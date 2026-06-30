@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 interface PlatformIconProps {
   platform: string;
   className?: string;
@@ -16,12 +18,15 @@ export function PlatformIcon({ platform, className = "h-4 w-4" }: PlatformIconPr
       );
     case "bilibili":
       return (
-        <svg className={className} viewBox="0 0 24 24" aria-hidden>
-          <path
-            fill="currentColor"
-            d="M7.2 4.4 5 6.6 3.4 5 2 6.4l1.6 1.6L2 9.6l1.4 1.4 1.6-1.6 2.2 2.2 1.4-1.4-2.2-2.2 2.2-2.2-1.4-1.4Zm9.6 0-1.4 1.4 2.2 2.2-2.2 2.2 1.4 1.4 2.2-2.2 1.6 1.6L22 9.6l-1.6-1.6L22 6.6l-1.4-1.4-1.6 1.6-2.2-2.2ZM4 10.8v8.4A1.8 1.8 0 0 0 5.8 21h12.4a1.8 1.8 0 0 0 1.8-1.8v-8.4H4Zm4.2 2.4h7.6v3.6H8.2v-3.6Z"
-          />
-        </svg>
+        <Image
+          src="/bilibili.png"
+          alt=""
+          width={16}
+          height={16}
+          className={`${className} object-contain`}
+          aria-hidden
+          unoptimized
+        />
       );
     default:
       return (

@@ -585,6 +585,55 @@ export async function insertComment(data: {
   };
 }
 
+export async function getCommentById(id: string): Promise<Comment | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  const { rows } = await db.execute({
+    sql: "SELECT * FROM comments WHERE id = ? LIMIT 1",
+    args: [id],
+  });
+
+  const r = rows[0];
+  if (!r) return null;
+
+  return {
+    id: r.id as string,
+    videoId: r.video_id as string,
+    nickname: (r.nickname as string | null) ?? null,
+    content: r.content as string,
+    userId: (r.user_id as string | null) ?? null,
+    createdAt: r.created_at as string,
+  };
+}
+
+export async function updateComment(
+  id: string,
+  content: string,
+): Promise<Comment | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  await db.execute({
+    sql: "UPDATE comments SET content = ? WHERE id = ?",
+    args: [content, id],
+  });
+
+  return getCommentById(id);
+}
+
+export async function deleteComment(id: string): Promise<boolean> {
+  const db = getClient();
+  if (!db) return false;
+
+  await db.execute({
+    sql: "DELETE FROM comments WHERE id = ?",
+    args: [id],
+  });
+
+  return true;
+}
+
 // --- Starter picks (入坑必看) ---
 
 async function ensureStarterPicksTable(db: Client): Promise<void> {

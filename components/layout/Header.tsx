@@ -136,8 +136,11 @@ export function Header({
       </div>
 
       {/* Desktop */}
-      <div className="hidden lg:flex items-center justify-end gap-3 px-6 py-3">
-        <div className="relative w-72">
+      <div className="hidden lg:flex items-center gap-3 px-6 py-3">
+        <p className="min-w-0 flex-1 text-xs text-[var(--color-textSubtle)] leading-relaxed">
+          *{t("thumbnailDisclaimer")}
+        </p>
+        <div className="relative w-72 shrink-0">
           <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-textSubtle)]" />
           <input
             type="search"

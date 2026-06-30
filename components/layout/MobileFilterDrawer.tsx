@@ -21,7 +21,7 @@ export function MobileFilterDrawer({
 }: MobileFilterDrawerProps) {
   return (
     <LeftDrawer open={open} onClose={onClose}>
-      <Sidebar {...sidebarProps} showBranding />
+      <Sidebar {...sidebarProps} showBranding scrollable={false} />
     </LeftDrawer>
   );
 }

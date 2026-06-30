@@ -24,7 +24,7 @@ export const KNOWN_PLATFORMS = ["youtube", "bilibili", "other"] as const;
 
 export const MAX_TAGS = 6;
 export const MAX_VIDEO_SOURCES = 3;
-export const SIDEBAR_TAG_LIMIT = 50;
+export const SIDEBAR_TAG_LIMIT = 19;
 
 export const FAVORITES_KEY = "yeji-verse-favorites";
 export const THEME_KEY = "yeji-verse-theme";

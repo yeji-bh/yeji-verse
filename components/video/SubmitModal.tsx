@@ -193,7 +193,7 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
             type="date"
             value={publishedDate}
             onChange={(e) => setPublishedDate(e.target.value)}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
+            className="date-input w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
           />
         </div>
 

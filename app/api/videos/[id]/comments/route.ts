@@ -23,11 +23,12 @@ export async function POST(
   }
 
   const user = await getSessionUser();
+  const defaultNickname = user?.username ?? null;
   const comment = await insertComment({
     id: crypto.randomUUID(),
     videoId,
     content: content.trim(),
-    nickname: nickname?.trim() || null,
+    nickname: nickname?.trim() || defaultNickname,
     userId: user?.id ?? null,
   });
 

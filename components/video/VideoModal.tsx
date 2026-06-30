@@ -147,7 +147,7 @@ export function VideoModal({
   };
 
   return (
-    <Modal open={open} onClose={onClose} size="lg">
+    <Modal open={open} onClose={onClose} size="lg" mobileFullscreen>
       <button
         type="button"
         onClick={onClose}
@@ -157,110 +157,95 @@ export function VideoModal({
         <IconClose className="h-4 w-4" />
       </button>
 
-      <div className="max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-4">
-        {source && (
-          <VideoPlayer
-            url={source.url}
-            platform={source.platform}
-            title={video.title}
-            thumbnail={video.thumbnail}
-          />
-        )}
-
-        {isAdmin && !editing && (
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={startEdit}
-              className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-textMuted)] hover:border-[var(--color-accent)]"
-            >
-              {t("edit")}
-            </button>
-            <button
-              type="button"
-              onClick={handleDelete}
-              className="rounded-lg border border-red-300 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
-            >
-              {t("delete")}
-            </button>
-          </div>
-        )}
-
-        {editing ? (
-          <div className="space-y-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
-                {t("videoTitle")}
-              </label>
-              <input
-                type="text"
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
+      {editing ? (
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 sm:flex-none sm:max-h-[90vh]">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
+                  {t("videoTitle")}
+                </label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
+                  {t("videoDate")}
+                </label>
+                <input
+                  type="date"
+                  value={editDate}
+                  onChange={(e) => setEditDate(e.target.value)}
+                  className="date-input w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
+                />
+              </div>
+              <SourceFields
+                sources={editSources}
+                onChange={setEditSources}
+                parsing={parsing}
               />
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
-                {t("videoCategory")}
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {CATEGORIES.map((c) => (
-                  <Badge
-                    key={c}
-                    active={editCategory === c}
-                    onClick={() => setEditCategory(c)}
-                  >
-                    {t(c)}
-                  </Badge>
-                ))}
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
+                  {t("videoCategory")}
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {CATEGORIES.map((c) => (
+                    <Badge
+                      key={c}
+                      active={editCategory === c}
+                      onClick={() => setEditCategory(c)}
+                    >
+                      {t(c)}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
+                  {t("tags")}
+                </label>
+                <TagInput tags={editTags} onChange={setEditTags} hint={t("tagsMax")} />
               </div>
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
-                {t("videoDate")}
-              </label>
-              <input
-                type="date"
-                value={editDate}
-                onChange={(e) => setEditDate(e.target.value)}
-                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
-              />
-            </div>
-            <SourceFields
-              sources={editSources}
-              onChange={setEditSources}
-              parsing={parsing}
-            />
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
-                {t("tags")}
-              </label>
-              <TagInput tags={editTags} onChange={setEditTags} hint={t("tagsMax")} />
-            </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  cancelParse();
-                  setEditing(false);
-                }}
-                className="flex-1 rounded-xl border border-[var(--color-border)] py-2 text-sm"
-              >
-                {t("cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                className="flex-1 rounded-xl bg-[var(--color-accent)] py-2 text-sm font-medium text-[var(--color-accentText)] disabled:opacity-50"
-              >
-                {saving ? t("submitting") : t("save")}
-              </button>
-            </div>
           </div>
-        ) : (
-          <>
-            <h2 className="text-lg sm:text-xl font-semibold leading-tight">{video.title}</h2>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                cancelParse();
+                setEditing(false);
+              }}
+              className="flex-1 rounded-xl border border-[var(--color-border)] py-2 text-sm"
+            >
+              {t("cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 rounded-xl bg-[var(--color-accent)] py-2 text-sm font-medium text-[var(--color-accentText)] disabled:opacity-50"
+            >
+              {saving ? t("submitting") : t("save")}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="min-h-0 flex-1 overflow-y-auto pb-8 lg:grid lg:max-h-[90vh] lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] lg:overflow-hidden lg:pb-0">
+          <div className="space-y-4 p-4 sm:p-5 lg:min-h-0 lg:overflow-y-auto">
+            {source && (
+              <VideoPlayer
+                url={source.url}
+                platform={source.platform}
+                title={video.title}
+                thumbnail={video.thumbnail}
+              />
+            )}
 
             <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--color-textMuted)]">
               <span>{video.publishedDate}</span>
@@ -272,11 +257,31 @@ export function VideoModal({
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5">
-              <Badge active>{t(video.category)}</Badge>
-              {video.tags.map((tag) => (
-                <Badge key={tag}>{tag}</Badge>
-              ))}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+                <Badge active>{t(video.category)}</Badge>
+                {video.tags.map((tag) => (
+                  <Badge key={tag}>{tag}</Badge>
+                ))}
+              </div>
+              {isAdmin && (
+                <div className="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    onClick={startEdit}
+                    className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-textMuted)] hover:border-[var(--color-accent)]"
+                  >
+                    {t("edit")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDelete}
+                    className="rounded-lg border border-red-300 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                  >
+                    {t("delete")}
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-wrap items-center justify-end gap-2">
@@ -306,11 +311,13 @@ export function VideoModal({
                 <IconHeart filled={isFavorite} className="h-4 w-4" />
               </button>
             </div>
-          </>
-        )}
+          </div>
 
-        <CommentSection videoId={video.id} />
-      </div>
+          <div className="border-t border-[var(--color-borderSubtle)] p-4 sm:p-5 lg:flex lg:flex-col lg:overflow-hidden lg:border-l lg:border-t-0">
+            <CommentSection videoId={video.id} fillHeight className="border-t-0 pt-0" />
+          </div>
+        </div>
+      )}
     </Modal>
   );
 }

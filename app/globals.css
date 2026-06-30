@@ -78,6 +78,19 @@ button:disabled {
   padding-right: 2.25rem;
 }
 
+.date-input {
+  min-width: 0;
+  padding-right: 2.5rem;
+}
+
+.date-input::-webkit-calendar-picker-indicator {
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  opacity: 0.65;
+  transform: translateX(-0.5rem);
+}
+
 .animate-drawer-in {
   animation: drawer-in 0.25s ease-out;
 }

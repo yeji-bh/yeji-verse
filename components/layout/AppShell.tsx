@@ -168,12 +168,12 @@ export function AppShell({
         : undefined;
 
   return (
-    <div className="flex min-h-screen bg-[var(--color-bg)]">
-      <div className="hidden lg:flex w-64 xl:w-72 shrink-0 flex-col border-r border-[var(--color-borderSubtle)] p-5">
-        <Sidebar {...sidebarProps} className="flex-1" />
-      </div>
+    <div className="min-h-screen bg-[var(--color-bg)]">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden h-dvh w-64 flex-col border-r border-[var(--color-borderSubtle)] bg-[var(--color-bg)] lg:flex xl:w-72">
+        <Sidebar {...sidebarProps} className="min-h-0 flex-1" />
+      </aside>
 
-      <div className="flex flex-1 flex-col min-w-0">
+      <div className="flex min-h-screen flex-col min-w-0 lg:ml-64 xl:ml-72">
         <Header
           search={filters.search}
           onSearchChange={setSearch}

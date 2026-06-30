@@ -9,6 +9,7 @@ interface ModalProps {
   children: React.ReactNode;
   className?: string;
   size?: "md" | "lg" | "xl";
+  mobileFullscreen?: boolean;
 }
 
 const sizeClasses = {
@@ -23,6 +24,7 @@ export function Modal({
   children,
   className = "",
   size = "lg",
+  mobileFullscreen = false,
 }: ModalProps) {
   const { t } = useTranslation("common");
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -47,7 +49,9 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className={`fixed inset-0 z-50 flex justify-center p-0 sm:p-4 ${
+        mobileFullscreen ? "items-stretch sm:items-center" : "items-end sm:items-center"
+      }`}
       role="dialog"
       aria-modal="true"
     >
@@ -59,7 +63,11 @@ export function Modal({
       />
       <div
         ref={dialogRef}
-        className={`relative w-full ${sizeClasses[size]} max-h-[95vh] sm:max-h-[90vh] overflow-hidden rounded-t-2xl sm:rounded-2xl border border-[var(--color-border)] bg-[var(--color-bgElevated)] shadow-[var(--color-shadowLg)] animate-modal-in ${className}`}
+        className={`relative w-full ${sizeClasses[size]} overflow-hidden bg-[var(--color-bgElevated)] shadow-[var(--color-shadowLg)] animate-modal-in ${
+          mobileFullscreen
+            ? "flex h-[100dvh] max-h-[100dvh] flex-col rounded-none border-0 sm:h-auto sm:max-h-[90vh] sm:flex-none sm:rounded-2xl sm:border sm:border-[var(--color-border)]"
+            : "max-h-[95vh] sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl border border-[var(--color-border)]"
+        } ${className}`}
       >
         {children}
       </div>

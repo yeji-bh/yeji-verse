@@ -2,6 +2,7 @@
 
 import { VideoCard } from "./VideoCard";
 import { useTranslation } from "react-i18next";
+import { useIncrementalRender } from "@/hooks/useIncrementalRender";
 import type { Video } from "@/lib/types";
 
 interface VideoGridProps {
@@ -13,6 +14,8 @@ interface VideoGridProps {
   emptyHint?: string;
 }
 
+const BATCH_SIZE = 24;
+
 export function VideoGrid({
   videos,
   onVideoClick,
@@ -22,6 +25,7 @@ export function VideoGrid({
   emptyHint,
 }: VideoGridProps) {
   const { t } = useTranslation("common");
+  const { visibleItems, sentinelRef, hasMore } = useIncrementalRender(videos, BATCH_SIZE);
 
   if (videos.length === 0) {
     return (
@@ -44,19 +48,30 @@ export function VideoGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-      {videos.map((video) => (
-        <VideoCard
-          key={video.id}
-          video={video}
-          onClick={() => onVideoClick(video)}
-          isFavorite={isFavorite(video.id)}
-          onToggleFavorite={(e) => {
-            e.stopPropagation();
-            onToggleFavorite(video.id);
-          }}
-        />
-      ))}
-    </div>
+    <>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+        {visibleItems.map((video) => (
+          <VideoCard
+            key={video.id}
+            video={video}
+            onClick={() => onVideoClick(video)}
+            isFavorite={isFavorite(video.id)}
+            onToggleFavorite={(e) => {
+              e.stopPropagation();
+              onToggleFavorite(video.id);
+            }}
+          />
+        ))}
+      </div>
+      {hasMore && (
+        <div
+          ref={sentinelRef}
+          className="flex items-center justify-center py-8 text-xs text-[var(--color-textSubtle)]"
+          aria-hidden
+        >
+          {t("loadingMore")}
+        </div>
+      )}
+    </>
   );
 }

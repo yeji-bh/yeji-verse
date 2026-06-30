@@ -37,7 +37,8 @@ function compareVideos(
   return sortOrder === "asc" ? cmp : -cmp;
 }
 
-export function useFilters(videos: Video[]) {
+export function useFilters(videos: Video[], options?: { preserveOrder?: boolean }) {
+  const preserveOrder = options?.preserveOrder ?? false;
   const [filters, setFilters] = useState<VideoFilters>(defaultFilters);
 
   const toggleCategory = useCallback((category: string) => {
@@ -120,12 +121,14 @@ export function useFilters(videos: Video[]) {
       );
     }
 
-    result.sort((a, b) =>
-      compareVideos(a, b, filters.sortBy, filters.sortOrder),
-    );
+    if (!preserveOrder) {
+      result.sort((a, b) =>
+        compareVideos(a, b, filters.sortBy, filters.sortOrder),
+      );
+    }
 
     return result;
-  }, [videos, filters]);
+  }, [videos, filters, preserveOrder]);
 
   const hasActiveFilters =
     filters.categories.length > 0 ||

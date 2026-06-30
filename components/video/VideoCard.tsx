@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/Badge";
 import { useTranslation } from "react-i18next";
@@ -14,6 +15,52 @@ interface VideoCardProps {
   onToggleFavorite: (e: React.MouseEvent) => void;
 }
 
+function LazyThumbnail({ src, alt }: { src: string; alt: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [shouldLoad, setShouldLoad] = useState(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    if (typeof IntersectionObserver === "undefined") {
+      setShouldLoad(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldLoad(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "400px 0px" },
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} className="absolute inset-0">
+      {shouldLoad ? (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          loading="lazy"
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+          className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+          unoptimized
+        />
+      ) : (
+        <div className="absolute inset-0 bg-[var(--color-bgMuted)]" aria-hidden />
+      )}
+    </div>
+  );
+}
+
 export function VideoCard({
   video,
   onClick,
@@ -23,15 +70,14 @@ export function VideoCard({
   const { t } = useTranslation("common");
 
   return (
-    <article className="group cursor-pointer" onClick={onClick}>
+    <article
+      className="group cursor-pointer [content-visibility:auto] [contain-intrinsic-size:auto_220px]"
+      onClick={onClick}
+    >
       <div className="relative aspect-video overflow-hidden rounded-xl bg-[var(--color-bgMuted)]">
-        <Image
+        <LazyThumbnail
           src={getThumbnailDisplayUrl(video.thumbnail)}
           alt={video.title}
-          fill
-          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
-          className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-          unoptimized
         />
 
         <span className="absolute top-2 left-2 z-10 rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">

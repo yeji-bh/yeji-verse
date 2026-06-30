@@ -11,6 +11,7 @@ import type {
 import { dedupeTags } from "@/lib/tags";
 
 let client: Client | null = null;
+let starterPicksTableReady = false;
 
 function getClient(): Client | null {
   const url = process.env.TURSO_DATABASE_URL;
@@ -511,4 +512,154 @@ export async function insertComment(data: {
     userId: data.userId ?? null,
     createdAt: now,
   };
+}
+
+// --- Starter picks (入坑必看) ---
+
+async function ensureStarterPicksTable(db: Client): Promise<void> {
+  if (starterPicksTableReady) return;
+
+  await db.execute(`CREATE TABLE IF NOT EXISTS starter_picks (
+    video_id TEXT PRIMARY KEY,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    added_by TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE,
+    FOREIGN KEY (added_by) REFERENCES users(id) ON DELETE SET NULL
+  )`);
+  await db.execute(
+    "CREATE INDEX IF NOT EXISTS idx_starter_picks_sort ON starter_picks(sort_order)",
+  );
+  starterPicksTableReady = true;
+}
+
+export async function getStarterVideoIdsFromDb(): Promise<string[] | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  try {
+    await ensureStarterPicksTable(db);
+    const { rows } = await db.execute(
+      "SELECT video_id FROM starter_picks ORDER BY sort_order ASC, created_at ASC",
+    );
+    return rows.map((r) => r.video_id as string);
+  } catch {
+    return null;
+  }
+}
+
+export async function getStarterVideosFromDb(): Promise<Video[] | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  try {
+    await ensureStarterPicksTable(db);
+    const { rows } = await db.execute(`
+      SELECT v.* FROM videos v
+      INNER JOIN starter_picks sp ON sp.video_id = v.id
+      WHERE v.status = 'approved'
+      ORDER BY sp.sort_order ASC, sp.created_at ASC
+    `);
+
+    const videos: Video[] = [];
+    for (const row of rows) {
+      const sources = await loadSources(db, row.id as string);
+      videos.push(rowToVideo(row as Record<string, unknown>, sources));
+    }
+    return videos;
+  } catch {
+    return null;
+  }
+}
+
+export async function addStarterVideosToDb(
+  videoIds: string[],
+  addedBy?: string | null,
+): Promise<{ added: string[]; skipped: string[]; invalid: string[] } | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  try {
+    await ensureStarterPicksTable(db);
+
+    const added: string[] = [];
+    const skipped: string[] = [];
+    const invalid: string[] = [];
+
+    const { rows: maxRows } = await db.execute(
+      "SELECT COALESCE(MAX(sort_order), -1) as m FROM starter_picks",
+    );
+    let nextOrder = ((maxRows[0]?.m as number) ?? -1) + 1;
+
+    const { rows: existingRows } = await db.execute(
+      "SELECT video_id FROM starter_picks",
+    );
+    const existing = new Set(existingRows.map((r) => r.video_id as string));
+
+    for (const videoId of videoIds) {
+      if (existing.has(videoId)) {
+        skipped.push(videoId);
+        continue;
+      }
+
+      const { rows } = await db.execute({
+        sql: "SELECT id, status FROM videos WHERE id = ?",
+        args: [videoId],
+      });
+
+      if (rows.length === 0 || (rows[0].status as string) !== "approved") {
+        invalid.push(videoId);
+        continue;
+      }
+
+      await db.execute({
+        sql: "INSERT INTO starter_picks (video_id, sort_order, added_by) VALUES (?, ?, ?)",
+        args: [videoId, nextOrder, addedBy ?? null],
+      });
+      nextOrder += 1;
+      added.push(videoId);
+      existing.add(videoId);
+    }
+
+    return { added, skipped, invalid };
+  } catch (err) {
+    console.error("addStarterVideosToDb failed:", err);
+    return null;
+  }
+}
+
+export async function removeStarterVideoFromDb(videoId: string): Promise<boolean | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  try {
+    await ensureStarterPicksTable(db);
+    await db.execute({
+      sql: "DELETE FROM starter_picks WHERE video_id = ?",
+      args: [videoId],
+    });
+    return true;
+  } catch (err) {
+    console.error("removeStarterVideoFromDb failed:", err);
+    return null;
+  }
+}
+
+export async function reorderStarterVideosInDb(videoIds: string[]): Promise<boolean | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  try {
+    await ensureStarterPicksTable(db);
+    for (const [i, videoId] of videoIds.entries()) {
+      await db.execute({
+        sql: "UPDATE starter_picks SET sort_order = ? WHERE video_id = ?",
+        args: [i, videoId],
+      });
+    }
+    return true;
+  } catch (err) {
+    console.error("reorderStarterVideosInDb failed:", err);
+    return null;
+  }
 }

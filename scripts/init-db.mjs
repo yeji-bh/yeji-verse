@@ -71,6 +71,15 @@ const statements = [
   "CREATE INDEX IF NOT EXISTS idx_video_sources_video_id ON video_sources(video_id)",
   "CREATE INDEX IF NOT EXISTS idx_comments_video_id ON comments(video_id)",
   "CREATE INDEX IF NOT EXISTS idx_favorites_user_id ON favorites(user_id)",
+  `CREATE TABLE IF NOT EXISTS starter_picks (
+  video_id TEXT PRIMARY KEY,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  added_by TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE,
+  FOREIGN KEY (added_by) REFERENCES users(id) ON DELETE SET NULL
+)`,
+  "CREATE INDEX IF NOT EXISTS idx_starter_picks_sort ON starter_picks(sort_order)",
 ];
 
 for (const sql of statements) {

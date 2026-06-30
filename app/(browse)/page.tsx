@@ -1,7 +1,4 @@
 import type { Metadata } from "next";
-import { AppShell } from "@/components/layout/AppShell";
-import { mockVideos } from "@/data/mock-videos";
-import { getVideosFromDb } from "@/db/client";
 import { createMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = createMetadata({
@@ -11,9 +8,6 @@ export const metadata: Metadata = createMetadata({
   alternates: { canonical: "/" },
 });
 
-export default async function HomePage() {
-  const dbVideos = await getVideosFromDb();
-  const videos = dbVideos ?? mockVideos;
-
-  return <AppShell initialVideos={videos} />;
+export default function HomePage() {
+  return null;
 }

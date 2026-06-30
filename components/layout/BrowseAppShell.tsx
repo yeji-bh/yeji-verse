@@ -1,0 +1,47 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { AppShell } from "@/components/layout/AppShell";
+import type { Video } from "@/lib/types";
+
+type BrowseMode = "all" | "favorites" | "starter";
+
+function getMode(pathname: string): BrowseMode {
+  if (pathname === "/favorites") return "favorites";
+  if (pathname === "/starter") return "starter";
+  return "all";
+}
+
+interface BrowseAppShellProps {
+  allVideos: Video[];
+  starterVideos: Video[];
+  children: React.ReactNode;
+}
+
+export function BrowseAppShell({
+  allVideos,
+  starterVideos: serverStarterVideos,
+  children,
+}: BrowseAppShellProps) {
+  const pathname = usePathname();
+  const mode = getMode(pathname);
+  const [starterVideos, setStarterVideos] = useState(serverStarterVideos);
+
+  useEffect(() => {
+    setStarterVideos(serverStarterVideos);
+  }, [serverStarterVideos]);
+
+  const initialVideos = mode === "starter" ? starterVideos : allVideos;
+
+  return (
+    <>
+      <AppShell
+        initialVideos={initialVideos}
+        mode={mode}
+        onStarterVideosChange={setStarterVideos}
+      />
+      {children}
+    </>
+  );
+}

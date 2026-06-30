@@ -26,6 +26,7 @@ interface SidebarProps {
   onSetSortOrder: (sortOrder: SortOrder) => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
+  hideSort?: boolean;
   showBranding?: boolean;
   className?: string;
 }
@@ -43,6 +44,7 @@ export function Sidebar({
   onSetSortOrder,
   onClearFilters,
   hasActiveFilters,
+  hideSort = false,
   showBranding = true,
   className = "",
 }: SidebarProps) {
@@ -138,6 +140,19 @@ export function Sidebar({
             {t("allVideos")}
           </Link>
           <Link
+            href="/starter"
+            className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+              pathname === "/starter"
+                ? "bg-[var(--color-accentMuted)] text-[var(--color-accent)]"
+                : "text-[var(--color-textMuted)] hover:bg-[var(--color-bgMuted)] hover:text-[var(--color-text)]"
+            }`}
+          >
+            <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
+            </svg>
+            {t("starterNav")}
+          </Link>
+          <Link
             href="/favorites"
             className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
               pathname === "/favorites"
@@ -152,12 +167,14 @@ export function Sidebar({
 
         <div className="h-px bg-[var(--color-borderSubtle)]" />
 
-        <SortControls
-          sortBy={filters.sortBy}
-          sortOrder={filters.sortOrder}
-          onSortByChange={onSetSortBy}
-          onSortOrderChange={onSetSortOrder}
-        />
+        {!hideSort && (
+          <SortControls
+            sortBy={filters.sortBy}
+            sortOrder={filters.sortOrder}
+            onSortByChange={onSetSortBy}
+            onSortOrderChange={onSetSortOrder}
+          />
+        )}
 
         <FilterBadgeGroup
           label={t("year")}

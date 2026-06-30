@@ -124,6 +124,7 @@ export function VideoModal({
             url={source.url}
             platform={source.platform}
             title={video.title}
+            thumbnail={video.thumbnail}
           />
         )}
 

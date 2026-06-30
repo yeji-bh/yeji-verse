@@ -91,21 +91,28 @@ export function getThumbnailUrl(url: string, platform?: Platform | string): stri
   return null;
 }
 
-export function getEmbedUrl(url: string, platform?: Platform | string): string | null {
+export function getEmbedUrl(
+  url: string,
+  platform?: Platform | string,
+  options?: { autoplay?: boolean },
+): string | null {
   const p = platform ?? detectPlatform(url);
+  const autoplay = options?.autoplay ? 1 : 0;
 
   if (p === "youtube") {
     const id = extractYouTubeId(url);
-    return id ? `https://www.youtube.com/embed/${id}` : null;
+    return id
+      ? `https://www.youtube.com/embed/${id}?autoplay=${autoplay}&rel=0`
+      : null;
   }
 
   if (p === "bilibili") {
     const ids = extractBilibiliId(url);
     if (ids?.bvid) {
-      return `https://player.bilibili.com/player.html?bvid=${ids.bvid}&high_quality=1&danmaku=0`;
+      return `https://player.bilibili.com/player.html?bvid=${ids.bvid}&high_quality=1&danmaku=0&autoplay=${autoplay}`;
     }
     if (ids?.aid) {
-      return `https://player.bilibili.com/player.html?aid=${ids.aid}&high_quality=1&danmaku=0`;
+      return `https://player.bilibili.com/player.html?aid=${ids.aid}&high_quality=1&danmaku=0&autoplay=${autoplay}`;
     }
   }
 

@@ -25,13 +25,20 @@ export function getSiteUrl(): string {
 
 export function createMetadata(overrides: Metadata = {}): Metadata {
   const url = getSiteUrl();
+  const { title, openGraph, twitter, ...rest } = overrides;
+
+  const pageTitle = typeof title === "string" ? title : null;
+  const resolvedTitle = pageTitle
+    ? { absolute: `${pageTitle} | ${siteConfig.name}` }
+    : {
+        default: siteConfig.title,
+        template: `%s | ${siteConfig.name}`,
+      };
+  const documentTitle = pageTitle ? `${pageTitle} | ${siteConfig.name}` : siteConfig.title;
 
   return {
     metadataBase: new URL(url),
-    title: {
-      default: siteConfig.title,
-      template: `%s | ${siteConfig.name}`,
-    },
+    title: resolvedTitle,
     description: siteConfig.description,
     keywords: [...siteConfig.keywords],
     applicationName: siteConfig.name,
@@ -48,13 +55,17 @@ export function createMetadata(overrides: Metadata = {}): Metadata {
       locale: siteConfig.locale,
       url,
       siteName: siteConfig.name,
-      title: siteConfig.title,
+      title: documentTitle ?? siteConfig.title,
       description: siteConfig.description,
+      ...openGraph,
+      ...(documentTitle ? { title: openGraph?.title ?? documentTitle } : {}),
     },
     twitter: {
       card: "summary_large_image",
-      title: siteConfig.title,
+      title: documentTitle ?? siteConfig.title,
       description: siteConfig.description,
+      ...twitter,
+      ...(documentTitle ? { title: twitter?.title ?? documentTitle } : {}),
     },
     robots: {
       index: true,
@@ -69,7 +80,7 @@ export function createMetadata(overrides: Metadata = {}): Metadata {
     alternates: {
       canonical: url,
     },
-    ...overrides,
+    ...rest,
   };
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { categoryLabelKey, sortLabelKey } from "@/lib/i18n/client";
+import { categoryLabelKey, sortByLabelKey } from "@/lib/i18n/client";
 
 export function useAppTranslation() {
   const { t, i18n } = useTranslation("common");
@@ -10,6 +10,6 @@ export function useAppTranslation() {
     t,
     locale: i18n.language,
     categoryLabel: (category: string) => t(categoryLabelKey(category)),
-    sortLabel: (sort: string) => t(sortLabelKey(sort)),
+    sortByLabel: (sortBy: string) => t(sortByLabelKey(sortBy)),
   };
 }

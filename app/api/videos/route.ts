@@ -5,6 +5,7 @@ import {
   insertVideoToDb,
 } from "@/db/client";
 import { fetchUrlMetadata } from "@/lib/metadata";
+import { dedupeTags } from "@/lib/tags";
 import { getSessionUser, requireAdmin } from "@/lib/session";
 import { getThumbnailUrl } from "@/lib/video-platforms";
 import type { SubmitVideoPayload, Video, VideoStatus } from "@/lib/types";
@@ -38,6 +39,7 @@ export async function POST(request: Request) {
       thumbnail?: string;
       direct?: boolean;
     };
+    payload.tags = dedupeTags(payload.tags ?? []);
 
     const session = await getSessionUser();
     const isAdmin = session?.role === "admin";
@@ -97,7 +99,8 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(newVideo, { status: 201 });
-  } catch {
+  } catch (err) {
+    console.error("POST /api/videos failed:", err);
     return NextResponse.json({ error: "Failed to create" }, { status: 500 });
   }
 }

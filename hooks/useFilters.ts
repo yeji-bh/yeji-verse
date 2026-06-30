@@ -1,16 +1,41 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import type { SortOption, Video, VideoFilters } from "@/lib/types";
+import type { SortBy, SortOrder, Video, VideoFilters } from "@/lib/types";
+import { hasTag, removeTag, videoHasAnyTag } from "@/lib/tags";
 import { getPlatformViewCount, getVideoYear } from "@/lib/video-platforms";
 
 const defaultFilters: VideoFilters = {
   categories: [],
   tags: [],
   years: [],
-  sort: "newest",
+  sortBy: "createdAt",
+  sortOrder: "desc",
   search: "",
 };
+
+function compareVideos(
+  a: Video,
+  b: Video,
+  sortBy: SortBy,
+  sortOrder: SortOrder,
+): number {
+  let cmp = 0;
+
+  switch (sortBy) {
+    case "views":
+      cmp = (getPlatformViewCount(a) ?? 0) - (getPlatformViewCount(b) ?? 0);
+      break;
+    case "title":
+      cmp = a.title.localeCompare(b.title);
+      break;
+    default:
+      cmp =
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+  }
+
+  return sortOrder === "asc" ? cmp : -cmp;
+}
 
 export function useFilters(videos: Video[]) {
   const [filters, setFilters] = useState<VideoFilters>(defaultFilters);
@@ -24,13 +49,21 @@ export function useFilters(videos: Video[]) {
     }));
   }, []);
 
+  const clearCategories = useCallback(() => {
+    setFilters((f) => ({ ...f, categories: [] }));
+  }, []);
+
   const toggleTag = useCallback((tag: string) => {
     setFilters((f) => ({
       ...f,
-      tags: f.tags.includes(tag)
-        ? f.tags.filter((t) => t !== tag)
+      tags: hasTag(f.tags, tag)
+        ? removeTag(f.tags, tag)
         : [...f.tags, tag],
     }));
+  }, []);
+
+  const clearTags = useCallback(() => {
+    setFilters((f) => ({ ...f, tags: [] }));
   }, []);
 
   const toggleYear = useCallback((year: number) => {
@@ -42,8 +75,16 @@ export function useFilters(videos: Video[]) {
     }));
   }, []);
 
-  const setSort = useCallback((sort: SortOption) => {
-    setFilters((f) => ({ ...f, sort }));
+  const clearYears = useCallback(() => {
+    setFilters((f) => ({ ...f, years: [] }));
+  }, []);
+
+  const setSortBy = useCallback((sortBy: SortBy) => {
+    setFilters((f) => ({ ...f, sortBy }));
+  }, []);
+
+  const setSortOrder = useCallback((sortOrder: SortOrder) => {
+    setFilters((f) => ({ ...f, sortOrder }));
   }, []);
 
   const setSearch = useCallback((search: string) => {
@@ -62,9 +103,7 @@ export function useFilters(videos: Video[]) {
     }
 
     if (filters.tags.length > 0) {
-      result = result.filter((v) =>
-        filters.tags.some((t) => v.tags.includes(t)),
-      );
+      result = result.filter((v) => videoHasAnyTag(v.tags, filters.tags));
     }
 
     if (filters.years.length > 0) {
@@ -81,27 +120,9 @@ export function useFilters(videos: Video[]) {
       );
     }
 
-    switch (filters.sort) {
-      case "oldest":
-        result.sort(
-          (a, b) =>
-            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-        );
-        break;
-      case "views":
-        result.sort(
-          (a, b) => (getPlatformViewCount(b) ?? 0) - (getPlatformViewCount(a) ?? 0),
-        );
-        break;
-      case "title":
-        result.sort((a, b) => a.title.localeCompare(b.title));
-        break;
-      default:
-        result.sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        );
-    }
+    result.sort((a, b) =>
+      compareVideos(a, b, filters.sortBy, filters.sortOrder),
+    );
 
     return result;
   }, [videos, filters]);
@@ -116,9 +137,13 @@ export function useFilters(videos: Video[]) {
     filters,
     filtered,
     toggleCategory,
+    clearCategories,
     toggleTag,
+    clearTags,
     toggleYear,
-    setSort,
+    clearYears,
+    setSortBy,
+    setSortOrder,
     setSearch,
     clearFilters,
     hasActiveFilters,

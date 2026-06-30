@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/Badge";
 import { useTranslation } from "react-i18next";
 import { IconHeart } from "@/components/ui/IconButton";
+import { getThumbnailDisplayUrl } from "@/lib/thumbnail";
 import type { Video } from "@/lib/types";
 
 interface VideoCardProps {
@@ -25,7 +26,7 @@ export function VideoCard({
     <article className="group cursor-pointer" onClick={onClick}>
       <div className="relative aspect-video overflow-hidden rounded-xl bg-[var(--color-bgMuted)]">
         <Image
-          src={video.thumbnail || "/placeholder-video.svg"}
+          src={getThumbnailDisplayUrl(video.thumbnail)}
           alt={video.title}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"

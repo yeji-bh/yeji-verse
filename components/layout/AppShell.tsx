@@ -26,9 +26,13 @@ export function AppShell({ initialVideos, mode = "all" }: AppShellProps) {
     filters,
     filtered,
     toggleCategory,
+    clearCategories,
     toggleTag,
+    clearTags,
     toggleYear,
-    setSort,
+    clearYears,
+    setSortBy,
+    setSortOrder,
     setSearch,
     clearFilters,
     hasActiveFilters,
@@ -62,9 +66,13 @@ export function AppShell({ initialVideos, mode = "all" }: AppShellProps) {
     filters,
     allTags,
     onToggleCategory: toggleCategory,
+    onClearCategories: clearCategories,
     onToggleTag: toggleTag,
+    onClearTags: clearTags,
     onToggleYear: toggleYear,
-    onSetSort: setSort,
+    onClearYears: clearYears,
+    onSetSortBy: setSortBy,
+    onSetSortOrder: setSortOrder,
     onClearFilters: clearFilters,
     hasActiveFilters,
   };
@@ -118,6 +126,14 @@ export function AppShell({ initialVideos, mode = "all" }: AppShellProps) {
         onClose={() => setSelectedVideo(null)}
         isFavorite={selectedVideo ? isFavorite(selectedVideo.id) : false}
         onToggleFavorite={() => selectedVideo && toggle(selectedVideo.id)}
+        onVideoUpdated={(updated) => {
+          setVideos((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
+          setSelectedVideo(updated);
+        }}
+        onVideoDeleted={(id) => {
+          setVideos((prev) => prev.filter((v) => v.id !== id));
+          setSelectedVideo(null);
+        }}
       />
 
       <SubmitModal

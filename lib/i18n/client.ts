@@ -73,14 +73,13 @@ export function categoryLabelKey(category: string): string {
   return category;
 }
 
-export function sortLabelKey(sort: string): string {
+export function sortByLabelKey(sortBy: string): string {
   const map: Record<string, string> = {
-    newest: "sortNewest",
-    oldest: "sortOldest",
-    views: "sortViews",
-    title: "sortTitle",
+    createdAt: "sortByCreatedAt",
+    views: "sortByViews",
+    title: "sortByTitle",
   };
-  return map[sort] ?? "sortNewest";
+  return map[sortBy] ?? "sortByCreatedAt";
 }
 
 export { i18n, LOCALE_KEY, defaultLocale, locales, localeLabels };

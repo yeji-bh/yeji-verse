@@ -34,9 +34,13 @@ export function Header({
   const [langOpen, setLangOpen] = useState(false);
 
   const langThemeControls = (
-    <>
+    <div className="flex items-center gap-0">
       <div className="relative">
-        <PlainIconButton label={t("language")} onClick={() => setLangOpen((o) => !o)}>
+        <PlainIconButton
+          label={t("language")}
+          onClick={() => setLangOpen((o) => !o)}
+          className="h-9 w-9"
+        >
           <IconGlobe className="h-5 w-5" />
         </PlainIconButton>
         {langOpen && (
@@ -72,25 +76,32 @@ export function Header({
       <PlainIconButton
         label={theme === "dark" ? t("themeLight") : t("themeDark")}
         onClick={toggleTheme}
+        className="h-9 w-9"
       >
         {theme === "dark" ? <IconSun className="h-5 w-5" /> : <IconMoon className="h-5 w-5" />}
       </PlainIconButton>
-    </>
+    </div>
   );
 
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--color-borderSubtle)] bg-[var(--color-bg)]/90 backdrop-blur-xl">
       {/* Mobile */}
       <div className="lg:hidden px-4 py-3 space-y-3">
-        <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2">
-          {showFilterButton ? (
-            <PlainIconButton label={t("filters")} onClick={onFilterClick}>
-              <IconFilter className="h-5 w-5" />
-            </PlainIconButton>
-          ) : (
-            <div className="w-10" />
-          )}
-          <h1 className="text-center text-base font-bold">
+        <div className="relative flex min-h-9 items-center">
+          <div className="z-10 flex shrink-0 items-center">
+            {showFilterButton ? (
+              <PlainIconButton
+                label={t("filters")}
+                onClick={onFilterClick}
+                className="h-9 w-9"
+              >
+                <IconFilter className="h-5 w-5" />
+              </PlainIconButton>
+            ) : (
+              <div className="h-9 w-9" />
+            )}
+          </div>
+          <h1 className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-base font-bold">
             <span
               className="bg-clip-text text-transparent"
               style={{ backgroundImage: "var(--color-gradient)" }}
@@ -98,7 +109,9 @@ export function Header({
               {t("siteName")}
             </span>
           </h1>
-          <div className="flex items-center">{langThemeControls}</div>
+          <div className="z-10 ml-auto flex shrink-0 items-center">
+            {langThemeControls}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative flex-1">

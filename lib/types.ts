@@ -2,13 +2,21 @@ export type Category =
   | "vlog"
   | "variety"
   | "fancam"
+  | "fansite"
   | "solo"
   | "stage"
   | "cover"
   | "behind"
+  | "challenge"
+  | "brand"
+  | "predebut"
+  | "fanmade"
+  | "concert"
+  | "live"
   | "other";
 
-export type SortOption = "newest" | "oldest" | "views" | "title";
+export type SortBy = "createdAt" | "views" | "title";
+export type SortOrder = "asc" | "desc";
 
 export type Platform =
   | "youtube"
@@ -68,7 +76,8 @@ export interface VideoFilters {
   categories: Category[];
   tags: string[];
   years: number[];
-  sort: SortOption;
+  sortBy: SortBy;
+  sortOrder: SortOrder;
   search: string;
 }
 

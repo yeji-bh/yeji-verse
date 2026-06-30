@@ -8,6 +8,7 @@ import type {
   VideoSource,
   VideoStatus,
 } from "@/lib/types";
+import { dedupeTags } from "@/lib/tags";
 
 let client: Client | null = null;
 
@@ -21,14 +22,18 @@ function getClient(): Client | null {
 
 function rowToVideo(row: Record<string, unknown>, sources: VideoSource[]): Video {
   const year = row.year as number;
+  const createdAt = row.created_at as string;
+  const rawPublished = row.published_date as string | null | undefined;
   const publishedDate =
-    (row.published_date as string) || `${year}-01-01`;
+    (rawPublished && rawPublished.trim()) ||
+    (createdAt ? createdAt.slice(0, 10) : "") ||
+    `${year}-01-01`;
   return {
     id: row.id as string,
     title: row.title as string,
     description: (row.description as string) ?? "",
     category: row.category as Video["category"],
-    tags: JSON.parse((row.tags as string) || "[]"),
+    tags: dedupeTags(JSON.parse((row.tags as string) || "[]")),
     publishedDate,
     year: Number(publishedDate.slice(0, 4)) || year,
     thumbnail: (row.thumbnail as string) ?? "",
@@ -111,24 +116,47 @@ export async function insertVideoToDb(
   const status = payload.status ?? "pending";
   const year = Number(payload.publishedDate.slice(0, 4));
 
-  await db.execute({
-    sql: `INSERT INTO videos (id, title, description, category, tags, year, published_date, thumbnail, status, submitted_by, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    args: [
-      payload.id,
-      payload.title,
-      payload.description ?? "",
-      payload.category,
-      JSON.stringify(payload.tags),
-      year,
-      payload.publishedDate,
-      payload.thumbnail,
-      status,
-      payload.submittedBy ?? null,
-      now,
-      now,
-    ],
-  });
+  try {
+    await db.execute({
+      sql: `INSERT INTO videos (id, title, description, category, tags, year, published_date, thumbnail, status, submitted_by, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        payload.id,
+        payload.title,
+        payload.description ?? "",
+        payload.category,
+        JSON.stringify(dedupeTags(payload.tags)),
+        year,
+        payload.publishedDate,
+        payload.thumbnail,
+        status,
+        payload.submittedBy ?? null,
+        now,
+        now,
+      ],
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (!message.includes("published_date")) throw err;
+
+    await db.execute({
+      sql: `INSERT INTO videos (id, title, description, category, tags, year, thumbnail, status, submitted_by, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        payload.id,
+        payload.title,
+        payload.description ?? "",
+        payload.category,
+        JSON.stringify(dedupeTags(payload.tags)),
+        year,
+        payload.thumbnail,
+        status,
+        payload.submittedBy ?? null,
+        now,
+        now,
+      ],
+    });
+  }
 
   const sources: VideoSource[] = [];
   for (const [i, source] of payload.sources.entries()) {
@@ -177,6 +205,76 @@ export async function updateVideoStatus(
     args: [status, new Date().toISOString(), id],
   });
   return true;
+}
+
+export async function updateVideoInDb(
+  id: string,
+  data: {
+    title: string;
+    category: Video["category"];
+    tags: string[];
+    publishedDate: string;
+    thumbnail: string;
+    sources: { platform: string; url: string }[];
+  },
+): Promise<Video | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  const now = new Date().toISOString();
+  const year = Number(data.publishedDate.slice(0, 4));
+  const tags = dedupeTags(data.tags);
+
+  try {
+    await db.execute({
+      sql: `UPDATE videos
+            SET title = ?, category = ?, tags = ?, year = ?, published_date = ?, thumbnail = ?, updated_at = ?
+            WHERE id = ?`,
+      args: [
+        data.title,
+        data.category,
+        JSON.stringify(tags),
+        year,
+        data.publishedDate,
+        data.thumbnail,
+        now,
+        id,
+      ],
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    if (!message.includes("published_date")) throw err;
+
+    await db.execute({
+      sql: `UPDATE videos
+            SET title = ?, category = ?, tags = ?, year = ?, thumbnail = ?, updated_at = ?
+            WHERE id = ?`,
+      args: [
+        data.title,
+        data.category,
+        JSON.stringify(tags),
+        year,
+        data.thumbnail,
+        now,
+        id,
+      ],
+    });
+  }
+
+  await db.execute({
+    sql: "DELETE FROM video_sources WHERE video_id = ?",
+    args: [id],
+  });
+
+  for (const [i, source] of data.sources.entries()) {
+    const sourceId = `${id}-src-${i}`;
+    await db.execute({
+      sql: "INSERT INTO video_sources (id, video_id, platform, url) VALUES (?, ?, ?, ?)",
+      args: [sourceId, id, source.platform, source.url],
+    });
+  }
+
+  return getVideoById(id);
 }
 
 export async function deleteVideo(id: string): Promise<boolean> {

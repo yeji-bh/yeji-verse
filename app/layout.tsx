@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Noto_Sans_TC } from "next/font/google";
 import { AppProviders } from "@/components/providers/AppProviders";
+import { SiteJsonLd } from "@/components/seo/SiteJsonLd";
 import { colors } from "@/lib/colors";
+import { createMetadata } from "@/lib/seo";
 import "./globals.css";
 
 const notoSansTC = Noto_Sans_TC({
@@ -10,10 +12,7 @@ const notoSansTC = Noto_Sans_TC({
   weight: ["400", "500", "600", "700"],
 });
 
-export const metadata: Metadata = {
-  title: "Yeji Verse",
-  description: "黃禮志的影像宇宙 — Yeji's video universe",
-};
+export const metadata: Metadata = createMetadata();
 
 function themeScript() {
   const dark = colors.dark;
@@ -32,6 +31,7 @@ export default function RootLayout({
     <html lang="zh-TW" className={`${notoSansTC.variable} h-full`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript() }} />
+        <SiteJsonLd />
       </head>
       <body className="min-h-full flex flex-col font-sans antialiased bg-[var(--color-bg)] text-[var(--color-text)]">
         <AppProviders>{children}</AppProviders>

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { deleteVideo, updateVideoStatus } from "@/db/client";
+import { deleteVideo, updateVideoInDb, updateVideoStatus } from "@/db/client";
+import { dedupeTags } from "@/lib/tags";
 import { requireAdmin } from "@/lib/session";
-import type { VideoStatus } from "@/lib/types";
+import type { Category, VideoStatus } from "@/lib/types";
 
 export async function PATCH(
   request: Request,
@@ -13,8 +14,36 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const { status } = await request.json();
+  const body = await request.json();
 
+  if (body.title) {
+    const source = body.sources?.[0];
+    if (!source?.url) {
+      return NextResponse.json({ error: "Invalid source" }, { status: 400 });
+    }
+
+    const video = await updateVideoInDb(id, {
+      title: String(body.title).trim(),
+      category: body.category as Category,
+      tags: dedupeTags(body.tags ?? []),
+      publishedDate: body.publishedDate,
+      thumbnail: body.thumbnail ?? "",
+      sources: [
+        {
+          platform: source.platform ?? "other",
+          url: String(source.url).trim(),
+        },
+      ],
+    });
+
+    if (!video) {
+      return NextResponse.json({ error: "Update failed" }, { status: 500 });
+    }
+
+    return NextResponse.json(video);
+  }
+
+  const { status } = body;
   if (!["pending", "approved", "rejected"].includes(status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }

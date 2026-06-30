@@ -6,10 +6,10 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { FilterBadgeGroup } from "@/components/ui/FilterBadgeGroup";
-import { CATEGORIES, SORT_OPTIONS } from "@/lib/constants";
+import { SortControls } from "@/components/ui/SortControls";
+import { CATEGORIES } from "@/lib/constants";
 import { getFilterYears } from "@/lib/years";
-import { sortLabelKey } from "@/lib/i18n/client";
-import type { SortOption, VideoFilters } from "@/lib/types";
+import type { SortBy, SortOrder, VideoFilters } from "@/lib/types";
 import { IconHeart, IconLogout, IconSettings } from "@/components/ui/IconButton";
 import { AuthModal } from "@/components/auth/AuthModal";
 
@@ -17,9 +17,13 @@ interface SidebarProps {
   filters: VideoFilters;
   allTags: string[];
   onToggleCategory: (category: string) => void;
+  onClearCategories: () => void;
   onToggleTag: (tag: string) => void;
+  onClearTags: () => void;
   onToggleYear: (year: number) => void;
-  onSetSort: (sort: SortOption) => void;
+  onClearYears: () => void;
+  onSetSortBy: (sortBy: SortBy) => void;
+  onSetSortOrder: (sortOrder: SortOrder) => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
   showBranding?: boolean;
@@ -30,9 +34,13 @@ export function Sidebar({
   filters,
   allTags,
   onToggleCategory,
+  onClearCategories,
   onToggleTag,
+  onClearTags,
   onToggleYear,
-  onSetSort,
+  onClearYears,
+  onSetSortBy,
+  onSetSortOrder,
   onClearFilters,
   hasActiveFilters,
   showBranding = true,
@@ -73,23 +81,23 @@ export function Sidebar({
               <span className="min-w-0 truncate text-xs text-[var(--color-textMuted)]">
                 {user.username}
               </span>
-              <div className="flex shrink-0 items-center gap-1">
+              <div className="flex shrink-0 items-center gap-0.5">
                 {user.role === "admin" && (
                   <Link
                     href="/admin"
-                    className="inline-flex h-8 w-8 items-center justify-center text-[var(--color-textMuted)] hover:text-[var(--color-text)]"
+                    className="inline-flex h-9 w-9 items-center justify-center text-[var(--color-textMuted)] hover:text-[var(--color-text)]"
                     aria-label={t("admin")}
                   >
-                    <IconSettings className="h-4 w-4" />
+                    <IconSettings className="h-5 w-5" />
                   </Link>
                 )}
                 <button
                   type="button"
                   onClick={() => logout()}
-                  className="inline-flex h-8 w-8 items-center justify-center text-[var(--color-textMuted)] hover:text-[var(--color-text)]"
+                  className="inline-flex h-9 w-9 items-center justify-center text-[var(--color-textMuted)] hover:text-[var(--color-text)]"
                   aria-label={t("logout")}
                 >
-                  <IconLogout className="h-4 w-4" />
+                  <IconLogout className="h-5 w-5" />
                 </button>
               </div>
             </div>
@@ -144,19 +152,18 @@ export function Sidebar({
 
         <div className="h-px bg-[var(--color-borderSubtle)]" />
 
-        <FilterBadgeGroup
-          label={t("sort")}
-          items={SORT_OPTIONS.map((s) => ({
-            value: s,
-            label: t(sortLabelKey(s)),
-          }))}
-          selected={[filters.sort]}
-          onToggle={(sort) => onSetSort(sort as SortOption)}
-          single
+        <SortControls
+          sortBy={filters.sortBy}
+          sortOrder={filters.sortOrder}
+          onSortByChange={onSetSortBy}
+          onSortOrderChange={onSetSortOrder}
         />
 
         <FilterBadgeGroup
           label={t("year")}
+          showAll
+          allLabel={t("filterAll")}
+          onSelectAll={onClearYears}
           items={filterYears.map((y) => ({ value: y, label: String(y) }))}
           selected={filters.years}
           onToggle={onToggleYear}
@@ -164,19 +171,23 @@ export function Sidebar({
 
         <FilterBadgeGroup
           label={t("category")}
+          showAll
+          allLabel={t("filterAll")}
+          onSelectAll={onClearCategories}
           items={CATEGORIES.map((c) => ({ value: c, label: t(c) }))}
           selected={filters.categories}
           onToggle={onToggleCategory}
         />
 
-        {allTags.length > 0 && (
-          <FilterBadgeGroup
-            label={t("tags")}
-            items={allTags.map((tag) => ({ value: tag, label: tag }))}
-            selected={filters.tags}
-            onToggle={onToggleTag}
-          />
-        )}
+        <FilterBadgeGroup
+          label={t("tags")}
+          showAll
+          allLabel={t("filterAll")}
+          onSelectAll={onClearTags}
+          items={allTags.map((tag) => ({ value: tag, label: tag }))}
+          selected={filters.tags}
+          onToggle={onToggleTag}
+        />
 
         {hasActiveFilters && (
           <button

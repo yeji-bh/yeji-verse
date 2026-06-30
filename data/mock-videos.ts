@@ -1,4 +1,6 @@
 import type { Video } from "@/lib/types";
+import { collectPopularTags } from "@/lib/tags";
+import { SIDEBAR_TAG_LIMIT } from "@/lib/constants";
 
 export const mockVideos: Video[] = [
   {
@@ -209,9 +211,7 @@ export const mockVideos: Video[] = [
 ];
 
 export function getAllTags(videos: Video[]): string[] {
-  const tagSet = new Set<string>();
-  videos.forEach((v) => v.tags.forEach((t) => tagSet.add(t)));
-  return Array.from(tagSet).sort();
+  return collectPopularTags(videos, SIDEBAR_TAG_LIMIT);
 }
 
 export function getAllYears(videos: Video[]): number[] {

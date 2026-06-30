@@ -1,4 +1,5 @@
 import { detectPlatform, extractBilibiliId, extractYouTubeId, getEmbedUrl, getThumbnailUrl } from "./video-platforms";
+import { normalizeStoredThumbnail } from "./thumbnail";
 import type { VideoMetadata } from "./types";
 
 const BILIBILI_HEADERS = {
@@ -8,8 +9,7 @@ const BILIBILI_HEADERS = {
 };
 
 export function normalizeImageUrl(url: string | null | undefined): string | null {
-  if (!url) return null;
-  return url.replace(/^http:\/\//i, "https://");
+  return normalizeStoredThumbnail(url);
 }
 
 async function fetchYouTubeTitle(url: string): Promise<string | null> {

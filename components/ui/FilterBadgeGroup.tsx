@@ -5,7 +5,9 @@ interface FilterBadgeGroupProps<T extends string | number> {
   items: { value: T; label: string }[];
   selected: T[];
   onToggle: (value: T) => void;
-  single?: boolean;
+  showAll?: boolean;
+  allLabel?: string;
+  onSelectAll?: () => void;
 }
 
 export function FilterBadgeGroup<T extends string | number>({
@@ -13,9 +15,11 @@ export function FilterBadgeGroup<T extends string | number>({
   items,
   selected,
   onToggle,
-  single = false,
+  showAll = false,
+  allLabel = "All",
+  onSelectAll,
 }: FilterBadgeGroupProps<T>) {
-  if (items.length === 0) return null;
+  if (items.length === 0 && !showAll) return null;
 
   return (
     <div className="space-y-2.5">
@@ -23,15 +27,19 @@ export function FilterBadgeGroup<T extends string | number>({
         {label}
       </h3>
       <div className="flex flex-wrap gap-1.5">
+        {showAll && (
+          <Badge
+            active={selected.length === 0}
+            onClick={() => onSelectAll?.()}
+          >
+            {allLabel}
+          </Badge>
+        )}
         {items.map((item) => (
           <Badge
             key={String(item.value)}
             active={selected.includes(item.value)}
-            onClick={() => {
-              if (single || !selected.includes(item.value)) {
-                onToggle(item.value);
-              }
-            }}
+            onClick={() => onToggle(item.value)}
           >
             {item.label}
           </Badge>

@@ -98,6 +98,15 @@ for (const sql of migrations) {
   }
 }
 
+try {
+  await client.execute(
+    "UPDATE videos SET published_date = substr(created_at, 1, 10) WHERE published_date IS NULL OR published_date = ''",
+  );
+  console.log("✓ backfill published_date from created_at");
+} catch (e) {
+  console.error("✗ backfill:", e.message);
+}
+
 const { rows } = await client.execute(
   "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name",
 );

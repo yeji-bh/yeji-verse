@@ -29,6 +29,8 @@
   "close": "閉じる",
   "description": "説明",
   "sources": "動画ソース",
+  "sourcesMax": "最大3件まで",
+  "sourceParseHint": "最初のリンクのみタイトル・サムネ・日付を自動取得します",
   "selectSource": "プラットフォームを選択",
   "submitTitle": "動画を投稿",
   "submitHint": "リンクを貼るとサムネイル・タイトル・公開日を自動取得します",

@@ -60,6 +60,82 @@ async function loadSources(db: Client, videoId: string): Promise<VideoSource[]> 
   }));
 }
 
+async function loadSourcesForVideos(
+  db: Client,
+  videoIds: string[],
+): Promise<Map<string, VideoSource[]>> {
+  const map = new Map<string, VideoSource[]>();
+  if (videoIds.length === 0) return map;
+
+  const placeholders = videoIds.map(() => "?").join(", ");
+  const { rows } = await db.execute({
+    sql: `SELECT * FROM video_sources WHERE video_id IN (${placeholders})`,
+    args: videoIds,
+  });
+
+  for (const s of rows) {
+    const videoId = s.video_id as string;
+    const list = map.get(videoId) ?? [];
+    list.push({
+      id: s.id as string,
+      platform: s.platform as string,
+      url: s.url as string,
+      viewCount: (s.view_count as number | null) ?? null,
+      viewCountUpdatedAt: (s.view_count_updated_at as string | null) ?? null,
+    });
+    map.set(videoId, list);
+  }
+
+  return map;
+}
+
+async function rowsToVideos(db: Client, rows: Record<string, unknown>[]): Promise<Video[]> {
+  const sourceMap = await loadSourcesForVideos(
+    db,
+    rows.map((row) => row.id as string),
+  );
+  return rows.map((row) =>
+    rowToVideo(row, sourceMap.get(row.id as string) ?? []),
+  );
+}
+
+export async function getVideosPageFromDb(
+  limit: number,
+  offset: number,
+  status: VideoStatus | "all" = "approved",
+): Promise<{ videos: Video[]; total: number } | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  try {
+    const countSql =
+      status === "all"
+        ? "SELECT COUNT(*) as c FROM videos"
+        : "SELECT COUNT(*) as c FROM videos WHERE status = ?";
+
+    const { rows: countRows } = await db.execute(
+      status === "all" ? countSql : { sql: countSql, args: [status] },
+    );
+    const total = (countRows[0]?.c as number) ?? 0;
+
+    const sql =
+      status === "all"
+        ? "SELECT * FROM videos ORDER BY created_at DESC LIMIT ? OFFSET ?"
+        : "SELECT * FROM videos WHERE status = ? ORDER BY created_at DESC LIMIT ? OFFSET ?";
+
+    const { rows } = await db.execute(
+      status === "all"
+        ? { sql, args: [limit, offset] }
+        : { sql, args: [status, limit, offset] },
+    );
+
+    const videos = await rowsToVideos(db, rows as Record<string, unknown>[]);
+    return { videos, total };
+  } catch {
+    return null;
+  }
+}
+
 export async function getVideosFromDb(
   status: VideoStatus | "all" = "approved",
 ): Promise<Video[] | null> {
@@ -76,12 +152,7 @@ export async function getVideosFromDb(
       status === "all" ? sql : { sql, args: [status] },
     );
 
-    const videos: Video[] = [];
-    for (const row of rows) {
-      const sources = await loadSources(db, row.id as string);
-      videos.push(rowToVideo(row as Record<string, unknown>, sources));
-    }
-    return videos;
+    return rowsToVideos(db, rows as Record<string, unknown>[]);
   } catch {
     return null;
   }

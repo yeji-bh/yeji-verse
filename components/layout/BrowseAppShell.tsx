@@ -14,13 +14,11 @@ function getMode(pathname: string): BrowseMode {
 }
 
 interface BrowseAppShellProps {
-  allVideos: Video[] | null;
   starterVideos: Video[] | null;
   children: React.ReactNode;
 }
 
 export function BrowseAppShell({
-  allVideos,
   starterVideos: serverStarterVideos,
   children,
 }: BrowseAppShellProps) {
@@ -34,14 +32,14 @@ export function BrowseAppShell({
     setStarterVideos(serverStarterVideos);
   }, [serverStarterVideos]);
 
-  const initialVideos = mode === "starter" ? starterVideos : allVideos;
+  const initialVideos = mode === "starter" ? starterVideos : null;
 
   return (
     <>
       <AppShell
         initialVideos={initialVideos}
         mode={mode}
-        onStarterVideosChange={setStarterVideos}
+        onStarterVideosChange={(videos) => setStarterVideos(videos)}
       />
       {children}
     </>

@@ -35,7 +35,7 @@ function LazyThumbnail({ src, alt }: { src: string; alt: string }) {
           observer.disconnect();
         }
       },
-      { rootMargin: "400px 0px" },
+      { rootMargin: "80px 0px" },
     );
 
     observer.observe(el);

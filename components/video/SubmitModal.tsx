@@ -1,16 +1,21 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
 import { TagInput } from "@/components/ui/TagInput";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { IconClose } from "@/components/ui/IconButton";
-import { CATEGORIES, KNOWN_PLATFORMS } from "@/lib/constants";
+import {
+  SourceFields,
+  createEmptySource,
+  normalizeSources,
+} from "@/components/video/SourceFields";
+import { useVideoUrlParser } from "@/hooks/useVideoUrlParser";
+import { CATEGORIES } from "@/lib/constants";
 import { getThumbnailDisplayUrl } from "@/lib/thumbnail";
 import type { Category, SubmitVideoPayload } from "@/lib/types";
-import { detectPlatform, getThumbnailUrl } from "@/lib/video-platforms";
 
 interface SubmitModalProps {
   open: boolean;
@@ -29,26 +34,25 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
   const [category, setCategory] = useState<Category>("vlog");
   const [tags, setTags] = useState<string[]>([]);
   const [publishedDate, setPublishedDate] = useState(todayString());
-  const [platform, setPlatform] = useState("youtube");
-  const [url, setUrl] = useState("");
+  const [sources, setSources] = useState([createEmptySource()]);
   const [thumbnail, setThumbnail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [parsing, setParsing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-  const parseSeq = useRef(0);
+  const { parseUrl, parsing, cancelParse } = useVideoUrlParser();
+
+  const primaryUrl = sources[0]?.url ?? "";
 
   const reset = () => {
+    cancelParse();
     setTitle("");
     setCategory("vlog");
     setTags([]);
     setPublishedDate(todayString());
-    setPlatform("youtube");
-    setUrl("");
+    setSources([createEmptySource()]);
     setThumbnail("");
     setError("");
     setSuccess(false);
-    parseSeq.current += 1;
   };
 
   const handleClose = () => {
@@ -56,60 +60,32 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
     onClose();
   };
 
-  const parseUrl = useCallback(async (link: string) => {
-    const trimmed = link.trim();
-    if (!trimmed) {
+  useEffect(() => {
+    if (!primaryUrl.trim()) {
       setThumbnail("");
-      setPlatform("youtube");
       setPublishedDate(todayString());
       return;
     }
-
-    const seq = ++parseSeq.current;
-    setParsing(true);
-
-    try {
-      const res = await fetch("/api/metadata", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: trimmed }),
-      });
-      if (seq !== parseSeq.current) return;
-
-      const data = await res.json();
-      const detected = data.platform ?? detectPlatform(trimmed);
-
-      setPlatform(detected);
+    const timer = setTimeout(async () => {
+      const data = await parseUrl(primaryUrl);
+      if (!data) return;
+      setSources((prev) =>
+        prev.map((s, i) => (i === 0 ? { ...s, platform: data.platform } : s)),
+      );
       if (data.title) setTitle(data.title);
       if (data.publishedDate) setPublishedDate(data.publishedDate);
-
-      const thumb =
-        data.thumbnail ?? getThumbnailUrl(trimmed, detected) ?? "";
-      setThumbnail(thumb);
-    } catch {
-      if (seq !== parseSeq.current) return;
-      setPlatform(detectPlatform(trimmed));
-      setThumbnail(getThumbnailUrl(trimmed) ?? "");
-    } finally {
-      if (seq === parseSeq.current) setParsing(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!url.trim()) {
-      setThumbnail("");
-      return;
-    }
-    const timer = setTimeout(() => parseUrl(url), 500);
+      if (data.thumbnail) setThumbnail(data.thumbnail);
+    }, 500);
     return () => clearTimeout(timer);
-  }, [url, parseUrl]);
+  }, [primaryUrl, parseUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    if (!title.trim() || !url.trim()) {
+    const normalized = normalizeSources(sources);
+    if (!title.trim() || normalized.length === 0) {
       setError(t("submitError"));
       setLoading(false);
       return;
@@ -120,12 +96,7 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
       category,
       tags,
       publishedDate,
-      sources: [
-        {
-          platform: platform || detectPlatform(url),
-          url: url.trim(),
-        },
-      ],
+      sources: normalized,
     };
 
     try {
@@ -226,35 +197,7 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
-            {t("sources")}
-          </label>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <select
-              value={platform}
-              onChange={(e) => setPlatform(e.target.value)}
-              className="select-control rounded-lg border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm sm:w-36 outline-none focus:border-[var(--color-accent)]"
-            >
-              {KNOWN_PLATFORMS.map((p) => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </select>
-            <input
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder={t("link")}
-              required
-              className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
-            />
-          </div>
-          {parsing && (
-            <p className="text-xs text-[var(--color-textSubtle)]">{t("parsing")}</p>
-          )}
-        </div>
+        <SourceFields sources={sources} onChange={setSources} parsing={parsing} />
 
         <div>
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">

@@ -12,6 +12,7 @@ import { StarterManageModal } from "@/components/starter/StarterManageModal";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useFilters } from "@/hooks/useFilters";
+import { usePaginatedVideos } from "@/hooks/usePaginatedVideos";
 import { getAllTags } from "@/lib/videos";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import type { Video } from "@/lib/types";
@@ -29,8 +30,28 @@ export function AppShell({
 }: AppShellProps) {
   const { t } = useTranslation("common");
   const { user } = useAuth();
-  const [videos, setVideos] = useState<Video[]>(initialVideos ?? []);
-  const [loading, setLoading] = useState(initialVideos === null);
+  const paginated = mode === "all" || mode === "favorites";
+
+  const pagination = usePaginatedVideos(paginated);
+  const {
+    videos: paginatedVideos,
+    setVideos: setPaginatedVideos,
+    loading: paginatedLoading,
+    loadingMore,
+    hasMore,
+    fullyLoaded,
+    loadMore,
+    loadAll,
+    reset: resetPagination,
+  } = pagination;
+  const [starterVideos, setStarterVideos] = useState<Video[]>(initialVideos ?? []);
+  const [starterLoading, setStarterLoading] = useState(
+    mode === "starter" && initialVideos === null,
+  );
+
+  const videos = paginated ? paginatedVideos : starterVideos;
+  const loading = paginated ? paginatedLoading : starterLoading;
+
   const { favorites, toggle, isFavorite, hydrated } = useFavorites();
   const {
     filters,
@@ -60,46 +81,57 @@ export function AppShell({
       ? filtered.filter((v) => favorites.includes(v.id))
       : filtered;
 
+  const setVideos = paginated ? setPaginatedVideos : setStarterVideos;
+
   const refreshVideos = useCallback(async () => {
+    if (paginated) {
+      resetPagination();
+      return;
+    }
     try {
-      const endpoint = mode === "starter" ? "/api/starter" : "/api/videos";
-      const res = await fetch(endpoint);
-      if (res.ok) setVideos(await res.json());
+      const res = await fetch("/api/starter");
+      if (res.ok) setStarterVideos(await res.json());
     } catch {
       /* keep current */
     }
-  }, [mode]);
+  }, [paginated, resetPagination]);
 
   useEffect(() => {
     setSelectedVideo(null);
 
+    if (paginated) return;
+
     if (initialVideos !== null) {
-      setVideos(initialVideos);
-      setLoading(false);
+      setStarterVideos(initialVideos);
+      setStarterLoading(false);
       return;
     }
 
     let cancelled = false;
 
     (async () => {
-      setLoading(true);
+      setStarterLoading(true);
       try {
-        const endpoint = mode === "starter" ? "/api/starter" : "/api/videos";
-        const res = await fetch(endpoint);
+        const res = await fetch("/api/starter");
         if (!cancelled && res.ok) {
-          setVideos(await res.json());
+          setStarterVideos(await res.json());
         }
       } catch {
         /* keep current */
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setStarterLoading(false);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [initialVideos, mode]);
+  }, [initialVideos, paginated]);
+
+  useEffect(() => {
+    if (!paginated || !hasActiveFilters || fullyLoaded) return;
+    void loadAll();
+  }, [hasActiveFilters, paginated, fullyLoaded, loadAll]);
 
   const sidebarProps = {
     filters,
@@ -193,6 +225,9 @@ export function AppShell({
                 onToggleFavorite={toggle}
                 emptyMessage={emptyMessage}
                 emptyHint={emptyHint}
+                hasMore={paginated && hasMore && !hasActiveFilters}
+                loadingMore={paginated && loadingMore}
+                onLoadMore={paginated ? () => void loadMore() : undefined}
               />
             </>
           )}
@@ -225,9 +260,9 @@ export function AppShell({
         <StarterManageModal
           open={starterManageOpen}
           onClose={() => setStarterManageOpen(false)}
-          currentVideos={videos}
+          currentVideos={starterVideos}
           onUpdated={(updated) => {
-            setVideos(updated);
+            setStarterVideos(updated);
             onStarterVideosChange?.(updated);
           }}
         />

@@ -29,6 +29,8 @@
   "close": "关闭",
   "description": "简介",
   "sources": "视频来源",
+  "sourcesMax": "最多 3 个来源",
+  "sourceParseHint": "仅第一个链接会自动解析标题、封面与日期",
   "selectSource": "选择平台",
   "submitTitle": "投稿视频",
   "submitHint": "贴上链接后系统会自动解析封面、标题与发布日期",

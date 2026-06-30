@@ -23,6 +23,7 @@ export const SORT_BY_OPTIONS: SortBy[] = ["createdAt", "views", "title"];
 export const KNOWN_PLATFORMS = ["youtube", "bilibili", "other"] as const;
 
 export const MAX_TAGS = 6;
+export const MAX_VIDEO_SOURCES = 3;
 export const SIDEBAR_TAG_LIMIT = 50;
 
 export const FAVORITES_KEY = "yeji-verse-favorites";

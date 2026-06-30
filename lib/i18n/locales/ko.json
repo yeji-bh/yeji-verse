@@ -29,6 +29,8 @@
   "close": "닫기",
   "description": "소개",
   "sources": "영상 소스",
+  "sourcesMax": "최대 3개",
+  "sourceParseHint": "첫 번째 링크만 제목·썸네일·날짜를 자동으로 가져옵니다",
   "selectSource": "플랫폼 선택",
   "submitTitle": "영상 제출",
   "submitHint": "링크를 붙이면 썸네일, 제목, 게시일을 자동으로 가져옵니다",

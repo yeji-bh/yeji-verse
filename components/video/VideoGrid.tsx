@@ -2,7 +2,8 @@
 
 import { VideoCard } from "./VideoCard";
 import { useTranslation } from "react-i18next";
-import { useIncrementalRender } from "@/hooks/useIncrementalRender";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { useLoadMoreOnScroll } from "@/hooks/useLoadMoreOnScroll";
 import type { Video } from "@/lib/types";
 
 interface VideoGridProps {
@@ -12,9 +13,10 @@ interface VideoGridProps {
   onToggleFavorite: (id: string) => void;
   emptyMessage?: string;
   emptyHint?: string;
+  hasMore?: boolean;
+  loadingMore?: boolean;
+  onLoadMore?: () => void;
 }
-
-const BATCH_SIZE = 24;
 
 export function VideoGrid({
   videos,
@@ -23,9 +25,16 @@ export function VideoGrid({
   onToggleFavorite,
   emptyMessage,
   emptyHint,
+  hasMore = false,
+  loadingMore = false,
+  onLoadMore,
 }: VideoGridProps) {
   const { t } = useTranslation("common");
-  const { visibleItems, sentinelRef, hasMore } = useIncrementalRender(videos, BATCH_SIZE);
+  const sentinelRef = useLoadMoreOnScroll(
+    onLoadMore,
+    hasMore,
+    loadingMore,
+  );
 
   if (videos.length === 0) {
     return (
@@ -50,7 +59,7 @@ export function VideoGrid({
   return (
     <>
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-        {visibleItems.map((video) => (
+        {videos.map((video) => (
           <VideoCard
             key={video.id}
             video={video}
@@ -66,10 +75,16 @@ export function VideoGrid({
       {hasMore && (
         <div
           ref={sentinelRef}
-          className="flex items-center justify-center py-8 text-xs text-[var(--color-textSubtle)]"
-          aria-hidden
+          className="flex items-center justify-center gap-2 py-10 text-xs text-[var(--color-textSubtle)]"
         >
-          {t("loadingMore")}
+          {loadingMore ? (
+            <>
+              <LoadingSpinner size="sm" />
+              <span>{t("loadingMore")}</span>
+            </>
+          ) : (
+            <span className="sr-only">{t("loadingMore")}</span>
+          )}
         </div>
       )}
     </>

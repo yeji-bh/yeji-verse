@@ -17,8 +17,15 @@ export async function PATCH(
   const body = await request.json();
 
   if (body.title) {
-    const source = body.sources?.[0];
-    if (!source?.url) {
+    const sources = (body.sources ?? [])
+      .filter((s: { url?: string }) => typeof s?.url === "string" && s.url.trim())
+      .slice(0, 3)
+      .map((s: { platform?: string; url: string }) => ({
+        platform: s.platform ?? "other",
+        url: String(s.url).trim(),
+      }));
+
+    if (sources.length === 0) {
       return NextResponse.json({ error: "Invalid source" }, { status: 400 });
     }
 
@@ -28,12 +35,7 @@ export async function PATCH(
       tags: dedupeTags(body.tags ?? []),
       publishedDate: body.publishedDate,
       thumbnail: body.thumbnail ?? "",
-      sources: [
-        {
-          platform: source.platform ?? "other",
-          url: String(source.url).trim(),
-        },
-      ],
+      sources,
     });
 
     if (!video) {

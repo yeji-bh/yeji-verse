@@ -14,9 +14,17 @@ import {
   IconEye,
   IconHeart,
 } from "@/components/ui/IconButton";
-import { CATEGORIES, KNOWN_PLATFORMS } from "@/lib/constants";
+import { PlatformIcon } from "@/components/ui/PlatformIcon";
+import {
+  SourceFields,
+  createEmptySource,
+  normalizeSources,
+  type SourceInput,
+} from "@/components/video/SourceFields";
+import { useVideoUrlParser } from "@/hooks/useVideoUrlParser";
+import { CATEGORIES } from "@/lib/constants";
 import type { Category, Video } from "@/lib/types";
-import { getPlatformViewCount } from "@/lib/video-platforms";
+import { getPlatformLabel, getPlatformViewCount } from "@/lib/video-platforms";
 
 interface VideoModalProps {
   video: Video | null;
@@ -47,12 +55,33 @@ export function VideoModal({
   const [editCategory, setEditCategory] = useState<Category>("vlog");
   const [editTags, setEditTags] = useState<string[]>([]);
   const [editDate, setEditDate] = useState("");
-  const [editPlatform, setEditPlatform] = useState("youtube");
-  const [editUrl, setEditUrl] = useState("");
+  const [editSources, setEditSources] = useState<SourceInput[]>([createEmptySource()]);
+  const [editThumbnail, setEditThumbnail] = useState("");
+  const { parseUrl, parsing, cancelParse } = useVideoUrlParser();
 
   useEffect(() => {
     setEditing(false);
-  }, [video?.id]);
+    cancelParse();
+  }, [video?.id, cancelParse]);
+
+  const primaryEditUrl = editSources[0]?.url ?? "";
+
+  useEffect(() => {
+    if (!editing || !primaryEditUrl.trim()) return;
+
+    const timer = setTimeout(async () => {
+      const data = await parseUrl(primaryEditUrl);
+      if (!data) return;
+      setEditSources((prev) =>
+        prev.map((s, i) => (i === 0 ? { ...s, platform: data.platform } : s)),
+      );
+      if (data.title) setEditTitle(data.title);
+      if (data.publishedDate) setEditDate(data.publishedDate);
+      if (data.thumbnail) setEditThumbnail(data.thumbnail);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [primaryEditUrl, editing, parseUrl]);
 
   if (!video) return null;
 
@@ -64,12 +93,22 @@ export function VideoModal({
     setEditCategory(video.category);
     setEditTags([...video.tags]);
     setEditDate(video.publishedDate);
-    setEditPlatform(source?.platform ?? "youtube");
-    setEditUrl(source?.url ?? "");
+    setEditSources(
+      video.sources.length > 0
+        ? video.sources.map((s) => ({ platform: s.platform, url: s.url }))
+        : [createEmptySource()],
+    );
+    setEditThumbnail(video.thumbnail);
     setEditing(true);
   };
 
   const handleSave = async () => {
+    const normalized = normalizeSources(editSources);
+    if (normalized.length === 0) {
+      alert(t("submitError"));
+      return;
+    }
+
     setSaving(true);
     try {
       const res = await fetch(`/api/videos/${video.id}`, {
@@ -80,8 +119,8 @@ export function VideoModal({
           category: editCategory,
           tags: editTags,
           publishedDate: editDate,
-          thumbnail: video.thumbnail,
-          sources: [{ platform: editPlatform, url: editUrl.trim() }],
+          thumbnail: editThumbnail || video.thumbnail,
+          sources: normalized,
         }),
       });
       if (!res.ok) throw new Error("failed");
@@ -187,25 +226,11 @@ export function VideoModal({
                 className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
               />
             </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <select
-                value={editPlatform}
-                onChange={(e) => setEditPlatform(e.target.value)}
-                className="select-control rounded-lg border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm sm:w-36 outline-none focus:border-[var(--color-accent)]"
-              >
-                {KNOWN_PLATFORMS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="url"
-                value={editUrl}
-                onChange={(e) => setEditUrl(e.target.value)}
-                className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
-              />
-            </div>
+            <SourceFields
+              sources={editSources}
+              onChange={setEditSources}
+              parsing={parsing}
+            />
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
                 {t("tags")}
@@ -215,7 +240,10 @@ export function VideoModal({
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setEditing(false)}
+                onClick={() => {
+                  cancelParse();
+                  setEditing(false);
+                }}
                 className="flex-1 rounded-xl border border-[var(--color-border)] py-2 text-sm"
               >
                 {t("cancel")}
@@ -251,18 +279,20 @@ export function VideoModal({
               ))}
             </div>
 
-            <div className="flex justify-end gap-2">
-              {source && (
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {video.sources.map((s) => (
                 <a
-                  href={source.url}
+                  key={s.id}
+                  href={s.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-medium text-[var(--color-accentText)]"
+                  className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-sm font-medium text-[var(--color-text)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
                 >
-                  <IconExternal className="h-4 w-4" />
-                  {t("openOriginal")}
+                  <PlatformIcon platform={s.platform} className="h-4 w-4 shrink-0" />
+                  {getPlatformLabel(s.platform)}
+                  <IconExternal className="h-3.5 w-3.5 opacity-60" />
                 </a>
-              )}
+              ))}
               <button
                 type="button"
                 onClick={onToggleFavorite}

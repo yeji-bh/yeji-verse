@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useLocale } from "@/components/providers/LocaleProvider";
+import { useTranslation } from "react-i18next";
 
 interface ModalProps {
   open: boolean;
@@ -24,7 +24,7 @@ export function Modal({
   className = "",
   size = "lg",
 }: ModalProps) {
-  const { t } = useLocale();
+  const { t } = useTranslation("common");
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

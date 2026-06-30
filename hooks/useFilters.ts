@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import type { SortOption, Video, VideoFilters } from "@/lib/types";
-import { getDisplayViewCount } from "@/lib/video-platforms";
+import { getPlatformViewCount, getVideoYear } from "@/lib/video-platforms";
 
 const defaultFilters: VideoFilters = {
   categories: [],
@@ -68,7 +68,7 @@ export function useFilters(videos: Video[]) {
     }
 
     if (filters.years.length > 0) {
-      result = result.filter((v) => filters.years.includes(v.year));
+      result = result.filter((v) => filters.years.includes(getVideoYear(v)));
     }
 
     if (filters.search.trim()) {
@@ -90,7 +90,7 @@ export function useFilters(videos: Video[]) {
         break;
       case "views":
         result.sort(
-          (a, b) => getDisplayViewCount(b) - getDisplayViewCount(a),
+          (a, b) => (getPlatformViewCount(b) ?? 0) - (getPlatformViewCount(a) ?? 0),
         );
         break;
       case "title":

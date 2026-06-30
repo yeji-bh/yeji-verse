@@ -1,22 +1,46 @@
 import { NextResponse } from "next/server";
 import { mockVideos } from "@/data/mock-videos";
-import { getVideosFromDb, insertVideoToDb } from "@/db/client";
+import {
+  getVideosFromDb,
+  insertVideoToDb,
+} from "@/db/client";
 import { fetchUrlMetadata } from "@/lib/metadata";
+import { getSessionUser, requireAdmin } from "@/lib/session";
 import { getThumbnailUrl } from "@/lib/video-platforms";
-import type { SubmitVideoPayload } from "@/lib/types";
+import type { SubmitVideoPayload, Video, VideoStatus } from "@/lib/types";
 
-let memoryStore = [...mockVideos];
+let memoryStore: Video[] = mockVideos;
 
-export async function GET() {
-  const dbVideos = await getVideosFromDb();
-  const videos = dbVideos ?? memoryStore;
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const adminView = searchParams.get("admin") === "true";
+
+  if (adminView) {
+    const admin = await requireAdmin();
+    if (!admin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const videos = await getVideosFromDb("all");
+    return NextResponse.json(videos ?? memoryStore);
+  }
+
+  const dbVideos = await getVideosFromDb("approved");
+  const videos = (dbVideos ?? memoryStore).filter(
+    (v) => v.status === "approved",
+  );
   return NextResponse.json(videos);
 }
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const payload = body as SubmitVideoPayload & { thumbnail?: string };
+    const payload = body as SubmitVideoPayload & {
+      thumbnail?: string;
+      direct?: boolean;
+    };
+
+    const session = await getSessionUser();
+    const isAdmin = session?.role === "admin";
 
     const id = crypto.randomUUID();
     const primaryUrl = payload.sources[0]?.url ?? "";
@@ -24,13 +48,20 @@ export async function POST(request: Request) {
 
     if (!thumbnail && primaryUrl) {
       const meta = await fetchUrlMetadata(primaryUrl);
-      thumbnail = meta.thumbnail ?? getThumbnailUrl(primaryUrl, meta.platform) ?? "";
+      thumbnail =
+        meta.thumbnail ?? getThumbnailUrl(primaryUrl, meta.platform) ?? "";
     }
+
+    const status: VideoStatus = isAdmin ? "approved" : "pending";
+    const year = Number(payload.publishedDate.slice(0, 4));
 
     const videoData = {
       ...payload,
       id,
       thumbnail,
+      description: "",
+      status,
+      submittedBy: session?.id ?? null,
     };
 
     const dbVideo = await insertVideoToDb(videoData);
@@ -39,15 +70,18 @@ export async function POST(request: Request) {
       return NextResponse.json(dbVideo, { status: 201 });
     }
 
-    const newVideo = {
+    const newVideo: Video = {
       id,
       title: payload.title,
-      description: payload.description ?? "",
+      description: "",
       category: payload.category,
       tags: payload.tags,
-      year: payload.year,
+      publishedDate: payload.publishedDate,
+      year,
       thumbnail,
       siteViews: 0,
+      status,
+      submittedBy: session?.id ?? null,
       createdAt: new Date().toISOString(),
       sources: payload.sources.map((s, i) => ({
         id: `${id}-src-${i}`,
@@ -58,7 +92,10 @@ export async function POST(request: Request) {
       })),
     };
 
-    memoryStore = [newVideo, ...memoryStore];
+    if (status === "approved") {
+      memoryStore = [newVideo, ...memoryStore];
+    }
+
     return NextResponse.json(newVideo, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Failed to create" }, { status: 500 });

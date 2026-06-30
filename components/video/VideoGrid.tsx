@@ -1,7 +1,7 @@
 "use client";
 
 import { VideoCard } from "./VideoCard";
-import { useLocale } from "@/components/providers/LocaleProvider";
+import { useTranslation } from "react-i18next";
 import type { Video } from "@/lib/types";
 
 interface VideoGridProps {
@@ -21,7 +21,7 @@ export function VideoGrid({
   emptyMessage,
   emptyHint,
 }: VideoGridProps) {
-  const { t } = useLocale();
+  const { t } = useTranslation("common");
 
   if (videos.length === 0) {
     return (

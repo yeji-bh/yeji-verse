@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ["192.168.100.187"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "img.youtube.com" },

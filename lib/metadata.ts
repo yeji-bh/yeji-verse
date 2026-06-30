@@ -1,6 +1,17 @@
 import { detectPlatform, extractBilibiliId, extractYouTubeId, getEmbedUrl, getThumbnailUrl } from "./video-platforms";
 import type { VideoMetadata } from "./types";
 
+const BILIBILI_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  Referer: "https://www.bilibili.com",
+};
+
+export function normalizeImageUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  return url.replace(/^http:\/\//i, "https://");
+}
+
 async function fetchYouTubeTitle(url: string): Promise<string | null> {
   const id = extractYouTubeId(url);
   if (!id) return null;
@@ -29,15 +40,20 @@ async function fetchBilibiliView(url: string): Promise<{
   try {
     const res = await fetch(
       `https://api.bilibili.com/x/web-interface/view?${param}`,
-      { next: { revalidate: 3600 } },
+      {
+        headers: BILIBILI_HEADERS,
+        next: { revalidate: 3600 },
+      },
     );
     if (!res.ok) return { title: null, thumbnail: null };
     const json = (await res.json()) as {
+      code?: number;
       data?: { title?: string; pic?: string };
     };
+    if (json.code !== 0 || !json.data) return { title: null, thumbnail: null };
     return {
-      title: json.data?.title ?? null,
-      thumbnail: json.data?.pic ?? null,
+      title: json.data.title ?? null,
+      thumbnail: normalizeImageUrl(json.data.pic),
     };
   } catch {
     return { title: null, thumbnail: null };
@@ -67,7 +83,7 @@ export async function fetchUrlMetadata(url: string): Promise<VideoMetadata> {
 
   return {
     title,
-    thumbnail,
+    thumbnail: normalizeImageUrl(thumbnail),
     platform,
     embedUrl: getEmbedUrl(url, platform),
   };
@@ -85,10 +101,15 @@ export async function fetchPlatformViewCount(
     const param = ids.bvid ? `bvid=${ids.bvid}` : `aid=${ids.aid}`;
     try {
       const res = await fetch(`https://api.bilibili.com/x/web-interface/view?${param}`, {
+        headers: BILIBILI_HEADERS,
         next: { revalidate: 3600 },
       });
       if (!res.ok) return null;
-      const json = (await res.json()) as { data?: { stat?: { view?: number } } };
+      const json = (await res.json()) as {
+        code?: number;
+        data?: { stat?: { view?: number } };
+      };
+      if (json.code !== 0) return null;
       return json.data?.stat?.view ?? null;
     } catch {
       return null;

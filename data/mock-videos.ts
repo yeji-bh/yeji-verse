@@ -7,9 +7,12 @@ export const mockVideos: Video[] = [
     description: "禮志在首爾的日常紀錄，從練習室到咖啡廳的溫柔一日。",
     category: "vlog",
     tags: ["日常", "首爾", "ITZY"],
+    publishedDate: "2024-06-15",
     year: 2024,
     thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
     siteViews: 1280,
+    status: "approved",
+    submittedBy: null,
     createdAt: "2024-06-15T10:00:00Z",
     sources: [
       {
@@ -34,9 +37,12 @@ export const mockVideos: Video[] = [
     description: "經典舞台直拍，穩定輸出的表情管理與舞蹈實力。",
     category: "fancam",
     tags: ["直拍", "舞台", "4K"],
+    publishedDate: "2023-11-08",
     year: 2023,
     thumbnail: "https://img.youtube.com/vi/jNQXAC9IVRw/hqdefault.jpg",
     siteViews: 3420,
+    status: "approved",
+    submittedBy: null,
     createdAt: "2023-11-08T14:30:00Z",
     sources: [
       {
@@ -54,9 +60,12 @@ export const mockVideos: Video[] = [
     description: "綜藝名場面合集，禮志的綜藝感與魅力全開。",
     category: "variety",
     tags: ["綜藝", "Running Man", "搞笑"],
+    publishedDate: "2024-03-22",
     year: 2024,
     thumbnail: "https://img.youtube.com/vi/9bZkp7q19f0/hqdefault.jpg",
     siteViews: 890,
+    status: "approved",
+    submittedBy: null,
     createdAt: "2024-03-22T09:00:00Z",
     sources: [
       {
@@ -81,9 +90,12 @@ export const mockVideos: Video[] = [
     description: "個人舞台剪輯，展現獨特的舞台魅力。",
     category: "solo",
     tags: ["Solo", "WANNABE", "舞台"],
+    publishedDate: "2022-08-17",
     year: 2022,
     thumbnail: "https://img.youtube.com/vi/L_jWHffIx5E/hqdefault.jpg",
     siteViews: 2100,
+    status: "approved",
+    submittedBy: null,
     createdAt: "2022-08-17T16:00:00Z",
     sources: [
       {
@@ -101,9 +113,12 @@ export const mockVideos: Video[] = [
     description: "MAMA 頒獎典禮舞台完整版。",
     category: "stage",
     tags: ["MAMA", "頒獎典禮", "團體"],
+    publishedDate: "2023-11-29",
     year: 2023,
     thumbnail: "https://img.youtube.com/vi/kJQP7kiw5Fk/hqdefault.jpg",
     siteViews: 1560,
+    status: "approved",
+    submittedBy: null,
     createdAt: "2023-11-29T20:00:00Z",
     sources: [
       {
@@ -121,9 +136,12 @@ export const mockVideos: Video[] = [
     description: "禮志翻唱 acoustic 版本，溫柔嗓音詮釋。",
     category: "cover",
     tags: ["翻唱", "Acoustic", "Cover"],
+    publishedDate: "2024-01-10",
     year: 2024,
     thumbnail: "https://img.youtube.com/vi/RgKAFK5djSk/hqdefault.jpg",
     siteViews: 4200,
+    status: "approved",
+    submittedBy: null,
     createdAt: "2024-01-10T12:00:00Z",
     sources: [
       {
@@ -148,9 +166,12 @@ export const mockVideos: Video[] = [
     description: "MV 拍攝幕後花絮，一窺製作過程。",
     category: "behind",
     tags: ["幕後", "MV", "花絮"],
+    publishedDate: "2024-05-01",
     year: 2024,
     thumbnail: "https://img.youtube.com/vi/fJ9rUzIMcZQ/hqdefault.jpg",
     siteViews: 780,
+    status: "approved",
+    submittedBy: null,
     createdAt: "2024-05-01T08:00:00Z",
     sources: [
       {
@@ -168,9 +189,12 @@ export const mockVideos: Video[] = [
     description: "週偶舞蹈挑戰環節，禮志的可愛反應。",
     category: "variety",
     tags: ["週偶", "舞蹈", "挑戰"],
+    publishedDate: "2023-09-14",
     year: 2023,
     thumbnail: "https://img.youtube.com/vi/OPf0YbXqDm0/hqdefault.jpg",
     siteViews: 1890,
+    status: "approved",
+    submittedBy: null,
     createdAt: "2023-09-14T11:00:00Z",
     sources: [
       {

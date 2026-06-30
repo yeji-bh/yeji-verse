@@ -1,18 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
-import { useLocale } from "@/components/providers/LocaleProvider";
-import { IconClose, IconPlus } from "@/components/ui/IconButton";
+import { TagInput } from "@/components/ui/TagInput";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { IconClose } from "@/components/ui/IconButton";
 import { CATEGORIES, KNOWN_PLATFORMS } from "@/lib/constants";
 import type { Category, SubmitVideoPayload } from "@/lib/types";
 import { detectPlatform, getThumbnailUrl } from "@/lib/video-platforms";
-
-interface SourceInput {
-  platform: string;
-  url: string;
-}
 
 interface SubmitModalProps {
   open: boolean;
@@ -20,29 +17,32 @@ interface SubmitModalProps {
   onSubmitted: () => void;
 }
 
+function todayString() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
-  const { t, categoryLabel } = useLocale();
+  const { t } = useTranslation("common");
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Category>("vlog");
-  const [tags, setTags] = useState("");
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [sources, setSources] = useState<SourceInput[]>([
-    { platform: "", url: "" },
-  ]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [publishedDate, setPublishedDate] = useState(todayString());
+  const [platform, setPlatform] = useState("");
+  const [url, setUrl] = useState("");
   const [thumbnail, setThumbnail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [parsingIndex, setParsingIndex] = useState<number | null>(null);
+  const [parsing, setParsing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
   const reset = () => {
     setTitle("");
-    setDescription("");
     setCategory("vlog");
-    setTags("");
-    setYear(new Date().getFullYear());
-    setSources([{ platform: "", url: "" }]);
+    setTags([]);
+    setPublishedDate(todayString());
+    setPlatform("");
+    setUrl("");
     setThumbnail("");
     setError("");
     setSuccess(false);
@@ -53,74 +53,45 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
     onClose();
   };
 
-  const parseSource = async (index: number) => {
-    const url = sources[index]?.url.trim();
-    if (!url) return;
+  const parseUrl = async (link: string) => {
+    const trimmed = link.trim();
+    if (!trimmed) return;
 
-    setParsingIndex(index);
+    setParsing(true);
     try {
       const res = await fetch("/api/metadata", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url: trimmed }),
       });
       const data = await res.json();
-
-      setSources((prev) => {
-        const next = [...prev];
-        next[index] = {
-          platform: data.platform ?? detectPlatform(url),
-          url,
-        };
-        return next;
-      });
-
+      setPlatform(data.platform ?? detectPlatform(trimmed));
       if (data.title && !title) setTitle(data.title);
-      if (data.thumbnail) {
-        setThumbnail(data.thumbnail);
-      } else {
-        const thumb = getThumbnailUrl(url, data.platform);
+      if (data.thumbnail) setThumbnail(data.thumbnail);
+      else {
+        const thumb = getThumbnailUrl(trimmed, data.platform);
         if (thumb) setThumbnail(thumb);
       }
     } catch {
-      setSources((prev) => {
-        const next = [...prev];
-        next[index] = { platform: detectPlatform(url), url };
-        return next;
-      });
+      setPlatform(detectPlatform(trimmed));
     } finally {
-      setParsingIndex(null);
+      setParsing(false);
     }
   };
 
-  const addSource = () => {
-    setSources((prev) => [...prev, { platform: "", url: "" }]);
-  };
-
-  const removeSource = (index: number) => {
-    if (sources.length <= 1) return;
-    setSources((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const updateSource = (
-    index: number,
-    field: keyof SourceInput,
-    value: string,
-  ) => {
-    setSources((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
-      return next;
-    });
-  };
+  useEffect(() => {
+    if (!url.trim()) return;
+    const timer = setTimeout(() => parseUrl(url), 500);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [url]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const validSources = sources.filter((s) => s.url.trim());
-    if (!title.trim() || validSources.length === 0) {
+    if (!title.trim() || !url.trim()) {
       setError(t("submitError"));
       setLoading(false);
       return;
@@ -128,17 +99,15 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
 
     const payload: SubmitVideoPayload = {
       title: title.trim(),
-      description: description.trim(),
       category,
-      tags: tags
-        .split(/[,，、]/)
-        .map((t) => t.trim())
-        .filter(Boolean),
-      year,
-      sources: validSources.map((s) => ({
-        platform: s.platform || detectPlatform(s.url),
-        url: s.url.trim(),
-      })),
+      tags,
+      publishedDate,
+      sources: [
+        {
+          platform: platform || detectPlatform(url),
+          url: url.trim(),
+        },
+      ],
     };
 
     try {
@@ -152,7 +121,7 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
 
       setSuccess(true);
       onSubmitted();
-      setTimeout(handleClose, 1200);
+      setTimeout(handleClose, user?.role === "admin" ? 800 : 1500);
     } catch {
       setError(t("submitError"));
     } finally {
@@ -164,177 +133,122 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
     <Modal open={open} onClose={handleClose} size="lg">
       <div className="flex items-center justify-between border-b border-[var(--color-borderSubtle)] px-5 py-4">
         <div>
-          <h2 className="text-base font-semibold text-[var(--color-text)]">
-            {t("submitTitle")}
-          </h2>
-          <p className="mt-0.5 text-xs text-[var(--color-textSubtle)]">
-            {t("submitHint")}
-          </p>
+          <h2 className="text-base font-semibold">{t("submitTitle")}</h2>
+          <p className="mt-0.5 text-xs text-[var(--color-textSubtle)]">{t("submitHint")}</p>
         </div>
-        <button
-          type="button"
-          onClick={handleClose}
-          className="text-[var(--color-textMuted)] hover:text-[var(--color-text)]"
-          aria-label={t("close")}
-        >
-          <IconClose />
+        <button type="button" onClick={handleClose} aria-label={t("close")}>
+          <IconClose className="h-5 w-5 text-[var(--color-textMuted)]" />
         </button>
       </div>
 
       <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[75vh] p-5 space-y-5">
         {thumbnail && (
-          <div
-            className="h-32 rounded-xl bg-cover bg-center"
-            style={{ backgroundImage: `url(${thumbnail})` }}
-          />
+          <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-[var(--color-bgMuted)]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={thumbnail} alt="" className="h-full w-full object-cover" />
+          </div>
         )}
 
-        <div className="space-y-3">
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
+            {t("videoTitle")}
+          </label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            required
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
+            {t("videoCategory")}
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            {CATEGORIES.map((c) => (
+              <Badge key={c} active={category === c} onClick={() => setCategory(c)}>
+                {t(c)}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
+            {t("videoDate")}
+          </label>
+          <input
+            type="date"
+            value={publishedDate}
+            onChange={(e) => setPublishedDate(e.target.value)}
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
+          />
+        </div>
+
+        <div className="space-y-2">
           <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
             {t("sources")}
           </label>
-          {sources.map((source, i) => (
-            <div key={i} className="flex flex-col sm:flex-row gap-2">
-              <select
-                value={source.platform}
-                onChange={(e) => updateSource(i, "platform", e.target.value)}
-                className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-accent)] sm:w-36"
-              >
-                <option value="">{t("platform")}</option>
-                {KNOWN_PLATFORMS.map((p) => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
-                <option value="other">other</option>
-              </select>
-              <input
-                type="url"
-                value={source.url}
-                onChange={(e) => updateSource(i, "url", e.target.value)}
-                onBlur={() => parseSource(i)}
-                placeholder={t("link")}
-                className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-accent)]"
-              />
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => parseSource(i)}
-                  disabled={parsingIndex === i}
-                  className="rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs text-[var(--color-textMuted)] hover:border-[var(--color-accent)] disabled:opacity-50"
-                >
-                  {parsingIndex === i ? t("parsing") : t("parseLink")}
-                </button>
-                {sources.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeSource(i)}
-                    className="rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs text-[var(--color-textMuted)] hover:text-red-400"
-                  >
-                    {t("remove")}
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={addSource}
-            className="inline-flex items-center gap-1 text-xs text-[var(--color-accent)] hover:underline"
-          >
-            <IconPlus className="h-3 w-3" />
-            {t("addSource")}
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
-              {t("videoTitle")}
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-accent)]"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
-              {t("videoDescription")}
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-accent)] resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
-              {t("videoCategory")}
-            </label>
-            <div className="flex flex-wrap gap-1.5">
-              {CATEGORIES.map((c) => (
-                <Badge
-                  key={c}
-                  active={category === c}
-                  onClick={() => setCategory(c)}
-                >
-                  {categoryLabel(c)}
-                </Badge>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <select
+              value={platform}
+              onChange={(e) => setPlatform(e.target.value)}
+              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm sm:w-36 outline-none focus:border-[var(--color-accent)]"
+            >
+              <option value="">{t("platform")}</option>
+              {KNOWN_PLATFORMS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
               ))}
-            </div>
+            </select>
+            <input
+              type="url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder={t("link")}
+              required
+              className="flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
+            />
           </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
-                {t("videoTags")}
-              </label>
-              <input
-                type="text"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-accent)]"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
-                {t("videoYear")}
-              </label>
-              <input
-                type="number"
-                value={year}
-                onChange={(e) => setYear(Number(e.target.value))}
-                min={2000}
-                max={2100}
-                className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm text-[var(--color-text)] outline-none focus:border-[var(--color-accent)]"
-              />
-            </div>
-          </div>
+          {parsing && (
+            <p className="text-xs text-[var(--color-textSubtle)]">{t("parsing")}</p>
+          )}
         </div>
 
-        {error && <p className="text-sm text-red-400">{error}</p>}
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
+            {t("tags")}
+          </label>
+          <TagInput
+            tags={tags}
+            onChange={setTags}
+            placeholder={t("videoTags")}
+            hint={t("tagsMax")}
+          />
+        </div>
+
+        {error && <p className="text-sm text-red-500">{error}</p>}
         {success && (
-          <p className="text-sm text-[var(--color-accent)]">{t("submitSuccess")}</p>
+          <p className="text-sm text-[var(--color-accent)]">
+            {user?.role === "admin" ? t("submitSuccess") : t("submitPending")}
+          </p>
         )}
 
         <div className="flex gap-2 pt-2">
           <button
             type="button"
             onClick={handleClose}
-            className="flex-1 rounded-xl border border-[var(--color-border)] py-2.5 text-sm text-[var(--color-textMuted)] hover:bg-[var(--color-bgMuted)]"
+            className="flex-1 rounded-xl border border-[var(--color-border)] py-2.5 text-sm"
           >
             {t("cancel")}
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="flex-1 rounded-xl bg-[var(--color-accent)] py-2.5 text-sm font-medium text-[var(--color-accentText)] hover:bg-[var(--color-accentHover)] disabled:opacity-50"
+            className="flex-1 rounded-xl bg-[var(--color-accent)] py-2.5 text-sm font-medium text-[var(--color-accentText)] disabled:opacity-50"
           >
             {loading ? t("submitting") : t("confirmSubmit")}
           </button>

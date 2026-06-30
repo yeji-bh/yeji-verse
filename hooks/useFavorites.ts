@@ -1,29 +1,57 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { FAVORITES_KEY } from "@/lib/constants";
 
 export function useFavorites() {
+  const { user } = useAuth();
   const [favorites, setFavorites] = useState<string[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
-  useEffect(() => {
+  const loadFromStorage = useCallback(() => {
     try {
       const stored = localStorage.getItem(FAVORITES_KEY);
       if (stored) setFavorites(JSON.parse(stored));
     } catch {
       /* ignore */
     }
-    setHydrated(true);
   }, []);
 
-  const persist = useCallback((ids: string[]) => {
-    setFavorites(ids);
-    localStorage.setItem(FAVORITES_KEY, JSON.stringify(ids));
-  }, []);
+  useEffect(() => {
+    loadFromStorage();
+    setHydrated(true);
+  }, [loadFromStorage]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetch("/api/favorites")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.ids) {
+          setFavorites(data.ids);
+          localStorage.setItem(FAVORITES_KEY, JSON.stringify(data.ids));
+        }
+      })
+      .catch(() => {});
+  }, [user]);
 
   const toggle = useCallback(
-    (id: string) => {
+    async (id: string) => {
+      if (user) {
+        const res = await fetch("/api/favorites", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ videoId: id }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setFavorites(data.ids);
+          localStorage.setItem(FAVORITES_KEY, JSON.stringify(data.ids));
+        }
+        return;
+      }
+
       setFavorites((prev) => {
         const next = prev.includes(id)
           ? prev.filter((f) => f !== id)
@@ -32,7 +60,7 @@ export function useFavorites() {
         return next;
       });
     },
-    [],
+    [user],
   );
 
   const isFavorite = useCallback(
@@ -40,5 +68,5 @@ export function useFavorites() {
     [favorites],
   );
 
-  return { favorites, toggle, isFavorite, hydrated, persist };
+  return { favorites, toggle, isFavorite, hydrated };
 }

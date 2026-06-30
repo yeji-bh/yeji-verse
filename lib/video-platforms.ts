@@ -125,17 +125,28 @@ export function getPlatformLabel(platform: Platform | string): string {
   return labels[platform] ?? platform;
 }
 
-export function getDisplayViewCount(video: {
+export function getPlatformViewCount(video: {
   sources: { viewCount: number | null }[];
-  siteViews: number;
-}): number {
+}): number | null {
   const platformViews = video.sources
     .map((s) => s.viewCount)
     .filter((v): v is number => v !== null && v > 0);
 
-  if (platformViews.length > 0) {
-    return Math.max(...platformViews);
-  }
+  if (platformViews.length === 0) return null;
+  return Math.max(...platformViews);
+}
 
-  return video.siteViews;
+/** @deprecated use getPlatformViewCount */
+export function getDisplayViewCount(video: {
+  sources: { viewCount: number | null }[];
+  siteViews?: number;
+}): number {
+  return getPlatformViewCount(video) ?? 0;
+}
+
+export function getVideoYear(video: { publishedDate?: string; year?: number }): number {
+  if (video.publishedDate) {
+    return Number(video.publishedDate.slice(0, 4));
+  }
+  return video.year ?? 0;
 }

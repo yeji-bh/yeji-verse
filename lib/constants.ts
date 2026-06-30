@@ -8,6 +8,7 @@ export const CATEGORIES: Category[] = [
   "stage",
   "cover",
   "behind",
+  "other",
 ];
 
 export const SORT_OPTIONS: SortOption[] = [
@@ -17,14 +18,9 @@ export const SORT_OPTIONS: SortOption[] = [
   "title",
 ];
 
-export const KNOWN_PLATFORMS = [
-  "youtube",
-  "bilibili",
-  "twitter",
-  "instagram",
-  "tiktok",
-  "weibo",
-] as const;
+export const KNOWN_PLATFORMS = ["youtube", "bilibili", "other"] as const;
+
+export const MAX_TAGS = 6;
 
 export const FAVORITES_KEY = "yeji-verse-favorites";
 export const THEME_KEY = "yeji-verse-theme";

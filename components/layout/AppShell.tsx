@@ -1,29 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileFilterDrawer } from "@/components/layout/MobileFilterDrawer";
 import { VideoGrid } from "@/components/video/VideoGrid";
 import { VideoModal } from "@/components/video/VideoModal";
 import { SubmitModal } from "@/components/video/SubmitModal";
-import { useLocale } from "@/components/providers/LocaleProvider";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useFilters } from "@/hooks/useFilters";
-import { getAllTags, getAllYears } from "@/data/mock-videos";
+import { getAllTags } from "@/data/mock-videos";
 import type { Video } from "@/lib/types";
 
 interface AppShellProps {
   initialVideos: Video[];
-  favoriteIds?: string[];
   mode?: "all" | "favorites";
 }
 
-export function AppShell({
-  initialVideos,
-  mode = "all",
-}: AppShellProps) {
-  const { t } = useLocale();
+export function AppShell({ initialVideos, mode = "all" }: AppShellProps) {
+  const { t } = useTranslation("common");
   const [videos, setVideos] = useState<Video[]>(initialVideos);
   const { favorites, toggle, isFavorite, hydrated } = useFavorites();
   const {
@@ -43,7 +39,6 @@ export function AppShell({
   const [filterOpen, setFilterOpen] = useState(false);
 
   const allTags = getAllTags(videos);
-  const allYears = getAllYears(videos);
 
   const displayVideos =
     mode === "favorites" && hydrated
@@ -53,10 +48,7 @@ export function AppShell({
   const refreshVideos = useCallback(async () => {
     try {
       const res = await fetch("/api/videos");
-      if (res.ok) {
-        const data = await res.json();
-        setVideos(data);
-      }
+      if (res.ok) setVideos(await res.json());
     } catch {
       /* keep current */
     }
@@ -69,7 +61,6 @@ export function AppShell({
   const sidebarProps = {
     filters,
     allTags,
-    allYears,
     onToggleCategory: toggleCategory,
     onToggleTag: toggleTag,
     onToggleYear: toggleYear,
@@ -78,31 +69,20 @@ export function AppShell({
     hasActiveFilters,
   };
 
+  const emptyMessage =
+    mode === "favorites"
+      ? t("noFavorites")
+      : hasActiveFilters
+        ? t("noResults")
+        : t("noVideos");
+
   return (
     <div className="flex min-h-screen bg-[var(--color-bg)]">
       <div className="hidden lg:flex w-64 xl:w-72 shrink-0 flex-col border-r border-[var(--color-borderSubtle)] p-5">
-        <div className="mb-8">
-          <h1 className="text-lg font-bold tracking-tight">
-            <span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--color-gradient)" }}>
-              {t("siteName")}
-            </span>
-          </h1>
-          <p className="mt-0.5 text-xs text-[var(--color-textSubtle)]">
-            {t("siteTagline")}
-          </p>
-        </div>
         <Sidebar {...sidebarProps} className="flex-1" />
       </div>
 
       <div className="flex flex-1 flex-col min-w-0">
-        <div className="lg:hidden px-4 pt-4 pb-1">
-          <h1 className="text-base font-bold">
-            <span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--color-gradient)" }}>
-              {t("siteName")}
-            </span>
-          </h1>
-        </div>
-
         <Header
           search={filters.search}
           onSearchChange={setSearch}
@@ -120,9 +100,7 @@ export function AppShell({
             onVideoClick={setSelectedVideo}
             isFavorite={isFavorite}
             onToggleFavorite={toggle}
-            emptyMessage={
-              mode === "favorites" ? t("noFavorites") : t("noResults")
-            }
+            emptyMessage={emptyMessage}
             emptyHint={mode === "favorites" ? t("noFavoritesHint") : undefined}
           />
         </main>

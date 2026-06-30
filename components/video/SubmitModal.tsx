@@ -61,6 +61,7 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
     if (!trimmed) {
       setThumbnail("");
       setPlatform("youtube");
+      setPublishedDate(todayString());
       return;
     }
 
@@ -80,6 +81,7 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
 
       setPlatform(detected);
       if (data.title) setTitle(data.title);
+      if (data.publishedDate) setPublishedDate(data.publishedDate);
 
       const thumb =
         data.thumbnail ?? getThumbnailUrl(trimmed, detected) ?? "";

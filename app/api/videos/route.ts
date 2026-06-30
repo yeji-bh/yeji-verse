@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { mockVideos } from "@/data/mock-videos";
 import {
   getVideosFromDb,
   insertVideoToDb,
@@ -10,7 +9,7 @@ import { getSessionUser, requireAdmin } from "@/lib/session";
 import { getThumbnailUrl } from "@/lib/video-platforms";
 import type { SubmitVideoPayload, Video, VideoStatus } from "@/lib/types";
 
-let memoryStore: Video[] = mockVideos;
+let memoryStore: Video[] = [];
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

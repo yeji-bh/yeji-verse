@@ -8,6 +8,8 @@ import { IconClose } from "@/components/ui/IconButton";
 import { getThumbnailDisplayUrl } from "@/lib/thumbnail";
 import type { Video } from "@/lib/types";
 
+const RECENT_LIBRARY_LIMIT = 20;
+
 interface StarterManageModalProps {
   open: boolean;
   onClose: () => void;
@@ -57,14 +59,22 @@ export function StarterManageModal({
 
   const available = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return allVideos.filter((v) => {
-      if (pickIds.has(v.id)) return false;
-      if (!q) return true;
-      return (
-        v.title.toLowerCase().includes(q) ||
-        v.tags.some((tag) => tag.toLowerCase().includes(q))
+    let pool = allVideos.filter((v) => !pickIds.has(v.id));
+
+    if (q) {
+      pool = pool.filter(
+        (v) =>
+          v.title.toLowerCase().includes(q) ||
+          v.tags.some((tag) => tag.toLowerCase().includes(q)),
       );
-    });
+    }
+
+    return pool
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+      .slice(0, RECENT_LIBRARY_LIMIT);
   }, [allVideos, pickIds, search]);
 
   const toggleSelect = (id: string) => {
@@ -263,7 +273,7 @@ export function StarterManageModal({
                 {t("noResults")}
               </li>
             ) : (
-              available.slice(0, 50).map((v) => (
+              available.map((v) => (
                 <li key={v.id}>
                   <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-[var(--color-bgMuted)]">
                     <input
@@ -281,9 +291,6 @@ export function StarterManageModal({
               ))
             )}
           </ul>
-          {available.length > 50 && (
-            <p className="text-xs text-[var(--color-textSubtle)]">{t("starterSearchMore")}</p>
-          )}
           <button
             type="button"
             disabled={loading || selected.size === 0}

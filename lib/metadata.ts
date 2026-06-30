@@ -8,6 +8,27 @@ const BILIBILI_HEADERS = {
   Referer: "https://www.bilibili.com",
 };
 
+/** 正規化為 yyyy-mm-dd */
+export function toPublishedDateString(value: string | number): string | null {
+  try {
+    if (typeof value === "number") {
+      const ms = value > 1e12 ? value : value * 1000;
+      const d = new Date(ms);
+      if (Number.isNaN(d.getTime())) return null;
+      return d.toISOString().slice(0, 10);
+    }
+
+    const ymd = value.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (ymd) return ymd[1];
+
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return null;
+    return d.toISOString().slice(0, 10);
+  } catch {
+    return null;
+  }
+}
+
 export function normalizeImageUrl(url: string | null | undefined): string | null {
   return normalizeStoredThumbnail(url);
 }
@@ -29,12 +50,37 @@ async function fetchYouTubeTitle(url: string): Promise<string | null> {
   }
 }
 
+async function fetchYouTubePublishedDate(videoId: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+      next: { revalidate: 86400 },
+    });
+    if (!res.ok) return null;
+
+    const html = await res.text();
+    const match =
+      html.match(/"publishDate":"(\d{4}-\d{2}-\d{2})/) ??
+      html.match(/"datePublished":"(\d{4}-\d{2}-\d{2})/) ??
+      html.match(/"uploadDate":"(\d{4}-\d{2}-\d{2})/);
+
+    return match ? toPublishedDateString(match[1]) : null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchBilibiliView(url: string): Promise<{
   title: string | null;
   thumbnail: string | null;
+  publishedDate: string | null;
 }> {
   const ids = extractBilibiliId(url);
-  if (!ids) return { title: null, thumbnail: null };
+  if (!ids) return { title: null, thumbnail: null, publishedDate: null };
 
   const param = ids.bvid ? `bvid=${ids.bvid}` : `aid=${ids.aid}`;
   try {
@@ -45,18 +91,24 @@ async function fetchBilibiliView(url: string): Promise<{
         next: { revalidate: 3600 },
       },
     );
-    if (!res.ok) return { title: null, thumbnail: null };
+    if (!res.ok) return { title: null, thumbnail: null, publishedDate: null };
     const json = (await res.json()) as {
       code?: number;
-      data?: { title?: string; pic?: string };
+      data?: { title?: string; pic?: string; pubdate?: number };
     };
-    if (json.code !== 0 || !json.data) return { title: null, thumbnail: null };
+    if (json.code !== 0 || !json.data) {
+      return { title: null, thumbnail: null, publishedDate: null };
+    }
     return {
       title: json.data.title ?? null,
       thumbnail: normalizeImageUrl(json.data.pic),
+      publishedDate:
+        json.data.pubdate != null
+          ? toPublishedDateString(json.data.pubdate)
+          : null,
     };
   } catch {
-    return { title: null, thumbnail: null };
+    return { title: null, thumbnail: null, publishedDate: null };
   }
 }
 
@@ -69,14 +121,22 @@ export async function fetchUrlMetadata(url: string): Promise<VideoMetadata> {
   const platform = detectPlatform(url);
   let title: string | null = null;
   let thumbnail: string | null = null;
+  let publishedDate: string | null = null;
 
   if (platform === "youtube") {
+    const id = extractYouTubeId(url);
     thumbnail = getThumbnailUrl(url, platform);
-    title = await fetchYouTubeTitle(url);
+    const [ytTitle, ytDate] = await Promise.all([
+      fetchYouTubeTitle(url),
+      id ? fetchYouTubePublishedDate(id) : Promise.resolve(null),
+    ]);
+    title = ytTitle;
+    publishedDate = ytDate;
   } else if (platform === "bilibili") {
     const meta = await fetchBilibiliView(url);
     title = meta.title;
     thumbnail = meta.thumbnail;
+    publishedDate = meta.publishedDate;
   } else {
     thumbnail = getThumbnailUrl(url, platform);
   }
@@ -86,6 +146,7 @@ export async function fetchUrlMetadata(url: string): Promise<VideoMetadata> {
     thumbnail: normalizeImageUrl(thumbnail),
     platform,
     embedUrl: getEmbedUrl(url, platform),
+    publishedDate,
   };
 }
 

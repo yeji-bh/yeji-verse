@@ -12,11 +12,12 @@ import { StarterManageModal } from "@/components/starter/StarterManageModal";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useFilters } from "@/hooks/useFilters";
-import { getAllTags } from "@/data/mock-videos";
+import { getAllTags } from "@/lib/videos";
+import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import type { Video } from "@/lib/types";
 
 interface AppShellProps {
-  initialVideos: Video[];
+  initialVideos: Video[] | null;
   mode?: "all" | "favorites" | "starter";
   onStarterVideosChange?: (videos: Video[]) => void;
 }
@@ -28,7 +29,8 @@ export function AppShell({
 }: AppShellProps) {
   const { t } = useTranslation("common");
   const { user } = useAuth();
-  const [videos, setVideos] = useState<Video[]>(initialVideos);
+  const [videos, setVideos] = useState<Video[]>(initialVideos ?? []);
+  const [loading, setLoading] = useState(initialVideos === null);
   const { favorites, toggle, isFavorite, hydrated } = useFavorites();
   const {
     filters,
@@ -69,8 +71,34 @@ export function AppShell({
   }, [mode]);
 
   useEffect(() => {
-    setVideos(initialVideos);
     setSelectedVideo(null);
+
+    if (initialVideos !== null) {
+      setVideos(initialVideos);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      setLoading(true);
+      try {
+        const endpoint = mode === "starter" ? "/api/starter" : "/api/videos";
+        const res = await fetch(endpoint);
+        if (!cancelled && res.ok) {
+          setVideos(await res.json());
+        }
+      } catch {
+        /* keep current */
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [initialVideos, mode]);
 
   const sidebarProps = {
@@ -149,17 +177,25 @@ export function AppShell({
               </div>
             </header>
           )}
-          <p className="mb-4 text-xs text-[var(--color-textSubtle)]">
-            {t("resultsCount", { count: displayVideos.length })}
-          </p>
-          <VideoGrid
-            videos={displayVideos}
-            onVideoClick={setSelectedVideo}
-            isFavorite={isFavorite}
-            onToggleFavorite={toggle}
-            emptyMessage={emptyMessage}
-            emptyHint={emptyHint}
-          />
+          {loading ? (
+            <div className="flex justify-center py-24">
+              <LoadingSpinner size="lg" />
+            </div>
+          ) : (
+            <>
+              <p className="mb-4 text-xs text-[var(--color-textSubtle)]">
+                {t("resultsCount", { count: displayVideos.length })}
+              </p>
+              <VideoGrid
+                videos={displayVideos}
+                onVideoClick={setSelectedVideo}
+                isFavorite={isFavorite}
+                onToggleFavorite={toggle}
+                emptyMessage={emptyMessage}
+                emptyHint={emptyHint}
+              />
+            </>
+          )}
         </main>
       </div>
 

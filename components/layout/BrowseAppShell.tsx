@@ -14,8 +14,8 @@ function getMode(pathname: string): BrowseMode {
 }
 
 interface BrowseAppShellProps {
-  allVideos: Video[];
-  starterVideos: Video[];
+  allVideos: Video[] | null;
+  starterVideos: Video[] | null;
   children: React.ReactNode;
 }
 
@@ -26,7 +26,9 @@ export function BrowseAppShell({
 }: BrowseAppShellProps) {
   const pathname = usePathname();
   const mode = getMode(pathname);
-  const [starterVideos, setStarterVideos] = useState(serverStarterVideos);
+  const [starterVideos, setStarterVideos] = useState<Video[] | null>(
+    serverStarterVideos,
+  );
 
   useEffect(() => {
     setStarterVideos(serverStarterVideos);

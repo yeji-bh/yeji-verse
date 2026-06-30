@@ -1,5 +1,4 @@
 import { BrowseAppShell } from "@/components/layout/BrowseAppShell";
-import { mockVideos } from "@/data/mock-videos";
 import { getStarterVideosFromDb, getVideosFromDb } from "@/db/client";
 
 export default async function BrowseLayout({
@@ -13,10 +12,7 @@ export default async function BrowseLayout({
   ]);
 
   return (
-    <BrowseAppShell
-      allVideos={dbVideos ?? mockVideos}
-      starterVideos={starterVideos ?? []}
-    >
+    <BrowseAppShell allVideos={dbVideos} starterVideos={starterVideos}>
       {children}
     </BrowseAppShell>
   );

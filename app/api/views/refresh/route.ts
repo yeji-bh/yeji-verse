@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { fetchPlatformViewCount } from "@/lib/metadata";
 import { getVideosFromDb, updateSourceViewCount } from "@/db/client";
-import { mockVideos } from "@/data/mock-videos";
 
 export async function POST() {
-  const videos = (await getVideosFromDb()) ?? mockVideos;
+  const videos = (await getVideosFromDb()) ?? [];
   const updated: { sourceId: string; viewCount: number | null }[] = [];
 
   for (const video of videos) {

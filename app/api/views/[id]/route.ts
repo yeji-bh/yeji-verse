@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
-import { mockVideos } from "@/data/mock-videos";
 import { incrementSiteViews } from "@/db/client";
 
-let memoryViews: Record<string, number> = Object.fromEntries(
-  mockVideos.map((v) => [v.id, v.siteViews]),
-);
+let memoryViews: Record<string, number> = {};
 
 export async function POST(
   _request: Request,

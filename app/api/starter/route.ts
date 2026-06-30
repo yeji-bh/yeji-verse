@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { mockVideos } from "@/data/mock-videos";
 import {
   addStarterVideosToDb,
   getStarterVideosFromDb,
@@ -25,7 +24,7 @@ export async function GET() {
     return NextResponse.json(dbVideos);
   }
 
-  const all = (await getVideosFromDb("approved")) ?? mockVideos;
+  const all = (await getVideosFromDb("approved")) ?? [];
   return NextResponse.json(getMemoryStarterVideos(all));
 }
 
@@ -51,7 +50,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ...result, videos: videos ?? [] });
     }
 
-    const all = (await getVideosFromDb("approved")) ?? mockVideos;
+    const all = (await getVideosFromDb("approved")) ?? [];
     const approvedIds = new Set(all.filter((v) => v.status === "approved").map((v) => v.id));
     const added: string[] = [];
     const skipped: string[] = [];
@@ -101,7 +100,7 @@ export async function DELETE(request: Request) {
   }
 
   memoryStarterIds = memoryStarterIds.filter((id) => id !== videoId);
-  const all = (await getVideosFromDb("approved")) ?? mockVideos;
+  const all = (await getVideosFromDb("approved")) ?? [];
   return NextResponse.json({ videos: getMemoryStarterVideos(all) });
 }
 
@@ -128,6 +127,6 @@ export async function PUT(request: Request) {
     ...memoryStarterIds.filter((id) => !videoIds.includes(id)),
   ];
 
-  const all = (await getVideosFromDb("approved")) ?? mockVideos;
+  const all = (await getVideosFromDb("approved")) ?? [];
   return NextResponse.json({ videos: getMemoryStarterVideos(all) });
 }

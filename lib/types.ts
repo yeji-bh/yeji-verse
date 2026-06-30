@@ -86,6 +86,7 @@ export interface VideoMetadata {
   thumbnail: string | null;
   platform: Platform | string;
   embedUrl: string | null;
+  publishedDate: string | null;
 }
 
 export interface SubmitVideoPayload {

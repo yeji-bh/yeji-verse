@@ -1,0 +1,41 @@
+import type { Metadata } from "next";
+import { Noto_Sans_TC } from "next/font/google";
+import { AppProviders } from "@/components/providers/AppProviders";
+import { colors } from "@/lib/colors";
+import "./globals.css";
+
+const notoSansTC = Noto_Sans_TC({
+  variable: "--font-sans",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+export const metadata: Metadata = {
+  title: "Yeji Verse",
+  description: "黃禮志的影像宇宙 — Yeji's video universe",
+};
+
+function themeScript() {
+  const dark = colors.dark;
+  const cssVars = Object.entries(dark)
+    .map(([k, v]) => `--color-${k}:${v}`)
+    .join(";");
+  return `(function(){try{var t=localStorage.getItem("yeji-verse-theme");var m=t||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");var p=${JSON.stringify(dark)};var l=${JSON.stringify(colors.light)};var c=m==="dark"?p:l;for(var k in c)document.documentElement.style.setProperty("--color-"+k,c[k]);document.documentElement.classList.toggle("dark",m==="dark");document.documentElement.dataset.theme=m}catch(e){}})()`;
+}
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="zh-TW" className={`${notoSansTC.variable} h-full`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript() }} />
+      </head>
+      <body className="min-h-full flex flex-col font-sans antialiased bg-[var(--color-bg)] text-[var(--color-text)]">
+        <AppProviders>{children}</AppProviders>
+      </body>
+    </html>
+  );
+}

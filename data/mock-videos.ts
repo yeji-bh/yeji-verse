@@ -8,7 +8,7 @@ export const mockVideos: Video[] = [
     category: "vlog",
     tags: ["日常", "首爾", "ITZY"],
     year: 2024,
-    thumbnail: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
     siteViews: 1280,
     createdAt: "2024-06-15T10:00:00Z",
     sources: [
@@ -35,7 +35,7 @@ export const mockVideos: Video[] = [
     category: "fancam",
     tags: ["直拍", "舞台", "4K"],
     year: 2023,
-    thumbnail: "https://i.ytimg.com/vi/jNQXAC9IVRw/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/jNQXAC9IVRw/hqdefault.jpg",
     siteViews: 3420,
     createdAt: "2023-11-08T14:30:00Z",
     sources: [
@@ -55,7 +55,7 @@ export const mockVideos: Video[] = [
     category: "variety",
     tags: ["綜藝", "Running Man", "搞笑"],
     year: 2024,
-    thumbnail: "https://i.ytimg.com/vi/9bZkp7q19f0/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/9bZkp7q19f0/hqdefault.jpg",
     siteViews: 890,
     createdAt: "2024-03-22T09:00:00Z",
     sources: [
@@ -82,7 +82,7 @@ export const mockVideos: Video[] = [
     category: "solo",
     tags: ["Solo", "WANNABE", "舞台"],
     year: 2022,
-    thumbnail: "https://i.ytimg.com/vi/L_jWHffIx5E/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/L_jWHffIx5E/hqdefault.jpg",
     siteViews: 2100,
     createdAt: "2022-08-17T16:00:00Z",
     sources: [
@@ -102,7 +102,7 @@ export const mockVideos: Video[] = [
     category: "stage",
     tags: ["MAMA", "頒獎典禮", "團體"],
     year: 2023,
-    thumbnail: "https://i.ytimg.com/vi/kJQP7kiw5Fk/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/kJQP7kiw5Fk/hqdefault.jpg",
     siteViews: 1560,
     createdAt: "2023-11-29T20:00:00Z",
     sources: [
@@ -122,7 +122,7 @@ export const mockVideos: Video[] = [
     category: "cover",
     tags: ["翻唱", "Acoustic", "Cover"],
     year: 2024,
-    thumbnail: "https://i.ytimg.com/vi/RgKAFK5djSk/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/RgKAFK5djSk/hqdefault.jpg",
     siteViews: 4200,
     createdAt: "2024-01-10T12:00:00Z",
     sources: [
@@ -149,7 +149,7 @@ export const mockVideos: Video[] = [
     category: "behind",
     tags: ["幕後", "MV", "花絮"],
     year: 2024,
-    thumbnail: "https://i.ytimg.com/vi/fJ9rUzIMcZQ/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/fJ9rUzIMcZQ/hqdefault.jpg",
     siteViews: 780,
     createdAt: "2024-05-01T08:00:00Z",
     sources: [
@@ -169,7 +169,7 @@ export const mockVideos: Video[] = [
     category: "variety",
     tags: ["週偶", "舞蹈", "挑戰"],
     year: 2023,
-    thumbnail: "https://i.ytimg.com/vi/OPf0YbXqDm0/hqdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/OPf0YbXqDm0/hqdefault.jpg",
     siteViews: 1890,
     createdAt: "2023-09-14T11:00:00Z",
     sources: [

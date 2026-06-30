@@ -18,15 +18,19 @@ async function fetchYouTubeTitle(url: string): Promise<string | null> {
   }
 }
 
-async function fetchBilibiliMeta(url: string): Promise<{ title: string | null; thumbnail: string | null }> {
+async function fetchBilibiliView(url: string): Promise<{
+  title: string | null;
+  thumbnail: string | null;
+}> {
   const ids = extractBilibiliId(url);
   if (!ids) return { title: null, thumbnail: null };
 
   const param = ids.bvid ? `bvid=${ids.bvid}` : `aid=${ids.aid}`;
   try {
-    const res = await fetch(`https://api.bilibili.com/x/web-interface/view?${param}`, {
-      next: { revalidate: 3600 },
-    });
+    const res = await fetch(
+      `https://api.bilibili.com/x/web-interface/view?${param}`,
+      { next: { revalidate: 3600 } },
+    );
     if (!res.ok) return { title: null, thumbnail: null };
     const json = (await res.json()) as {
       data?: { title?: string; pic?: string };
@@ -40,17 +44,25 @@ async function fetchBilibiliMeta(url: string): Promise<{ title: string | null; t
   }
 }
 
+export async function fetchBilibiliThumbnail(url: string): Promise<string | null> {
+  const { thumbnail } = await fetchBilibiliView(url);
+  return thumbnail;
+}
+
 export async function fetchUrlMetadata(url: string): Promise<VideoMetadata> {
   const platform = detectPlatform(url);
   let title: string | null = null;
-  let thumbnail = getThumbnailUrl(url, platform);
+  let thumbnail: string | null = null;
 
   if (platform === "youtube") {
+    thumbnail = getThumbnailUrl(url, platform);
     title = await fetchYouTubeTitle(url);
   } else if (platform === "bilibili") {
-    const meta = await fetchBilibiliMeta(url);
+    const meta = await fetchBilibiliView(url);
     title = meta.title;
-    thumbnail = meta.thumbnail ?? thumbnail;
+    thumbnail = meta.thumbnail;
+  } else {
+    thumbnail = getThumbnailUrl(url, platform);
   }
 
   return {

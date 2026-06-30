@@ -76,8 +76,9 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
       });
 
       if (data.title && !title) setTitle(data.title);
-      if (data.thumbnail) setThumbnail(data.thumbnail);
-      else {
+      if (data.thumbnail) {
+        setThumbnail(data.thumbnail);
+      } else {
         const thumb = getThumbnailUrl(url, data.platform);
         if (thumb) setThumbnail(thumb);
       }

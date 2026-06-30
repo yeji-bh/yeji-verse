@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { mockVideos } from "@/data/mock-videos";
 import { getVideosFromDb, insertVideoToDb } from "@/db/client";
+import { fetchUrlMetadata } from "@/lib/metadata";
 import { getThumbnailUrl } from "@/lib/video-platforms";
 import type { SubmitVideoPayload } from "@/lib/types";
 
@@ -18,10 +19,13 @@ export async function POST(request: Request) {
     const payload = body as SubmitVideoPayload & { thumbnail?: string };
 
     const id = crypto.randomUUID();
-    const thumbnail =
-      payload.thumbnail ||
-      getThumbnailUrl(payload.sources[0]?.url ?? "") ||
-      "";
+    const primaryUrl = payload.sources[0]?.url ?? "";
+    let thumbnail = payload.thumbnail || "";
+
+    if (!thumbnail && primaryUrl) {
+      const meta = await fetchUrlMetadata(primaryUrl);
+      thumbnail = meta.thumbnail ?? getThumbnailUrl(primaryUrl, meta.platform) ?? "";
+    }
 
     const videoData = {
       ...payload,

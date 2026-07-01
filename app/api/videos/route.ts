@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import {
+  getVideosByIds,
   getVideosFromDb,
   getVideosPageFromDb,
   insertVideoToDb,
@@ -28,6 +29,30 @@ export async function GET(request: Request) {
 
   const limitParam = searchParams.get("limit");
   const offsetParam = searchParams.get("offset");
+  const idsParam = searchParams.get("ids");
+
+  if (idsParam) {
+    const ids = idsParam
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean);
+    if (ids.length === 0) {
+      return NextResponse.json([]);
+    }
+
+    const dbVideos = await getVideosByIds(ids);
+    if (dbVideos) {
+      return NextResponse.json(dbVideos);
+    }
+
+    const approved = memoryStore.filter(
+      (v) => v.status === "approved" && ids.includes(v.id),
+    );
+    const map = new Map(approved.map((v) => [v.id, v]));
+    return NextResponse.json(
+      ids.map((id) => map.get(id)).filter((v): v is Video => v !== undefined),
+    );
+  }
 
   if (limitParam !== null) {
     const limit = Math.min(Math.max(Number(limitParam) || 12, 1), 50);

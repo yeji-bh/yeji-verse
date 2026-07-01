@@ -173,6 +173,22 @@ export async function getVideoById(id: string): Promise<Video | null> {
   return rowToVideo(rows[0] as Record<string, unknown>, sources);
 }
 
+export async function getVideosByIds(ids: string[]): Promise<Video[] | null> {
+  const db = getClient();
+  if (!db || ids.length === 0) return null;
+
+  const uniqueIds = [...new Set(ids)];
+  const placeholders = uniqueIds.map(() => "?").join(", ");
+  const { rows } = await db.execute({
+    sql: `SELECT * FROM videos WHERE id IN (${placeholders}) AND status = 'approved'`,
+    args: uniqueIds,
+  });
+
+  const videos = await rowsToVideos(db, rows as Record<string, unknown>[]);
+  const map = new Map(videos.map((v) => [v.id, v]));
+  return ids.map((id) => map.get(id)).filter((v): v is Video => v !== undefined);
+}
+
 export async function insertVideoToDb(
   payload: SubmitVideoPayload & {
     id: string;

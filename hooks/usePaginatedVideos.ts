@@ -31,53 +31,46 @@ export function usePaginatedVideos(enabled: boolean) {
   const [total, setTotal] = useState(0);
   const [fullyLoaded, setFullyLoaded] = useState(false);
   const offsetRef = useRef(0);
-  const stateRef = useRef({ hasMore: false, loadingMore: false, fullyLoaded: false });
-  stateRef.current = { hasMore, loadingMore, fullyLoaded };
+  const loadingMoreRef = useRef(false);
+  const stateRef = useRef({ hasMore: false, fullyLoaded: false });
+  stateRef.current = { hasMore, fullyLoaded };
 
-  const fetchPage = useCallback(async (offset: number, append: boolean) => {
-    const res = await fetch(
-      `/api/videos?limit=${VIDEO_PAGE_SIZE}&offset=${offset}`,
-    );
-    if (!res.ok) throw new Error("failed");
-    const data = (await res.json()) as PaginatedResponse;
-    setVideos((prev) => (append ? mergeVideos(prev, data.videos) : data.videos));
-    setHasMore(data.hasMore);
-    setTotal(data.total);
-    offsetRef.current = offset + data.videos.length;
-    return data;
-  }, []);
-
-  const loadInitial = useCallback(async () => {
-    setLoading(true);
-    try {
-      offsetRef.current = 0;
-      setFullyLoaded(false);
-      await fetchPage(0, false);
-    } catch {
-      setVideos([]);
-      setHasMore(false);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchPage]);
+  const fetchPage = useCallback(
+    async (offset: number, append: boolean, signal?: AbortSignal) => {
+      const res = await fetch(
+        `/api/videos?limit=${VIDEO_PAGE_SIZE}&offset=${offset}`,
+        { signal },
+      );
+      if (!res.ok) throw new Error("failed");
+      const data = (await res.json()) as PaginatedResponse;
+      setVideos((prev) => (append ? mergeVideos(prev, data.videos) : data.videos));
+      setHasMore(data.hasMore);
+      setTotal(data.total);
+      offsetRef.current = offset + data.videos.length;
+      return data;
+    },
+    [],
+  );
 
   const loadMore = useCallback(async () => {
-    const { hasMore: canLoad, loadingMore: busy, fullyLoaded: done } =
-      stateRef.current;
-    if (!canLoad || busy || done) return;
+    const { hasMore: canLoad, fullyLoaded: done } = stateRef.current;
+    if (!canLoad || done || loadingMoreRef.current) return;
+
+    loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
       await fetchPage(offsetRef.current, true);
     } catch {
       /* keep current */
     } finally {
+      loadingMoreRef.current = false;
       setLoadingMore(false);
     }
   }, [fetchPage]);
 
   const loadAll = useCallback(async () => {
-    if (fullyLoaded) return;
+    if (fullyLoaded || loadingMoreRef.current) return;
+    loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
       const res = await fetch("/api/videos");
@@ -94,6 +87,7 @@ export function usePaginatedVideos(enabled: boolean) {
     } catch {
       /* keep current */
     } finally {
+      loadingMoreRef.current = false;
       setLoadingMore(false);
     }
   }, [fullyLoaded]);
@@ -101,13 +95,42 @@ export function usePaginatedVideos(enabled: boolean) {
   const reset = useCallback(() => {
     offsetRef.current = 0;
     setFullyLoaded(false);
-    void loadInitial();
-  }, [loadInitial]);
+    loadingMoreRef.current = false;
+    setLoadingMore(false);
+    setLoading(true);
+
+    void fetchPage(0, false)
+      .catch(() => {
+        setVideos([]);
+        setHasMore(false);
+        setTotal(0);
+      })
+      .finally(() => setLoading(false));
+  }, [fetchPage]);
 
   useEffect(() => {
     if (!enabled) return;
-    void loadInitial();
-  }, [enabled, loadInitial]);
+
+    const ac = new AbortController();
+    setLoading(true);
+    offsetRef.current = 0;
+    setFullyLoaded(false);
+
+    (async () => {
+      try {
+        await fetchPage(0, false, ac.signal);
+      } catch (err) {
+        if ((err as Error).name === "AbortError") return;
+        setVideos([]);
+        setHasMore(false);
+        setTotal(0);
+      } finally {
+        if (!ac.signal.aborted) setLoading(false);
+      }
+    })();
+
+    return () => ac.abort();
+  }, [enabled, fetchPage]);
 
   return {
     videos,

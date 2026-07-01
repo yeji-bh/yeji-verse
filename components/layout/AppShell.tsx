@@ -13,6 +13,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useFilters } from "@/hooks/useFilters";
 import { usePaginatedVideos } from "@/hooks/usePaginatedVideos";
+import { useFavoriteVideos } from "@/hooks/useFavoriteVideos";
 import { getAllTags } from "@/lib/videos";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import type { Video } from "@/lib/types";
@@ -30,7 +31,7 @@ export function AppShell({
 }: AppShellProps) {
   const { t } = useTranslation("common");
   const { user } = useAuth();
-  const paginated = mode === "all" || mode === "favorites";
+  const paginated = mode === "all";
 
   const pagination = usePaginatedVideos(paginated);
   const {
@@ -50,10 +51,26 @@ export function AppShell({
     mode === "starter" && initialVideos === null,
   );
 
-  const videos = paginated ? paginatedVideos : starterVideos;
-  const loading = paginated ? paginatedLoading : starterLoading;
-
   const { favorites, toggle, isFavorite, hydrated } = useFavorites();
+  const {
+    videos: favoriteVideos,
+    setVideos: setFavoriteVideos,
+    loading: favoriteLoading,
+  } = useFavoriteVideos(favorites, mode === "favorites" && hydrated);
+
+  const videos =
+    mode === "favorites"
+      ? favoriteVideos
+      : paginated
+        ? paginatedVideos
+        : starterVideos;
+  const loading =
+    mode === "favorites"
+      ? favoriteLoading
+      : paginated
+        ? paginatedLoading
+        : starterLoading;
+
   const {
     filters,
     filtered,
@@ -77,17 +94,17 @@ export function AppShell({
 
   const allTags = getAllTags(videos);
 
-  const displayVideos =
-    mode === "favorites" && hydrated
-      ? filtered.filter((v) => favorites.includes(v.id))
-      : filtered;
+  const displayVideos = filtered;
 
   const resultCount =
-    paginated && mode === "all" && !hasActiveFilters
-      ? videoTotal
-      : displayVideos.length;
+    mode === "all" && !hasActiveFilters ? videoTotal : displayVideos.length;
 
-  const setVideos = paginated ? setPaginatedVideos : setStarterVideos;
+  const setVideos =
+    mode === "favorites"
+      ? setFavoriteVideos
+      : paginated
+        ? setPaginatedVideos
+        : setStarterVideos;
 
   const handleLoadMore = useCallback(() => {
     void loadMore();
@@ -139,9 +156,9 @@ export function AppShell({
   }, [initialVideos, paginated]);
 
   useEffect(() => {
-    if (!paginated || !hasActiveFilters || fullyLoaded) return;
+    if (mode !== "all" || !hasActiveFilters || fullyLoaded) return;
     void loadAll();
-  }, [hasActiveFilters, paginated, fullyLoaded, loadAll]);
+  }, [mode, hasActiveFilters, fullyLoaded, loadAll]);
 
   const sidebarProps = {
     filters,
@@ -235,9 +252,9 @@ export function AppShell({
                 onToggleFavorite={toggle}
                 emptyMessage={emptyMessage}
                 emptyHint={emptyHint}
-                hasMore={paginated && hasMore && !hasActiveFilters}
-                loadingMore={paginated && loadingMore}
-                onLoadMore={paginated ? handleLoadMore : undefined}
+                hasMore={mode === "all" && hasMore && !hasActiveFilters}
+                loadingMore={mode === "all" && loadingMore}
+                onLoadMore={mode === "all" ? handleLoadMore : undefined}
               />
             </>
           )}

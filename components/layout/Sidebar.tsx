@@ -26,6 +26,9 @@ interface SidebarProps {
   onSetSortOrder: (sortOrder: SortOrder) => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
+  showUnwatchedOnly?: boolean;
+  onToggleShowUnwatchedOnly?: () => void;
+  onClearShowUnwatchedOnly?: () => void;
   hideSort?: boolean;
   showBranding?: boolean;
   scrollable?: boolean;
@@ -72,6 +75,9 @@ export function Sidebar({
   onSetSortOrder,
   onClearFilters,
   hasActiveFilters,
+  showUnwatchedOnly = false,
+  onToggleShowUnwatchedOnly,
+  onClearShowUnwatchedOnly,
   hideSort = false,
   showBranding = true,
   scrollable = true,
@@ -171,6 +177,12 @@ export function Sidebar({
           <IconHeart className="h-4 w-4 shrink-0" />
           {t("favorites")}
         </NavLink>
+        <NavLink href="/checklist" active={pathname === "/checklist"} onNavigate={onNavigate}>
+          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+          </svg>
+          {t("checklist")}
+        </NavLink>
       </div>
 
       <div className="h-px bg-[var(--color-borderSubtle)]" />
@@ -206,6 +218,16 @@ export function Sidebar({
         />
 
         <FilterBadgeGroup
+          label={t("checklist")}
+          showAll
+          allLabel={t("allVideos")}
+          onSelectAll={onClearShowUnwatchedOnly}
+          items={[{ value: "unwatched", label: t("onlyUnwatched") }]}
+          selected={showUnwatchedOnly ? ["unwatched"] : []}
+          onToggle={() => onToggleShowUnwatchedOnly?.()}
+        />
+
+        <FilterBadgeGroup
           label={t("tags")}
           showAll
           allLabel={t("filterAll")}
@@ -215,7 +237,7 @@ export function Sidebar({
           onToggle={onToggleTag}
         />
 
-        {hasActiveFilters && (
+        {(hasActiveFilters || showUnwatchedOnly) && (
           <button
             type="button"
             onClick={onClearFilters}

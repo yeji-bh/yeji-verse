@@ -15,7 +15,7 @@ export type Category =
   | "live"
   | "other";
 
-export type SortBy = "createdAt" | "views" | "title";
+export type SortBy = "createdAt" | "title";
 export type SortOrder = "asc" | "desc";
 
 export type Platform =

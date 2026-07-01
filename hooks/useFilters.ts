@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import type { SortBy, SortOrder, Video, VideoFilters } from "@/lib/types";
 import { hasTag, removeTag, videoHasAnyTag } from "@/lib/tags";
 import { normalizeCategory } from "@/lib/constants";
-import { getPlatformViewCount, getVideoYear } from "@/lib/video-platforms";
+import { getVideoYear } from "@/lib/video-platforms";
 
 const defaultFilters: VideoFilters = {
   categories: [],
@@ -24,9 +24,6 @@ function compareVideos(
   let cmp = 0;
 
   switch (sortBy) {
-    case "views":
-      cmp = (getPlatformViewCount(a) ?? 0) - (getPlatformViewCount(b) ?? 0);
-      break;
     case "title":
       cmp = a.title.localeCompare(b.title);
       break;

@@ -14,13 +14,15 @@ import { useFavorites } from "@/hooks/useFavorites";
 import { useFilters } from "@/hooks/useFilters";
 import { usePaginatedVideos } from "@/hooks/usePaginatedVideos";
 import { useFavoriteVideos } from "@/hooks/useFavoriteVideos";
+import { useChecklist } from "@/hooks/useChecklist";
+import { useSidebarTags } from "@/hooks/useSidebarTags";
 import { getAllTags } from "@/lib/videos";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import type { Video } from "@/lib/types";
 
 interface AppShellProps {
   initialVideos: Video[] | null;
-  mode?: "all" | "favorites" | "starter";
+  mode?: "all" | "favorites" | "starter" | "checklist";
   onStarterVideosChange?: (videos: Video[]) => void;
 }
 
@@ -54,19 +56,35 @@ export function AppShell({
 
   const { favorites, toggle, isFavorite, hydrated } = useFavorites();
   const {
+    checkedIds,
+    isChecked,
+    toggleChecked,
+    showUnwatchedOnly,
+    setShowUnwatchedOnly,
+  } = useChecklist();
+  const {
     videos: favoriteVideos,
     setVideos: setFavoriteVideos,
     loading: favoriteLoading,
   } = useFavoriteVideos(favorites, mode === "favorites" && hydrated);
+  const {
+    videos: checklistVideos,
+    setVideos: setChecklistVideos,
+    loading: checklistLoading,
+  } = useFavoriteVideos(checkedIds, mode === "checklist" && hydrated);
 
   const videos =
-    mode === "favorites"
+    mode === "checklist"
+      ? checklistVideos
+      : mode === "favorites"
       ? favoriteVideos
       : paginated
         ? paginatedVideos
         : starterVideos;
   const loading =
-    mode === "favorites"
+    mode === "checklist"
+      ? checklistLoading
+      : mode === "favorites"
       ? favoriteLoading
       : paginated
         ? paginatedLoading
@@ -88,23 +106,58 @@ export function AppShell({
     hasActiveFilters,
   } = useFilters(videos, { preserveOrder: mode === "starter" });
 
-  const prevHasActiveFiltersRef = useRef(hasActiveFilters);
+  const prevHasActiveFiltersRef = useRef(hasActiveFilters || showUnwatchedOnly);
   const prevModeRef = useRef(mode);
 
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [starterManageOpen, setStarterManageOpen] = useState(false);
+  const [siteVideoTotal, setSiteVideoTotal] = useState(0);
+  const { tags: sidebarTags, refresh: refreshSidebarTags } = useSidebarTags();
 
-  const allTags = getAllTags(videos);
+  const allTags = sidebarTags.length > 0 ? sidebarTags : getAllTags(videos);
 
-  const displayVideos = filtered;
+  const displayVideos = showUnwatchedOnly
+    ? filtered.filter((v) => !isChecked(v.id))
+    : filtered;
+
+  const checklistTotal = Math.max(videoTotal, siteVideoTotal);
+
+  useEffect(() => {
+    if (videoTotal > 0) {
+      setSiteVideoTotal(videoTotal);
+    }
+  }, [videoTotal]);
+
+  useEffect(() => {
+    if (siteVideoTotal > 0) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch("/api/videos?limit=1&offset=0");
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as { total: number };
+        setSiteVideoTotal(data.total ?? 0);
+      } catch {
+        /* keep current */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [siteVideoTotal]);
 
   const resultCount =
     mode === "all" && !hasActiveFilters ? videoTotal : displayVideos.length;
 
   const setVideos =
-    mode === "favorites"
+    mode === "checklist"
+      ? setChecklistVideos
+      : mode === "favorites"
       ? setFavoriteVideos
       : paginated
         ? setPaginatedVideos
@@ -115,7 +168,12 @@ export function AppShell({
   }, [loadMore]);
 
   const refreshVideos = useCallback(async () => {
+    void refreshSidebarTags();
     if (paginated) {
+      if (hasActiveFilters || showUnwatchedOnly) {
+        await loadAll();
+        return;
+      }
       resetPagination();
       return;
     }
@@ -125,13 +183,14 @@ export function AppShell({
     } catch {
       /* keep current */
     }
-  }, [paginated, resetPagination]);
+  }, [paginated, hasActiveFilters, showUnwatchedOnly, loadAll, resetPagination, refreshSidebarTags]);
 
   useEffect(() => {
     if (prevModeRef.current === mode) return;
     prevModeRef.current = mode;
     clearFilters();
-  }, [mode, clearFilters]);
+    setShowUnwatchedOnly(false);
+  }, [mode, clearFilters, setShowUnwatchedOnly]);
 
   useEffect(() => {
     setSelectedVideo(null);
@@ -166,9 +225,9 @@ export function AppShell({
   }, [initialVideos, paginated]);
 
   useEffect(() => {
-    if (mode !== "all" || !hasActiveFilters || fullyLoaded) return;
+    if (mode !== "all" || (!hasActiveFilters && !showUnwatchedOnly) || fullyLoaded) return;
     void loadAll();
-  }, [mode, hasActiveFilters, fullyLoaded, loadAll]);
+  }, [mode, hasActiveFilters, showUnwatchedOnly, fullyLoaded, loadAll]);
 
   useEffect(() => {
     if (mode !== "all") {
@@ -177,17 +236,18 @@ export function AppShell({
     }
 
     const wasFiltering = prevHasActiveFiltersRef.current;
-    if (wasFiltering && !hasActiveFilters) {
+    if (wasFiltering && !hasActiveFilters && !showUnwatchedOnly) {
       abortLoadAll();
       if (paginatedVideos.length < videoTotal) {
         resetPagination();
       }
     }
 
-    prevHasActiveFiltersRef.current = hasActiveFilters;
+    prevHasActiveFiltersRef.current = hasActiveFilters || showUnwatchedOnly;
   }, [
     mode,
     hasActiveFilters,
+    showUnwatchedOnly,
     paginatedVideos.length,
     videoTotal,
     abortLoadAll,
@@ -206,12 +266,20 @@ export function AppShell({
     onClearYears: clearYears,
     onSetSortBy: setSortBy,
     onSetSortOrder: setSortOrder,
-    onClearFilters: clearFilters,
+    onClearFilters: () => {
+      clearFilters();
+      setShowUnwatchedOnly(false);
+    },
     hasActiveFilters,
+    showUnwatchedOnly,
+    onToggleShowUnwatchedOnly: () => setShowUnwatchedOnly((v) => !v),
+    onClearShowUnwatchedOnly: () => setShowUnwatchedOnly(false),
   };
 
   const emptyMessage =
-    mode === "favorites"
+    mode === "checklist"
+      ? t("noChecklist")
+      : mode === "favorites"
       ? t("noFavorites")
       : mode === "starter"
         ? hasActiveFilters
@@ -222,7 +290,9 @@ export function AppShell({
           : t("noVideos");
 
   const emptyHint =
-    mode === "favorites"
+    mode === "checklist"
+      ? t("noChecklistHint")
+      : mode === "favorites"
       ? t("noFavoritesHint")
       : mode === "starter" && !hasActiveFilters
         ? t("starterEmptyHint")
@@ -277,16 +347,21 @@ export function AppShell({
           ) : (
             <>
               <p className="mb-4 text-xs text-[var(--color-textSubtle)]">
-                {t("resultsCount", { count: resultCount })}
+                {mode === "checklist"
+                  ? t("checklistProgress", {
+                      completed: checkedIds.length,
+                      total: checklistTotal,
+                    })
+                  : t("resultsCount", { count: resultCount })}
               </p>
               <VideoGrid
                 videos={displayVideos}
                 onVideoClick={setSelectedVideo}
-                isFavorite={isFavorite}
-                onToggleFavorite={toggle}
+                isChecked={isChecked}
+                onToggleChecked={toggleChecked}
                 emptyMessage={emptyMessage}
                 emptyHint={emptyHint}
-                hasMore={mode === "all" && hasMore && !hasActiveFilters}
+                hasMore={mode === "all" && hasMore && !hasActiveFilters && !showUnwatchedOnly}
                 loadingMore={mode === "all" && loadingMore}
                 onLoadMore={mode === "all" ? handleLoadMore : undefined}
               />

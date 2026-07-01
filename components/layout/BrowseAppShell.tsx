@@ -5,11 +5,12 @@ import { usePathname } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import type { Video } from "@/lib/types";
 
-type BrowseMode = "all" | "favorites" | "starter";
+type BrowseMode = "all" | "favorites" | "starter" | "checklist";
 
 function getMode(pathname: string): BrowseMode {
   if (pathname === "/favorites") return "favorites";
   if (pathname === "/starter") return "starter";
+  if (pathname === "/checklist") return "checklist";
   return "all";
 }
 

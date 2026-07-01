@@ -18,7 +18,7 @@ export const CATEGORIES: Category[] = [
   "other",
 ];
 
-export const SORT_BY_OPTIONS: SortBy[] = ["createdAt", "views", "title"];
+export const SORT_BY_OPTIONS: SortBy[] = ["createdAt", "title"];
 
 export const KNOWN_PLATFORMS = ["youtube", "bilibili", "other"] as const;
 
@@ -27,6 +27,7 @@ export const MAX_VIDEO_SOURCES = 3;
 export const SIDEBAR_TAG_LIMIT = 19;
 
 export const FAVORITES_KEY = "yeji-verse-favorites";
+export const CHECKLIST_KEY = "yeji-verse-checklist";
 export const THEME_KEY = "yeji-verse-theme";
 export const LOCALE_KEY = "yeji-verse-locale";
 

@@ -9,8 +9,8 @@ import type { Video } from "@/lib/types";
 interface VideoGridProps {
   videos: Video[];
   onVideoClick: (video: Video) => void;
-  isFavorite: (id: string) => boolean;
-  onToggleFavorite: (id: string) => void;
+  isChecked: (id: string) => boolean;
+  onToggleChecked: (id: string) => void;
   emptyMessage?: string;
   emptyHint?: string;
   hasMore?: boolean;
@@ -21,8 +21,8 @@ interface VideoGridProps {
 export function VideoGrid({
   videos,
   onVideoClick,
-  isFavorite,
-  onToggleFavorite,
+  isChecked,
+  onToggleChecked,
   emptyMessage,
   emptyHint,
   hasMore = false,
@@ -64,10 +64,10 @@ export function VideoGrid({
             key={video.id}
             video={video}
             onClick={() => onVideoClick(video)}
-            isFavorite={isFavorite(video.id)}
-            onToggleFavorite={(e) => {
+            isChecked={isChecked(video.id)}
+            onToggleChecked={(e) => {
               e.stopPropagation();
-              onToggleFavorite(video.id);
+              onToggleChecked(video.id);
             }}
           />
         ))}

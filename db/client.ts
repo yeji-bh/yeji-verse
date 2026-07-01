@@ -8,11 +8,12 @@ import type {
   VideoSource,
   VideoStatus,
 } from "@/lib/types";
-import { dedupeTags } from "@/lib/tags";
+import { dedupeTags, collectPopularTags } from "@/lib/tags";
 import { normalizeCategory } from "@/lib/constants";
 
 let client: Client | null = null;
 let starterPicksTableReady = false;
+let checklistTableReady = false;
 
 function getClient(): Client | null {
   const url = process.env.TURSO_DATABASE_URL;
@@ -154,6 +155,26 @@ export async function getVideosFromDb(
     );
 
     return rowsToVideos(db, rows as Record<string, unknown>[]);
+  } catch {
+    return null;
+  }
+}
+
+export async function getPopularTagsFromDb(limit: number): Promise<string[] | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  try {
+    const { rows } = await db.execute({
+      sql: "SELECT tags FROM videos WHERE status = 'approved'",
+      args: [],
+    });
+
+    const videos = rows.map((row) => ({
+      tags: dedupeTags(JSON.parse((row.tags as string) || "[]")),
+    }));
+
+    return collectPopularTags(videos, limit);
   } catch {
     return null;
   }
@@ -548,6 +569,95 @@ export async function toggleUserFavorite(
     args: [userId, videoId],
   });
   return true;
+}
+
+// --- Checklist ---
+
+async function ensureChecklistTable(db: Client): Promise<void> {
+  if (checklistTableReady) return;
+
+  await db.execute(`CREATE TABLE IF NOT EXISTS checklist (
+    user_id TEXT NOT NULL,
+    video_id TEXT NOT NULL,
+    completed INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, video_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
+  )`);
+  await db.execute(
+    "CREATE INDEX IF NOT EXISTS idx_checklist_user_completed ON checklist(user_id, completed)",
+  );
+  checklistTableReady = true;
+}
+
+export async function getUserChecklist(userId: string): Promise<string[]> {
+  const db = getClient();
+  if (!db) return [];
+
+  await ensureChecklistTable(db);
+  const { rows } = await db.execute({
+    sql: "SELECT video_id FROM checklist WHERE user_id = ? AND completed = 1",
+    args: [userId],
+  });
+  return rows.map((r) => r.video_id as string);
+}
+
+export async function syncUserChecklist(
+  userId: string,
+  videoIds: string[],
+): Promise<string[]> {
+  const db = getClient();
+  if (!db) return videoIds;
+
+  await ensureChecklistTable(db);
+
+  const existing = await getUserChecklist(userId);
+  const merged = [...new Set([...existing, ...videoIds])];
+
+  const now = new Date().toISOString();
+  for (const videoId of merged) {
+    await db.execute({
+      sql: `INSERT INTO checklist (user_id, video_id, completed, updated_at)
+            VALUES (?, ?, 1, ?)
+            ON CONFLICT(user_id, video_id) DO UPDATE SET completed = 1, updated_at = excluded.updated_at`,
+      args: [userId, videoId, now],
+    });
+  }
+
+  return merged;
+}
+
+export async function toggleUserChecklist(
+  userId: string,
+  videoId: string,
+): Promise<boolean> {
+  const db = getClient();
+  if (!db) return false;
+
+  await ensureChecklistTable(db);
+
+  const { rows } = await db.execute({
+    sql: "SELECT completed FROM checklist WHERE user_id = ? AND video_id = ?",
+    args: [userId, videoId],
+  });
+
+  const now = new Date().toISOString();
+  if (rows.length === 0 || Number(rows[0]?.completed ?? 0) === 0) {
+    await db.execute({
+      sql: `INSERT INTO checklist (user_id, video_id, completed, updated_at)
+            VALUES (?, ?, 1, ?)
+            ON CONFLICT(user_id, video_id) DO UPDATE SET completed = 1, updated_at = excluded.updated_at`,
+      args: [userId, videoId, now],
+    });
+    return true;
+  }
+
+  await db.execute({
+    sql: "UPDATE checklist SET completed = 0, updated_at = ? WHERE user_id = ? AND video_id = ?",
+    args: [now, userId, videoId],
+  });
+  return false;
 }
 
 // --- Comments ---

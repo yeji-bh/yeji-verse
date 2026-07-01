@@ -4,15 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/Badge";
 import { useTranslation } from "react-i18next";
-import { IconHeart } from "@/components/ui/IconButton";
 import { getThumbnailDisplayUrl } from "@/lib/thumbnail";
 import type { Video } from "@/lib/types";
 
 interface VideoCardProps {
   video: Video;
   onClick: () => void;
-  isFavorite: boolean;
-  onToggleFavorite: (e: React.MouseEvent) => void;
+  isChecked: boolean;
+  onToggleChecked: (e: React.MouseEvent) => void;
 }
 
 function LazyThumbnail({ src, alt }: { src: string; alt: string }) {
@@ -64,8 +63,8 @@ function LazyThumbnail({ src, alt }: { src: string; alt: string }) {
 export function VideoCard({
   video,
   onClick,
-  isFavorite,
-  onToggleFavorite,
+  isChecked,
+  onToggleChecked,
 }: VideoCardProps) {
   const { t } = useTranslation("common");
 
@@ -84,18 +83,20 @@ export function VideoCard({
           {t(video.category)}
         </span>
 
-        <button
-          type="button"
-          onClick={onToggleFavorite}
-          className={`absolute top-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
-            isFavorite
-              ? "bg-[var(--color-accent)] text-[var(--color-accentText)]"
-              : "bg-black/45 text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-          }`}
-          aria-label={isFavorite ? t("unfavorite") : t("favorite")}
-        >
-          <IconHeart filled={isFavorite} className="h-3.5 w-3.5" />
-        </button>
+        <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
+          <button
+            type="button"
+            onClick={onToggleChecked}
+            className={`flex h-7 w-7 items-center justify-center rounded-full text-white transition-colors ${
+              isChecked ? "bg-emerald-500/95" : "bg-black/45"
+            }`}
+            aria-label={isChecked ? t("markUnwatched") : t("markWatched")}
+          >
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       <h3 className="mt-2 line-clamp-2 text-sm font-medium leading-snug text-[var(--color-text)] group-hover:text-[var(--color-accent)] transition-colors">

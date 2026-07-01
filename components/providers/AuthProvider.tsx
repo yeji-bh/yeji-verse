@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import type { SessionUser } from "@/lib/types";
-import { FAVORITES_KEY } from "@/lib/constants";
+import { CHECKLIST_KEY, FAVORITES_KEY } from "@/lib/constants";
 
 interface AuthContextValue {
   user: SessionUser | null;
@@ -36,6 +36,26 @@ async function syncFavoritesOnLogin() {
     if (res.ok) {
       const data = await res.json();
       localStorage.setItem(FAVORITES_KEY, JSON.stringify(data.ids));
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+async function syncChecklistOnLogin() {
+  try {
+    const stored = localStorage.getItem(CHECKLIST_KEY);
+    const ids: string[] = stored ? JSON.parse(stored) : [];
+    if (ids.length === 0) return;
+
+    const res = await fetch("/api/checklist/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem(CHECKLIST_KEY, JSON.stringify(data.ids));
     }
   } catch {
     /* ignore */
@@ -76,6 +96,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await res.json();
     setUser(data.user);
     await syncFavoritesOnLogin();
+    await syncChecklistOnLogin();
     return true;
   }, []);
 
@@ -89,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const data = await res.json();
     setUser(data.user);
     await syncFavoritesOnLogin();
+    await syncChecklistOnLogin();
     return true;
   }, []);
 

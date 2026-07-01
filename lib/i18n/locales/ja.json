@@ -1,9 +1,10 @@
 {
   "siteName": "Yeji Verse",
-  "siteTagline": "イェジの映像宇宙",
+  "siteTagline": "Pocket every Yeji moment",
   "allVideos": "すべての動画",
   "favorites": "お気に入り",
   "search": "動画を検索…",
+  "clearSearch": "検索をクリア",
   "submit": "投稿",
   "category": "カテゴリ",
   "tags": "タグ",

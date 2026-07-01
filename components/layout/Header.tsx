@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { localeLabels, locales, setAppLocale, type AppLocale } from "@/lib/i18n/client";
 import {
+  IconClose,
   IconFilter,
   IconGlobe,
   IconMoon,
@@ -22,6 +23,54 @@ interface HeaderProps {
   showFilterButton?: boolean;
 }
 
+function SearchField({
+  value,
+  onChange,
+  placeholder,
+  className = "",
+  inputRef,
+  onFocus,
+  onBlur,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder: string;
+  className?: string;
+  inputRef?: React.RefObject<HTMLInputElement | null>;
+  onFocus?: () => void;
+  onBlur?: () => void;
+}) {
+  const { t } = useTranslation("common");
+
+  return (
+    <div className={`relative ${className}`}>
+      <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-textSubtle)]" />
+      <input
+        ref={inputRef}
+        type="search"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        placeholder={placeholder}
+        className={`w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] py-2 pl-9 text-sm outline-none focus:border-[var(--color-accent)] ${
+          value ? "pr-9" : "pr-3"
+        }`}
+      />
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-[var(--color-textMuted)] hover:bg-[var(--color-bgMuted)] hover:text-[var(--color-text)]"
+          aria-label={t("clearSearch")}
+        >
+          <IconClose className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function Header({
   search,
   onSearchChange,
@@ -32,6 +81,8 @@ export function Header({
   const { t, i18n } = useTranslation("common");
   const { theme, toggleTheme } = useTheme();
   const [langOpen, setLangOpen] = useState(false);
+  const [mobileSearchFocused, setMobileSearchFocused] = useState(false);
+  const mobileSearchRef = useRef<HTMLInputElement>(null);
 
   const langThemeControls = (
     <div className="flex items-center gap-0">
@@ -83,55 +134,65 @@ export function Header({
     </div>
   );
 
+  const handleMobileSearchFocus = () => {
+    setMobileSearchFocused(true);
+    window.setTimeout(() => {
+      mobileSearchRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 300);
+  };
+
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--color-borderSubtle)] bg-[var(--color-bg)]/90 backdrop-blur-xl">
       {/* Mobile */}
-      <div className="lg:hidden px-4 py-3 space-y-3">
-        <div className="relative flex min-h-9 items-center">
-          <div className="z-10 flex shrink-0 items-center">
-            {showFilterButton ? (
-              <PlainIconButton
-                label={t("filters")}
-                onClick={onFilterClick}
-                className="h-9 w-9"
+      <div className="scroll-mt-4 px-4 py-3 lg:hidden">
+        {!mobileSearchFocused && (
+          <div className="relative mb-3 flex min-h-9 items-center">
+            <div className="z-10 flex shrink-0 items-center">
+              {showFilterButton ? (
+                <PlainIconButton
+                  label={t("filters")}
+                  onClick={onFilterClick}
+                  className="h-9 w-9"
+                >
+                  <IconFilter className="h-5 w-5" />
+                </PlainIconButton>
+              ) : (
+                <div className="h-9 w-9" />
+              )}
+            </div>
+            <h1 className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-base font-bold">
+              <span
+                className="bg-clip-text text-transparent"
+                style={{ backgroundImage: "var(--color-gradient)" }}
               >
-                <IconFilter className="h-5 w-5" />
-              </PlainIconButton>
-            ) : (
-              <div className="h-9 w-9" />
-            )}
+                {t("siteName")}
+              </span>
+            </h1>
+            <div className="z-10 ml-auto flex shrink-0 items-center">
+              {langThemeControls}
+            </div>
           </div>
-          <h1 className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-base font-bold">
-            <span
-              className="bg-clip-text text-transparent"
-              style={{ backgroundImage: "var(--color-gradient)" }}
-            >
-              {t("siteName")}
-            </span>
-          </h1>
-          <div className="z-10 ml-auto flex shrink-0 items-center">
-            {langThemeControls}
-          </div>
-        </div>
+        )}
         <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-textSubtle)]" />
-            <input
-              type="search"
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              placeholder={t("search")}
-              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] py-2 pl-9 pr-3 text-sm outline-none focus:border-[var(--color-accent)]"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={onSubmitClick}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--color-accent)] text-[var(--color-accentText)]"
-            aria-label={t("submitVideo")}
-          >
-            <IconPlus className="h-5 w-5" />
-          </button>
+          <SearchField
+            inputRef={mobileSearchRef}
+            value={search}
+            onChange={onSearchChange}
+            placeholder={t("search")}
+            className="min-w-0 flex-1"
+            onFocus={handleMobileSearchFocus}
+            onBlur={() => setMobileSearchFocused(false)}
+          />
+          {!mobileSearchFocused && (
+            <button
+              type="button"
+              onClick={onSubmitClick}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--color-accent)] text-[var(--color-accentText)]"
+              aria-label={t("submitVideo")}
+            >
+              <IconPlus className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -140,16 +201,12 @@ export function Header({
         <p className="min-w-0 flex-1 text-xs text-[var(--color-textSubtle)] leading-relaxed">
           *{t("thumbnailDisclaimer")}
         </p>
-        <div className="relative w-72 shrink-0">
-          <IconSearch className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-textSubtle)]" />
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder={t("search")}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] py-2 pl-9 pr-4 text-sm outline-none focus:border-[var(--color-accent)]"
-          />
-        </div>
+        <SearchField
+          value={search}
+          onChange={onSearchChange}
+          placeholder={t("search")}
+          className="w-72 shrink-0"
+        />
         {langThemeControls}
         <button
           type="button"

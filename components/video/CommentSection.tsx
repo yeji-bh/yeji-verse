@@ -153,8 +153,10 @@ export function CommentSection({ videoId, className = "", fillHeight = false }: 
       </form>
 
       <div
-        className={`space-y-3 overflow-y-auto ${
-          fillHeight ? "max-h-48 lg:max-h-72 lg:shrink-0" : "max-h-48"
+        className={`space-y-3 ${
+          comments.length > 0
+            ? `overflow-y-auto ${fillHeight ? "max-h-48 lg:max-h-72 lg:shrink-0" : "max-h-48"}`
+            : ""
         }`}
       >
         {comments.length === 0 ? (

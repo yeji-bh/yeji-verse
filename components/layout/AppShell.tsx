@@ -40,6 +40,7 @@ export function AppShell({
     loadingMore,
     hasMore,
     fullyLoaded,
+    total: videoTotal,
     loadMore,
     loadAll,
     reset: resetPagination,
@@ -80,6 +81,11 @@ export function AppShell({
     mode === "favorites" && hydrated
       ? filtered.filter((v) => favorites.includes(v.id))
       : filtered;
+
+  const resultCount =
+    paginated && mode === "all" && !hasActiveFilters
+      ? videoTotal
+      : displayVideos.length;
 
   const setVideos = paginated ? setPaginatedVideos : setStarterVideos;
 
@@ -216,7 +222,7 @@ export function AppShell({
           ) : (
             <>
               <p className="mb-4 text-xs text-[var(--color-textSubtle)]">
-                {t("resultsCount", { count: displayVideos.length })}
+                {t("resultsCount", { count: resultCount })}
               </p>
               <VideoGrid
                 videos={displayVideos}

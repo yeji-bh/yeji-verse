@@ -239,13 +239,18 @@ export function VideoModal({
         <div className="min-h-0 flex-1 overflow-y-auto pb-8 lg:grid lg:max-h-[90vh] lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] lg:overflow-hidden lg:pb-0">
           <div className="space-y-4 p-4 sm:p-5 lg:min-h-0 lg:overflow-y-auto">
             {source && (
-              <VideoPlayer
-                url={source.url}
-                platform={source.platform}
-                title={video.title}
-                thumbnail={video.thumbnail}
-              />
+              <div className="-mx-4 -mt-4 sm:-mx-5 sm:-mt-5 lg:-mx-5 lg:-mt-5">
+                <VideoPlayer
+                  url={source.url}
+                  platform={source.platform}
+                  title={video.title}
+                  thumbnail={video.thumbnail}
+                  flat
+                />
+              </div>
             )}
+
+            <h2 className="text-lg font-semibold leading-snug sm:text-xl">{video.title}</h2>
 
             <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--color-textMuted)]">
               <span>{video.publishedDate}</span>

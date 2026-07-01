@@ -1,9 +1,10 @@
 {
   "siteName": "Yeji Verse",
-  "siteTagline": "黄礼志的影像宇宙",
+  "siteTagline": "Pocket every Yeji moment",
   "allVideos": "全部影片",
   "favorites": "我的收藏",
   "search": "搜索影片…",
+  "clearSearch": "清除搜索",
   "submit": "投稿",
   "category": "分类",
   "tags": "标签",

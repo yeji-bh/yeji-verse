@@ -90,8 +90,8 @@ export function VideoCard({
           className={`absolute top-2 right-2 z-10 flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
             isFavorite
               ? "bg-[var(--color-accent)] text-[var(--color-accentText)]"
-              : "bg-black/45 text-white opacity-0 group-hover:opacity-100"
-          } ${isFavorite ? "opacity-100" : ""}`}
+              : "bg-black/45 text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+          }`}
           aria-label={isFavorite ? t("unfavorite") : t("favorite")}
         >
           <IconHeart filled={isFavorite} className="h-3.5 w-3.5" />

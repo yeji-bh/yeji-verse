@@ -12,7 +12,7 @@ export type TranslationKey = keyof typeof zhTW;
 
 const zhTW = {
   siteName: "Yeji Verse",
-  siteTagline: "黃禮志的影像宇宙",
+  siteTagline: "Pocket every Yeji moment",
   allVideos: "全部影片",
   favorites: "我的收藏",
   search: "搜尋影片…",
@@ -79,7 +79,7 @@ const zhTW = {
 
 const zhCN: Record<TranslationKey, string> = {
   ...zhTW,
-  siteTagline: "黄礼志的影像宇宙",
+  siteTagline: "Pocket every Yeji moment",
   allVideos: "全部影片",
   favorites: "我的收藏",
   search: "搜索影片…",
@@ -138,7 +138,7 @@ const zhCN: Record<TranslationKey, string> = {
 
 const en: Record<TranslationKey, string> = {
   siteName: "Yeji Verse",
-  siteTagline: "Yeji's video universe",
+  siteTagline: "Pocket every Yeji moment",
   allVideos: "All Videos",
   favorites: "Favorites",
   search: "Search videos…",
@@ -205,7 +205,7 @@ const en: Record<TranslationKey, string> = {
 
 const ja: Record<TranslationKey, string> = {
   siteName: "Yeji Verse",
-  siteTagline: "イェジの映像宇宙",
+  siteTagline: "Pocket every Yeji moment",
   allVideos: "すべての動画",
   favorites: "お気に入り",
   search: "動画を検索…",
@@ -272,7 +272,7 @@ const ja: Record<TranslationKey, string> = {
 
 const ko: Record<TranslationKey, string> = {
   siteName: "Yeji Verse",
-  siteTagline: "예지의 영상 우주",
+  siteTagline: "Pocket every Yeji moment",
   allVideos: "전체 영상",
   favorites: "즐겨찾기",
   search: "영상 검색…",

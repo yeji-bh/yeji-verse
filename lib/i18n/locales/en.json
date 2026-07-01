@@ -1,9 +1,10 @@
 {
   "siteName": "Yeji Verse",
-  "siteTagline": "Yeji's video universe",
+  "siteTagline": "Pocket every Yeji moment",
   "allVideos": "All Videos",
   "favorites": "Favorites",
   "search": "Search videos…",
+  "clearSearch": "Clear search",
   "submit": "Submit",
   "category": "Category",
   "tags": "Tags",

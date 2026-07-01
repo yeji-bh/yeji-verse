@@ -28,6 +28,7 @@ export function usePaginatedVideos(enabled: boolean) {
   const [loading, setLoading] = useState(enabled);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
   const [fullyLoaded, setFullyLoaded] = useState(false);
   const offsetRef = useRef(0);
 
@@ -39,6 +40,7 @@ export function usePaginatedVideos(enabled: boolean) {
     const data = (await res.json()) as PaginatedResponse;
     setVideos((prev) => (append ? mergeVideos(prev, data.videos) : data.videos));
     setHasMore(data.hasMore);
+    setTotal(data.total);
     offsetRef.current = offset + data.videos.length;
     return data;
   }, []);
@@ -52,6 +54,7 @@ export function usePaginatedVideos(enabled: boolean) {
     } catch {
       setVideos([]);
       setHasMore(false);
+      setTotal(0);
     } finally {
       setLoading(false);
     }
@@ -79,6 +82,7 @@ export function usePaginatedVideos(enabled: boolean) {
         if (Array.isArray(data)) {
           setVideos(data);
           setHasMore(false);
+          setTotal(data.length);
           setFullyLoaded(true);
           offsetRef.current = data.length;
         }
@@ -108,6 +112,7 @@ export function usePaginatedVideos(enabled: boolean) {
     loadingMore,
     hasMore: hasMore && !fullyLoaded,
     fullyLoaded,
+    total,
     loadMore,
     loadAll,
     reset,

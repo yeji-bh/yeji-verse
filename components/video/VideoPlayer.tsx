@@ -10,11 +10,13 @@ interface VideoPlayerProps {
   platform: string;
   title: string;
   thumbnail?: string;
+  flat?: boolean;
 }
 
-export function VideoPlayer({ url, platform, title, thumbnail }: VideoPlayerProps) {
+export function VideoPlayer({ url, platform, title, thumbnail, flat = false }: VideoPlayerProps) {
   const [playing, setPlaying] = useState(false);
   const embedUrl = playing ? getEmbedUrl(url, platform, { autoplay: true }) : null;
+  const shape = flat ? "rounded-none" : "rounded-xl";
 
   useEffect(() => {
     setPlaying(false);
@@ -22,7 +24,7 @@ export function VideoPlayer({ url, platform, title, thumbnail }: VideoPlayerProp
 
   if (embedUrl) {
     return (
-      <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
+      <div className={`relative aspect-video w-full overflow-hidden bg-black ${shape}`}>
         <iframe
           src={embedUrl}
           title={title}
@@ -40,7 +42,7 @@ export function VideoPlayer({ url, platform, title, thumbnail }: VideoPlayerProp
     <button
       type="button"
       onClick={() => setPlaying(true)}
-      className="group relative aspect-video w-full overflow-hidden rounded-xl bg-black"
+      className={`group relative aspect-video w-full overflow-hidden bg-black ${shape}`}
       aria-label={title}
     >
       {thumbSrc ? (

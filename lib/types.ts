@@ -8,6 +8,7 @@ export type Category =
   | "behind"
   | "challenge"
   | "brand"
+  | "fansign"
   | "predebut"
   | "fanmade"
   | "concert"

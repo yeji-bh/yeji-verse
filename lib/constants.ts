@@ -10,6 +10,7 @@ export const CATEGORIES: Category[] = [
   "behind",
   "challenge",
   "brand",
+  "fansign",
   "predebut",
   "fanmade",
   "concert",

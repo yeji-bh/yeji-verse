@@ -2,7 +2,6 @@
 
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
 import {
   defaultLocale,
   detectLocaleFromBrowser,
@@ -27,40 +26,17 @@ const resources = {
   ko: { common: ko },
 };
 
-const customDetector = {
-  name: "yejiBrowser",
-  lookup() {
-    if (typeof window === "undefined") return defaultLocale;
-    const stored = localStorage.getItem(LOCALE_KEY) as AppLocale | null;
-    if (stored && locales.includes(stored)) return stored;
-    return detectLocaleFromBrowser();
-  },
-  cacheUserLanguage(lng: string) {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(LOCALE_KEY, lng);
-    }
-  },
-};
-
-const detector = new LanguageDetector();
-detector.addDetector(customDetector);
-
 if (!i18n.isInitialized) {
-  i18n
-    .use(detector)
-    .use(initReactI18next)
-    .init({
-      resources,
-      fallbackLng: fallbackLocale,
-      defaultNS: "common",
-      ns: ["common"],
-      interpolation: { escapeValue: false },
-      detection: {
-        order: ["yejiBrowser"],
-        caches: ["yejiBrowser"],
-      },
-      react: { useSuspense: false },
-    });
+  i18n.use(initReactI18next).init({
+    resources,
+    lng: defaultLocale,
+    fallbackLng: fallbackLocale,
+    defaultNS: "common",
+    ns: ["common"],
+    interpolation: { escapeValue: false },
+    initImmediate: false,
+    react: { useSuspense: false },
+  });
 }
 
 export function setAppLocale(locale: AppLocale) {
@@ -82,5 +58,5 @@ export function sortByLabelKey(sortBy: string): string {
   return map[sortBy] ?? "sortByCreatedAt";
 }
 
-export { i18n, LOCALE_KEY, defaultLocale, locales, localeLabels };
+export { i18n, LOCALE_KEY, defaultLocale, locales, localeLabels, detectLocaleFromBrowser };
 export type { AppLocale };

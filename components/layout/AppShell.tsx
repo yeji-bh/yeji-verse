@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -45,6 +45,7 @@ export function AppShell({
     loadMore,
     loadAll,
     reset: resetPagination,
+    abortLoadAll,
   } = pagination;
   const [starterVideos, setStarterVideos] = useState<Video[]>(initialVideos ?? []);
   const [starterLoading, setStarterLoading] = useState(
@@ -86,6 +87,8 @@ export function AppShell({
     clearFilters,
     hasActiveFilters,
   } = useFilters(videos, { preserveOrder: mode === "starter" });
+
+  const prevHasActiveFiltersRef = useRef(hasActiveFilters);
 
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [submitOpen, setSubmitOpen] = useState(false);
@@ -159,6 +162,30 @@ export function AppShell({
     if (mode !== "all" || !hasActiveFilters || fullyLoaded) return;
     void loadAll();
   }, [mode, hasActiveFilters, fullyLoaded, loadAll]);
+
+  useEffect(() => {
+    if (mode !== "all") {
+      prevHasActiveFiltersRef.current = hasActiveFilters;
+      return;
+    }
+
+    const wasFiltering = prevHasActiveFiltersRef.current;
+    if (wasFiltering && !hasActiveFilters) {
+      abortLoadAll();
+      if (paginatedVideos.length < videoTotal) {
+        resetPagination();
+      }
+    }
+
+    prevHasActiveFiltersRef.current = hasActiveFilters;
+  }, [
+    mode,
+    hasActiveFilters,
+    paginatedVideos.length,
+    videoTotal,
+    abortLoadAll,
+    resetPagination,
+  ]);
 
   const sidebarProps = {
     filters,

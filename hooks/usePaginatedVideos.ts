@@ -31,9 +31,12 @@ export function usePaginatedVideos(enabled: boolean) {
   const [total, setTotal] = useState(0);
   const [fullyLoaded, setFullyLoaded] = useState(false);
   const offsetRef = useRef(0);
+  const totalRef = useRef(0);
   const loadingMoreRef = useRef(false);
+  const loadAllAbortRef = useRef<AbortController | null>(null);
   const stateRef = useRef({ hasMore: false, fullyLoaded: false });
   stateRef.current = { hasMore, fullyLoaded };
+  totalRef.current = total;
 
   const fetchPage = useCallback(
     async (offset: number, append: boolean, signal?: AbortSignal) => {
@@ -46,11 +49,17 @@ export function usePaginatedVideos(enabled: boolean) {
       setVideos((prev) => (append ? mergeVideos(prev, data.videos) : data.videos));
       setHasMore(data.hasMore);
       setTotal(data.total);
+      totalRef.current = data.total;
       offsetRef.current = offset + data.videos.length;
       return data;
     },
     [],
   );
+
+  const abortLoadAll = useCallback(() => {
+    loadAllAbortRef.current?.abort();
+    loadAllAbortRef.current = null;
+  }, []);
 
   const loadMore = useCallback(async () => {
     const { hasMore: canLoad, fullyLoaded: done } = stateRef.current;
@@ -70,29 +79,41 @@ export function usePaginatedVideos(enabled: boolean) {
 
   const loadAll = useCallback(async () => {
     if (fullyLoaded || loadingMoreRef.current) return;
+
+    abortLoadAll();
+    const ac = new AbortController();
+    loadAllAbortRef.current = ac;
+
     loadingMoreRef.current = true;
     setLoadingMore(true);
     try {
-      const res = await fetch("/api/videos");
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setVideos(data);
-          setHasMore(false);
-          setTotal(data.length);
-          setFullyLoaded(true);
-          offsetRef.current = data.length;
-        }
-      }
-    } catch {
-      /* keep current */
+      const res = await fetch("/api/videos", { signal: ac.signal });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!Array.isArray(data)) return;
+
+      const expectedTotal = totalRef.current;
+      const gotAll = expectedTotal === 0 || data.length >= expectedTotal;
+
+      setVideos(data);
+      setTotal(Math.max(expectedTotal, data.length));
+      totalRef.current = Math.max(expectedTotal, data.length);
+      setFullyLoaded(gotAll);
+      setHasMore(!gotAll);
+      offsetRef.current = data.length;
+    } catch (err) {
+      if ((err as Error).name === "AbortError") return;
     } finally {
+      if (loadAllAbortRef.current === ac) {
+        loadAllAbortRef.current = null;
+      }
       loadingMoreRef.current = false;
       setLoadingMore(false);
     }
-  }, [fullyLoaded]);
+  }, [abortLoadAll, fullyLoaded]);
 
   const reset = useCallback(() => {
+    abortLoadAll();
     offsetRef.current = 0;
     setFullyLoaded(false);
     loadingMoreRef.current = false;
@@ -104,9 +125,10 @@ export function usePaginatedVideos(enabled: boolean) {
         setVideos([]);
         setHasMore(false);
         setTotal(0);
+        totalRef.current = 0;
       })
       .finally(() => setLoading(false));
-  }, [fetchPage]);
+  }, [abortLoadAll, fetchPage]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -124,6 +146,7 @@ export function usePaginatedVideos(enabled: boolean) {
         setVideos([]);
         setHasMore(false);
         setTotal(0);
+        totalRef.current = 0;
       } finally {
         if (!ac.signal.aborted) setLoading(false);
       }
@@ -143,5 +166,6 @@ export function usePaginatedVideos(enabled: boolean) {
     loadMore,
     loadAll,
     reset,
+    abortLoadAll,
   };
 }

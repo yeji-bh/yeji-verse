@@ -89,6 +89,7 @@ export function AppShell({
   } = useFilters(videos, { preserveOrder: mode === "starter" });
 
   const prevHasActiveFiltersRef = useRef(hasActiveFilters);
+  const prevModeRef = useRef(mode);
 
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [submitOpen, setSubmitOpen] = useState(false);
@@ -125,6 +126,12 @@ export function AppShell({
       /* keep current */
     }
   }, [paginated, resetPagination]);
+
+  useEffect(() => {
+    if (prevModeRef.current === mode) return;
+    prevModeRef.current = mode;
+    clearFilters();
+  }, [mode, clearFilters]);
 
   useEffect(() => {
     setSelectedVideo(null);

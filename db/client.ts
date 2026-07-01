@@ -9,6 +9,7 @@ import type {
   VideoStatus,
 } from "@/lib/types";
 import { dedupeTags } from "@/lib/tags";
+import { normalizeCategory } from "@/lib/constants";
 
 let client: Client | null = null;
 let starterPicksTableReady = false;
@@ -33,7 +34,7 @@ function rowToVideo(row: Record<string, unknown>, sources: VideoSource[]): Video
     id: row.id as string,
     title: row.title as string,
     description: (row.description as string) ?? "",
-    category: row.category as Video["category"],
+    category: normalizeCategory(row.category as string),
     tags: dedupeTags(JSON.parse((row.tags as string) || "[]")),
     publishedDate,
     year: Number(publishedDate.slice(0, 4)) || year,
@@ -187,6 +188,7 @@ export async function insertVideoToDb(
   const now = new Date().toISOString();
   const status = payload.status ?? "pending";
   const year = Number(payload.publishedDate.slice(0, 4));
+  const category = normalizeCategory(payload.category);
 
   try {
     await db.execute({
@@ -196,7 +198,7 @@ export async function insertVideoToDb(
         payload.id,
         payload.title,
         payload.description ?? "",
-        payload.category,
+        category,
         JSON.stringify(dedupeTags(payload.tags)),
         year,
         payload.publishedDate,
@@ -218,7 +220,7 @@ export async function insertVideoToDb(
         payload.id,
         payload.title,
         payload.description ?? "",
-        payload.category,
+        category,
         JSON.stringify(dedupeTags(payload.tags)),
         year,
         payload.thumbnail,
@@ -251,7 +253,7 @@ export async function insertVideoToDb(
       id: payload.id,
       title: payload.title,
       description: payload.description ?? "",
-      category: payload.category,
+      category,
       tags: JSON.stringify(payload.tags),
       year,
       published_date: payload.publishedDate,
@@ -296,6 +298,7 @@ export async function updateVideoInDb(
   const now = new Date().toISOString();
   const year = Number(data.publishedDate.slice(0, 4));
   const tags = dedupeTags(data.tags);
+  const category = normalizeCategory(data.category);
 
   try {
     await db.execute({
@@ -304,7 +307,7 @@ export async function updateVideoInDb(
             WHERE id = ?`,
       args: [
         data.title,
-        data.category,
+        category,
         JSON.stringify(tags),
         year,
         data.publishedDate,
@@ -323,7 +326,7 @@ export async function updateVideoInDb(
             WHERE id = ?`,
       args: [
         data.title,
-        data.category,
+        category,
         JSON.stringify(tags),
         year,
         data.thumbnail,

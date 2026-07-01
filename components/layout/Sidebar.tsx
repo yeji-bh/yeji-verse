@@ -30,20 +30,24 @@ interface SidebarProps {
   showBranding?: boolean;
   scrollable?: boolean;
   className?: string;
+  onNavigate?: () => void;
 }
 
 function NavLink({
   href,
   active,
   children,
+  onNavigate,
 }: {
   href: string;
   active: boolean;
   children: React.ReactNode;
+  onNavigate?: () => void;
 }) {
   return (
     <Link
       href={href}
+      onClick={onNavigate}
       className={`flex items-center gap-2.5 rounded-xl py-2.5 px-3 text-sm font-medium transition-colors ${
         active
           ? "bg-[var(--color-accentMuted)] text-[var(--color-accent)]"
@@ -72,6 +76,7 @@ export function Sidebar({
   showBranding = true,
   scrollable = true,
   className = "",
+  onNavigate,
 }: SidebarProps) {
   const { t } = useTranslation("common");
   const pathname = usePathname();
@@ -150,19 +155,19 @@ export function Sidebar({
       <div className="h-px bg-[var(--color-borderSubtle)]" />
 
       <div className="space-y-1">
-        <NavLink href="/" active={pathname === "/"}>
+        <NavLink href="/" active={pathname === "/"} onNavigate={onNavigate}>
           <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
           </svg>
           {t("allVideos")}
         </NavLink>
-        <NavLink href="/starter" active={pathname === "/starter"}>
+        <NavLink href="/starter" active={pathname === "/starter"} onNavigate={onNavigate}>
           <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
           </svg>
           {t("starterNav")}
         </NavLink>
-        <NavLink href="/favorites" active={pathname === "/favorites"}>
+        <NavLink href="/favorites" active={pathname === "/favorites"} onNavigate={onNavigate}>
           <IconHeart className="h-4 w-4 shrink-0" />
           {t("favorites")}
         </NavLink>

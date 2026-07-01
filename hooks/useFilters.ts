@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import type { SortBy, SortOrder, Video, VideoFilters } from "@/lib/types";
 import { hasTag, removeTag, videoHasAnyTag } from "@/lib/tags";
+import { normalizeCategory } from "@/lib/constants";
 import { getPlatformViewCount, getVideoYear } from "@/lib/video-platforms";
 
 const defaultFilters: VideoFilters = {
@@ -100,7 +101,9 @@ export function useFilters(videos: Video[], options?: { preserveOrder?: boolean 
     let result = [...videos];
 
     if (filters.categories.length > 0) {
-      result = result.filter((v) => filters.categories.includes(v.category));
+      result = result.filter((v) =>
+        filters.categories.includes(normalizeCategory(v.category)),
+      );
     }
 
     if (filters.tags.length > 0) {

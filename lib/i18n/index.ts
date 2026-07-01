@@ -360,11 +360,12 @@ export function t(
 }
 
 export function categoryLabel(locale: Locale, category: string): string {
-  const key = category as TranslationKey;
+  const normalized = category === "fansite" ? "fancam" : category;
+  const key = normalized as TranslationKey;
   if (key in translations[locale]) {
     return t(locale, key);
   }
-  return category;
+  return normalized;
 }
 
 export function sortLabel(locale: Locale, sort: string): string {

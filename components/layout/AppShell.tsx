@@ -89,6 +89,10 @@ export function AppShell({
 
   const setVideos = paginated ? setPaginatedVideos : setStarterVideos;
 
+  const handleLoadMore = useCallback(() => {
+    void loadMore();
+  }, [loadMore]);
+
   const refreshVideos = useCallback(async () => {
     if (paginated) {
       resetPagination();
@@ -233,7 +237,7 @@ export function AppShell({
                 emptyHint={emptyHint}
                 hasMore={paginated && hasMore && !hasActiveFilters}
                 loadingMore={paginated && loadingMore}
-                onLoadMore={paginated ? () => void loadMore() : undefined}
+                onLoadMore={paginated ? handleLoadMore : undefined}
               />
             </>
           )}

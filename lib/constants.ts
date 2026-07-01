@@ -4,7 +4,6 @@ export const CATEGORIES: Category[] = [
   "vlog",
   "variety",
   "fancam",
-  "fansite",
   "solo",
   "stage",
   "cover",
@@ -29,3 +28,12 @@ export const SIDEBAR_TAG_LIMIT = 19;
 export const FAVORITES_KEY = "yeji-verse-favorites";
 export const THEME_KEY = "yeji-verse-theme";
 export const LOCALE_KEY = "yeji-verse-locale";
+
+/** @deprecated fansite merged into fancam */
+const LEGACY_CATEGORY_ALIASES: Record<string, Category> = {
+  fansite: "fancam",
+};
+
+export function normalizeCategory(category: string): Category {
+  return LEGACY_CATEGORY_ALIASES[category] ?? (category as Category);
+}

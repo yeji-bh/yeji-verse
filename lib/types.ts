@@ -2,7 +2,6 @@ export type Category =
   | "vlog"
   | "variety"
   | "fancam"
-  | "fansite"
   | "solo"
   | "stage"
   | "cover"

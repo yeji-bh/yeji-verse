@@ -31,6 +31,8 @@ export function usePaginatedVideos(enabled: boolean) {
   const [total, setTotal] = useState(0);
   const [fullyLoaded, setFullyLoaded] = useState(false);
   const offsetRef = useRef(0);
+  const stateRef = useRef({ hasMore: false, loadingMore: false, fullyLoaded: false });
+  stateRef.current = { hasMore, loadingMore, fullyLoaded };
 
   const fetchPage = useCallback(async (offset: number, append: boolean) => {
     const res = await fetch(
@@ -61,7 +63,9 @@ export function usePaginatedVideos(enabled: boolean) {
   }, [fetchPage]);
 
   const loadMore = useCallback(async () => {
-    if (!hasMore || loadingMore || fullyLoaded) return;
+    const { hasMore: canLoad, loadingMore: busy, fullyLoaded: done } =
+      stateRef.current;
+    if (!canLoad || busy || done) return;
     setLoadingMore(true);
     try {
       await fetchPage(offsetRef.current, true);
@@ -70,7 +74,7 @@ export function usePaginatedVideos(enabled: boolean) {
     } finally {
       setLoadingMore(false);
     }
-  }, [fetchPage, fullyLoaded, hasMore, loadingMore]);
+  }, [fetchPage]);
 
   const loadAll = useCallback(async () => {
     if (fullyLoaded) return;

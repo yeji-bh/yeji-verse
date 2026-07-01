@@ -85,12 +85,12 @@ export function Header({
   const mobileSearchRef = useRef<HTMLInputElement>(null);
 
   const langThemeControls = (
-    <div className="flex items-center gap-0">
+    <div className="flex items-center -space-x-1">
       <div className="relative">
         <PlainIconButton
           label={t("language")}
           onClick={() => setLangOpen((o) => !o)}
-          className="h-9 w-9"
+          className="h-8 w-8"
         >
           <IconGlobe className="h-5 w-5" />
         </PlainIconButton>
@@ -127,7 +127,7 @@ export function Header({
       <PlainIconButton
         label={theme === "dark" ? t("themeLight") : t("themeDark")}
         onClick={toggleTheme}
-        className="h-9 w-9"
+        className="h-8 w-8"
       >
         {theme === "dark" ? <IconSun className="h-5 w-5" /> : <IconMoon className="h-5 w-5" />}
       </PlainIconButton>
@@ -144,20 +144,20 @@ export function Header({
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--color-borderSubtle)] bg-[var(--color-bg)]/90 backdrop-blur-xl">
       {/* Mobile */}
-      <div className="scroll-mt-4 px-4 py-3 lg:hidden">
+      <div className="scroll-mt-4 px-3 py-3 lg:hidden">
         {!mobileSearchFocused && (
-          <div className="relative mb-3 flex min-h-9 items-center">
+          <div className="relative mb-3 flex min-h-8 items-center">
             <div className="z-10 flex shrink-0 items-center">
               {showFilterButton ? (
                 <PlainIconButton
                   label={t("filters")}
                   onClick={onFilterClick}
-                  className="h-9 w-9"
+                  className="h-8 w-8"
                 >
                   <IconFilter className="h-5 w-5" />
                 </PlainIconButton>
               ) : (
-                <div className="h-9 w-9" />
+                <div className="h-8 w-8" />
               )}
             </div>
             <h1 className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-base font-bold">

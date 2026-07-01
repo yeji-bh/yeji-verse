@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState } from "react";
 import type { SortBy, SortOrder, Video, VideoFilters } from "@/lib/types";
-import { hasTag, removeTag, videoHasAnyTag } from "@/lib/tags";
+import { hasTag, videoHasAnyTag } from "@/lib/tags";
 import { normalizeCategory } from "@/lib/constants";
 import { getVideoYear } from "@/lib/video-platforms";
 
@@ -40,12 +40,13 @@ export function useFilters(videos: Video[], options?: { preserveOrder?: boolean 
   const [filters, setFilters] = useState<VideoFilters>(defaultFilters);
 
   const toggleCategory = useCallback((category: string) => {
-    setFilters((f) => ({
-      ...f,
-      categories: f.categories.includes(category as VideoFilters["categories"][number])
-        ? f.categories.filter((c) => c !== category)
-        : [...f.categories, category as VideoFilters["categories"][number]],
-    }));
+    setFilters((f) => {
+      const cat = category as VideoFilters["categories"][number];
+      return {
+        ...f,
+        categories: f.categories.includes(cat) ? [] : [cat],
+      };
+    });
   }, []);
 
   const clearCategories = useCallback(() => {
@@ -55,9 +56,7 @@ export function useFilters(videos: Video[], options?: { preserveOrder?: boolean 
   const toggleTag = useCallback((tag: string) => {
     setFilters((f) => ({
       ...f,
-      tags: hasTag(f.tags, tag)
-        ? removeTag(f.tags, tag)
-        : [...f.tags, tag],
+      tags: hasTag(f.tags, tag) ? [] : [tag],
     }));
   }, []);
 
@@ -68,9 +67,7 @@ export function useFilters(videos: Video[], options?: { preserveOrder?: boolean 
   const toggleYear = useCallback((year: number) => {
     setFilters((f) => ({
       ...f,
-      years: f.years.includes(year)
-        ? f.years.filter((y) => y !== year)
-        : [...f.years, year],
+      years: f.years.includes(year) ? [] : [year],
     }));
   }, []);
 

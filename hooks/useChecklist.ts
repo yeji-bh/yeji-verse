@@ -55,7 +55,10 @@ export function useChecklist() {
           const data = await res.json();
           setCheckedIds(data.ids);
           localStorage.setItem(CHECKLIST_KEY, JSON.stringify(data.ids));
-          showToast(t(removing ? "checklistRemoved" : "checklistAdded"));
+          showToast(
+            t(removing ? "checklistRemoved" : "checklistAdded"),
+            removing ? "error" : "success",
+          );
         }
         return;
       }
@@ -67,7 +70,10 @@ export function useChecklist() {
         localStorage.setItem(CHECKLIST_KEY, JSON.stringify(next));
         return next;
       });
-      showToast(t(removing ? "checklistRemoved" : "checklistAdded"));
+      showToast(
+        t(removing ? "checklistRemoved" : "checklistAdded"),
+        removing ? "error" : "success",
+      );
     },
     [user, checkedIds, showToast, t],
   );

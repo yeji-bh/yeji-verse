@@ -257,7 +257,7 @@ export function AppShell({
   const sidebarProps = {
     filters,
     allTags,
-    hideSort: mode === "starter",
+    showBrowseFilters: mode === "all",
     onToggleCategory: toggleCategory,
     onClearCategories: clearCategories,
     onToggleTag: toggleTag,

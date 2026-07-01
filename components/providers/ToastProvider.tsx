@@ -12,21 +12,29 @@ import {
 interface ToastState {
   message: string;
   id: number;
+  variant: ToastVariant;
 }
 
+export type ToastVariant = "success" | "error";
+
 const ToastContext = createContext<{
-  showToast: (message: string) => void;
+  showToast: (message: string, variant?: ToastVariant) => void;
 } | null>(null);
 
 const TOAST_DURATION_MS = 2500;
+
+const TOAST_STYLES: Record<ToastVariant, string> = {
+  success: "border-emerald-600/30 bg-emerald-600 text-white",
+  error: "border-red-600/30 bg-red-600 text-white",
+};
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toast, setToast] = useState<ToastState | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const showToast = useCallback((message: string) => {
+  const showToast = useCallback((message: string, variant: ToastVariant = "success") => {
     const id = Date.now();
-    setToast({ message, id });
+    setToast({ message, id, variant });
 
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => setToast(null), TOAST_DURATION_MS);
@@ -47,7 +55,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             key={toast.id}
             role="status"
             aria-live="polite"
-            className="animate-[toast-in_0.2s_ease-out] rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-center text-sm text-[var(--color-text)] shadow-lg"
+            className={`animate-[toast-in_0.2s_ease-out] rounded-xl border px-4 py-3 text-center text-sm shadow-lg ${TOAST_STYLES[toast.variant]}`}
           >
             {toast.message}
           </div>

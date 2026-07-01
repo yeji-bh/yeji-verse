@@ -4,6 +4,8 @@
   "allVideos": "전체 영상",
   "favorites": "즐겨찾기",
   "checklist": "체크리스트",
+  "checklistFilter": "시청 현황",
+  "checklistFilterAll": "전체 영상",
   "onlyUnwatched": "미완료만 보기",
   "checklistProgress": "완료 {{completed}} / 전체 {{total}}",
   "markWatched": "시청 완료로 표시",

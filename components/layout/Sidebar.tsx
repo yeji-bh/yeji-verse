@@ -29,6 +29,7 @@ interface SidebarProps {
   showUnwatchedOnly?: boolean;
   onToggleShowUnwatchedOnly?: () => void;
   onClearShowUnwatchedOnly?: () => void;
+  showBrowseFilters?: boolean;
   hideSort?: boolean;
   showBranding?: boolean;
   scrollable?: boolean;
@@ -78,6 +79,7 @@ export function Sidebar({
   showUnwatchedOnly = false,
   onToggleShowUnwatchedOnly,
   onClearShowUnwatchedOnly,
+  showBrowseFilters = false,
   hideSort = false,
   showBranding = true,
   scrollable = true,
@@ -197,54 +199,58 @@ export function Sidebar({
           />
         )}
 
-        <FilterBadgeGroup
-          label={t("year")}
-          showAll
-          allLabel={t("filterAll")}
-          onSelectAll={onClearYears}
-          items={filterYears.map((y) => ({ value: y, label: String(y) }))}
-          selected={filters.years}
-          onToggle={onToggleYear}
-        />
+        {showBrowseFilters && (
+          <>
+            <FilterBadgeGroup
+              label={t("year")}
+              showAll
+              allLabel={t("filterAll")}
+              onSelectAll={onClearYears}
+              items={filterYears.map((y) => ({ value: y, label: String(y) }))}
+              selected={filters.years}
+              onToggle={onToggleYear}
+            />
 
-        <FilterBadgeGroup
-          label={t("category")}
-          showAll
-          allLabel={t("filterAll")}
-          onSelectAll={onClearCategories}
-          items={CATEGORIES.map((c) => ({ value: c, label: t(c) }))}
-          selected={filters.categories}
-          onToggle={onToggleCategory}
-        />
+            <FilterBadgeGroup
+              label={t("category")}
+              showAll
+              allLabel={t("filterAll")}
+              onSelectAll={onClearCategories}
+              items={CATEGORIES.map((c) => ({ value: c, label: t(c) }))}
+              selected={filters.categories}
+              onToggle={onToggleCategory}
+            />
 
-        <FilterBadgeGroup
-          label={t("checklist")}
-          showAll
-          allLabel={t("allVideos")}
-          onSelectAll={onClearShowUnwatchedOnly}
-          items={[{ value: "unwatched", label: t("onlyUnwatched") }]}
-          selected={showUnwatchedOnly ? ["unwatched"] : []}
-          onToggle={() => onToggleShowUnwatchedOnly?.()}
-        />
+            <FilterBadgeGroup
+              label={t("checklistFilter")}
+              showAll
+              allLabel={t("checklistFilterAll")}
+              onSelectAll={onClearShowUnwatchedOnly}
+              items={[{ value: "unwatched", label: t("onlyUnwatched") }]}
+              selected={showUnwatchedOnly ? ["unwatched"] : []}
+              onToggle={() => onToggleShowUnwatchedOnly?.()}
+            />
 
-        <FilterBadgeGroup
-          label={t("tags")}
-          showAll
-          allLabel={t("filterAll")}
-          onSelectAll={onClearTags}
-          items={allTags.map((tag) => ({ value: tag, label: tag }))}
-          selected={filters.tags}
-          onToggle={onToggleTag}
-        />
+            <FilterBadgeGroup
+              label={t("tags")}
+              showAll
+              allLabel={t("filterAll")}
+              onSelectAll={onClearTags}
+              items={allTags.map((tag) => ({ value: tag, label: tag }))}
+              selected={filters.tags}
+              onToggle={onToggleTag}
+            />
 
-        {(hasActiveFilters || showUnwatchedOnly) && (
-          <button
-            type="button"
-            onClick={onClearFilters}
-            className="text-xs text-[var(--color-accent)] hover:underline"
-          >
-            {t("clearFilters")}
-          </button>
+            {(hasActiveFilters || showUnwatchedOnly) && (
+              <button
+                type="button"
+                onClick={onClearFilters}
+                className="text-xs text-[var(--color-accent)] hover:underline"
+              >
+                {t("clearFilters")}
+              </button>
+            )}
+          </>
         )}
       </div>
     </>

@@ -4,6 +4,8 @@
   "allVideos": "All Videos",
   "favorites": "Favorites",
   "checklist": "Checklist",
+  "checklistFilter": "Watch progress",
+  "checklistFilterAll": "All videos",
   "onlyUnwatched": "Only unwatched",
   "checklistProgress": "Completed {{completed}} / Total {{total}}",
   "markWatched": "Mark as watched",

@@ -4,6 +4,8 @@
   "allVideos": "すべての動画",
   "favorites": "お気に入り",
   "checklist": "チェックリスト",
+  "checklistFilter": "視聴状況",
+  "checklistFilterAll": "すべての動画",
   "onlyUnwatched": "未視聴のみ",
   "checklistProgress": "完了 {{completed}} / 合計 {{total}}",
   "markWatched": "視聴済みにする",

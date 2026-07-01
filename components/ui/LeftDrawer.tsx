@@ -36,7 +36,7 @@ export function LeftDrawer({ open, onClose, children }: LeftDrawerProps) {
         >
           <IconClose className="h-5 w-5" />
         </button>
-        <div className="h-full overflow-y-auto p-5 pt-12">{children}</div>
+        <div className="flex h-full flex-col p-5 pt-12">{children}</div>
       </div>
     </div>
   );

@@ -14,6 +14,7 @@ import {
   IconHeart,
 } from "@/components/ui/IconButton";
 import { PlatformIcon } from "@/components/ui/PlatformIcon";
+import { HoverTooltip } from "@/components/ui/HoverTooltip";
 import {
   SourceFields,
   createEmptySource,
@@ -242,12 +243,14 @@ export function VideoModal({
         <div className="flex min-h-0 flex-1 flex-col lg:max-h-[90vh] lg:flex-row lg:overflow-hidden">
           <div className="min-h-0 lg:flex-[1.65] lg:overflow-y-auto">
             {source && (
-              <VideoPlayer
-                url={source.url}
-                platform={source.platform}
-                title={video.title}
-                thumbnail={video.thumbnail}
-              />
+              <div className="modal-video-shell">
+                <VideoPlayer
+                  url={source.url}
+                  platform={source.platform}
+                  title={video.title}
+                  thumbnail={video.thumbnail}
+                />
+              </div>
             )}
 
             <div className="space-y-2 p-5">
@@ -292,45 +295,51 @@ export function VideoModal({
 
               <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
                 {video.sources.map((s) => (
-                  <a
-                    key={s.id}
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-sm font-medium text-[var(--color-text)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-                  >
-                    <PlatformIcon platform={s.platform} className="h-4 w-4 shrink-0" />
-                    {getPlatformLabel(s.platform)}
-                    <IconExternal className="h-3.5 w-3.5 opacity-60" />
-                  </a>
+                  <HoverTooltip key={s.id} label={t("openOriginal")}>
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-sm font-medium text-[var(--color-text)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                    >
+                      <PlatformIcon platform={s.platform} className="h-4 w-4 shrink-0" />
+                      {getPlatformLabel(s.platform)}
+                      <IconExternal className="h-3.5 w-3.5 opacity-60" />
+                    </a>
+                  </HoverTooltip>
                 ))}
-                <button
-                  type="button"
-                  onClick={onToggleChecked}
-                  className={`inline-flex h-10 w-10 shrink-0 items-center justify-center border ${
-                    isChecked
-                      ? "border-emerald-500 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                      : "border-[var(--color-border)] text-[var(--color-textMuted)] hover:border-[var(--color-accent)]"
-                  }`}
-                  aria-label={isChecked ? t("markUnwatched") : t("markWatched")}
-                  title={isChecked ? t("markUnwatched") : t("markWatched")}
+                <HoverTooltip
+                  label={isChecked ? t("markUnwatched") : t("markWatched")}
                 >
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={onToggleFavorite}
-                  className={`inline-flex h-10 w-10 shrink-0 items-center justify-center border ${
-                    isFavorite
-                      ? "border-[var(--color-accent)] bg-[var(--color-accentMuted)] text-[var(--color-accent)]"
-                      : "border-[var(--color-border)] text-[var(--color-textMuted)] hover:border-[var(--color-accent)]"
-                  }`}
-                  aria-label={isFavorite ? t("unfavorite") : t("favorite")}
-                >
-                  <IconHeart filled={isFavorite} className="h-4 w-4" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={onToggleChecked}
+                    className={`inline-flex h-10 w-10 shrink-0 items-center justify-center border ${
+                      isChecked
+                        ? "border-emerald-500 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                        : "border-[var(--color-border)] text-[var(--color-textMuted)] hover:border-[var(--color-accent)]"
+                    }`}
+                    aria-label={isChecked ? t("markUnwatched") : t("markWatched")}
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" />
+                    </svg>
+                  </button>
+                </HoverTooltip>
+                <HoverTooltip label={isFavorite ? t("unfavorite") : t("favorite")}>
+                  <button
+                    type="button"
+                    onClick={onToggleFavorite}
+                    className={`inline-flex h-10 w-10 shrink-0 items-center justify-center border ${
+                      isFavorite
+                        ? "border-[var(--color-accent)] bg-[var(--color-accentMuted)] text-[var(--color-accent)]"
+                        : "border-[var(--color-border)] text-[var(--color-textMuted)] hover:border-[var(--color-accent)]"
+                    }`}
+                    aria-label={isFavorite ? t("unfavorite") : t("favorite")}
+                  >
+                    <IconHeart filled={isFavorite} className="h-4 w-4" />
+                  </button>
+                </HoverTooltip>
               </div>
             </div>
           </div>

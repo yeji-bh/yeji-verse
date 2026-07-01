@@ -117,6 +117,7 @@
   "save": "儲存",
   "saveError": "儲存失敗，請稍後再試",
   "confirmDeleteVideo": "確定要刪除這部影片嗎？",
+  "confirmDeleteComment": "確定要刪除這則評論嗎？",
   "comments": "評論",
   "commentsCount": "評論 ({{count}})",
   "commentPlaceholder": "寫下你的想法…",

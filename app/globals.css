@@ -113,6 +113,32 @@ button:disabled {
 }
 
 .modal-shell {
-  border-radius: 8px !important;
+  border-radius: 6px !important;
+}
+
+.modal-video-shell {
+  background: #000;
+  overflow: hidden;
+  border-radius: 6px 6px 0 0 !important;
+}
+
+@media (min-width: 1024px) {
+  .modal-video-shell {
+    border-radius: 6px 0 0 0 !important;
+  }
+}
+
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition: none !important;
+}
+
+.soft-muted-text {
+  color: var(--color-textSubtle);
+}
+
+[data-theme="dark"] .soft-muted-text {
+  color: #d4d4d8;
 }
 

@@ -22,7 +22,7 @@ export function VideoPlayer({ url, platform, title, thumbnail }: VideoPlayerProp
 
   if (embedUrl) {
     return (
-      <div className="relative aspect-video w-full overflow-hidden bg-black">
+      <div className="relative block aspect-video w-full overflow-hidden bg-black">
         <iframe
           src={embedUrl}
           title={title}
@@ -40,7 +40,7 @@ export function VideoPlayer({ url, platform, title, thumbnail }: VideoPlayerProp
     <button
       type="button"
       onClick={() => setPlaying(true)}
-      className="group relative aspect-video w-full overflow-hidden bg-black"
+      className="group relative block aspect-video w-full overflow-hidden bg-black"
       aria-label={title}
     >
       {thumbSrc ? (

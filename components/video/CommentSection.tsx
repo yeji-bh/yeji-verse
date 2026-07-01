@@ -61,13 +61,20 @@ export function CommentSection({
   const [editContent, setEditContent] = useState("");
   const [savingId, setSavingId] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    const res = await fetch(`/api/videos/${videoId}/comments`);
+  const load = useCallback(async (signal?: AbortSignal) => {
+    const res = await fetch(`/api/videos/${videoId}/comments`, { signal });
     if (res.ok) setComments(await res.json());
   }, [videoId]);
 
   useEffect(() => {
-    load();
+    setComments([]);
+    const ac = new AbortController();
+    void load(ac.signal).catch((err) => {
+      if ((err as Error).name !== "AbortError") {
+        /* ignore */
+      }
+    });
+    return () => ac.abort();
   }, [load]);
 
   const handleSubmit = async (e: React.FormEvent) => {

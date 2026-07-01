@@ -35,9 +35,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setTheme = useCallback((mode: ThemeMode) => {
-    setThemeState(mode);
     applyTheme(mode);
     localStorage.setItem(THEME_KEY, mode);
+    setThemeState(mode);
   }, []);
 
   const toggleTheme = useCallback(() => {

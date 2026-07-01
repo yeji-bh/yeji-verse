@@ -67,10 +67,17 @@ export function applyTheme(mode: ThemeMode) {
   const palette = colors[mode];
   const root = document.documentElement;
 
+  root.classList.add("theme-switching");
+
   Object.entries(palette).forEach(([key, value]) => {
     root.style.setProperty(`--color-${key}`, value);
   });
 
   root.classList.toggle("dark", mode === "dark");
   root.dataset.theme = mode;
+  root.style.colorScheme = mode;
+
+  requestAnimationFrame(() => {
+    root.classList.remove("theme-switching");
+  });
 }

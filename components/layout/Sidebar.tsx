@@ -110,14 +110,14 @@ export function Sidebar({
               {t("siteName")}
             </span>
           </h1>
-          <p className="mt-0.5 text-xs text-[var(--color-textSubtle)]">{t("siteTagline")}</p>
+          <p className="soft-muted-text mt-0.5 text-xs">{t("siteTagline")}</p>
         </div>
       )}
 
       <div className="flex flex-col gap-2">
         {user ? (
-          <div className="flex items-center justify-between gap-2">
-            <span className="min-w-0 truncate text-xs text-[var(--color-textMuted)]">
+          <div className="flex items-center justify-end gap-1">
+            <span className="soft-muted-text min-w-0 truncate text-right text-xs">
               {user.username}
             </span>
             <div className="flex shrink-0 items-center gap-0.5">
@@ -256,14 +256,30 @@ export function Sidebar({
     </>
   );
 
+  const mobileDisclaimer = (
+    <p
+      className={`soft-muted-text shrink-0 pt-4 text-xs leading-relaxed lg:hidden ${
+        scrollable ? "" : "mt-auto"
+      }`}
+    >
+      *{t("thumbnailDisclaimer")}
+    </p>
+  );
+
   return (
     <>
       {scrollable ? (
-        <aside className={`min-h-0 flex-1 overflow-y-auto ${className}`}>
-          <div className="flex flex-col gap-5 pl-5 pr-5 pb-12 pt-5">{content}</div>
+        <aside className={`flex min-h-0 flex-1 flex-col ${className}`}>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <div className="flex flex-col gap-5 pl-5 pr-5 pb-12 pt-5">{content}</div>
+          </div>
+          <div className="shrink-0 px-5 pb-5">{mobileDisclaimer}</div>
         </aside>
       ) : (
-        <aside className={`flex flex-col gap-5 ${className}`}>{content}</aside>
+        <aside className={`flex min-h-0 flex-1 flex-col ${className}`}>
+          <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto">{content}</div>
+          {mobileDisclaimer}
+        </aside>
       )}
 
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} initialMode={authMode} />

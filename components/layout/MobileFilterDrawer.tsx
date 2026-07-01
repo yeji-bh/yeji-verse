@@ -21,7 +21,7 @@ export function MobileFilterDrawer({
 }: MobileFilterDrawerProps) {
   return (
     <LeftDrawer open={open} onClose={onClose}>
-      <Sidebar {...sidebarProps} showBranding scrollable={false} onNavigate={onClose} />
+      <Sidebar {...sidebarProps} showBranding className="min-h-0 flex-1" scrollable={false} onNavigate={onClose} />
     </LeftDrawer>
   );
 }

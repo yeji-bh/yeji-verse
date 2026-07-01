@@ -65,8 +65,8 @@ export function Modal({
         ref={dialogRef}
         className={`modal-shell relative w-full ${sizeClasses[size]} overflow-hidden bg-[var(--color-bgElevated)] shadow-[var(--color-shadowLg)] animate-modal-in ${
           mobileFullscreen
-            ? "flex h-[100dvh] max-h-[100dvh] flex-col border-0 sm:h-auto sm:max-h-[90vh] sm:flex-none sm:border sm:border-[var(--color-border)]"
-            : "max-h-[95vh] sm:max-h-[90vh] border border-[var(--color-border)]"
+            ? "flex h-[100dvh] max-h-[100dvh] flex-col sm:h-auto sm:max-h-[90vh] sm:flex-none"
+            : "max-h-[95vh] sm:max-h-[90vh]"
         } ${className}`}
       >
         {children}

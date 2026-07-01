@@ -198,7 +198,7 @@ export function Header({
 
       {/* Desktop */}
       <div className="hidden lg:flex items-center gap-3 px-6 py-3">
-        <p className="min-w-0 flex-1 text-xs text-[var(--color-textSubtle)] leading-relaxed">
+        <p className="soft-muted-text min-w-0 flex-1 text-xs leading-relaxed">
           *{t("thumbnailDisclaimer")}
         </p>
         <SearchField

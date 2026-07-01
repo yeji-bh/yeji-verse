@@ -19,7 +19,7 @@ function themeScript() {
   const cssVars = Object.entries(dark)
     .map(([k, v]) => `--color-${k}:${v}`)
     .join(";");
-  return `(function(){try{var t=localStorage.getItem("yeji-verse-theme");var m=t||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");var p=${JSON.stringify(dark)};var l=${JSON.stringify(colors.light)};var c=m==="dark"?p:l;for(var k in c)document.documentElement.style.setProperty("--color-"+k,c[k]);document.documentElement.classList.toggle("dark",m==="dark");document.documentElement.dataset.theme=m}catch(e){}})()`;
+  return `(function(){try{var t=localStorage.getItem("yeji-verse-theme");var m=t||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");var p=${JSON.stringify(dark)};var l=${JSON.stringify(colors.light)};var c=m==="dark"?p:l;for(var k in c)document.documentElement.style.setProperty("--color-"+k,c[k]);document.documentElement.classList.toggle("dark",m==="dark");document.documentElement.dataset.theme=m;document.documentElement.style.colorScheme=m}catch(e){}})()`;
 }
 
 export default function RootLayout({

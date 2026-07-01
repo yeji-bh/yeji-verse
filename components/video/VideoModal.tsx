@@ -31,6 +31,8 @@ interface VideoModalProps {
   onClose: () => void;
   isFavorite: boolean;
   onToggleFavorite: () => void;
+  isChecked: boolean;
+  onToggleChecked: () => void;
   onVideoUpdated?: (video: Video) => void;
   onVideoDeleted?: (id: string) => void;
 }
@@ -41,6 +43,8 @@ export function VideoModal({
   onClose,
   isFavorite,
   onToggleFavorite,
+  isChecked,
+  onToggleChecked,
   onVideoUpdated,
   onVideoDeleted,
 }: VideoModalProps) {
@@ -236,7 +240,7 @@ export function VideoModal({
         </>
       ) : (
         <div className="flex min-h-0 flex-1 flex-col lg:max-h-[90vh] lg:flex-row lg:overflow-hidden">
-          <div className="min-h-0 space-y-4 overflow-y-auto p-5 lg:flex-[1.65]">
+          <div className="min-h-0 lg:flex-[1.65] lg:overflow-y-auto">
             {source && (
               <VideoPlayer
                 url={source.url}
@@ -246,63 +250,88 @@ export function VideoModal({
               />
             )}
 
-            <div className="flex flex-wrap gap-2">
-              <Badge>{t(video.category)}</Badge>
-              {video.tags.map((tag) => (
-                <Badge key={tag}>{tag}</Badge>
-              ))}
-            </div>
-
-            <div className="flex items-start justify-between gap-4">
-              <h2 className="text-xl font-bold leading-snug text-[var(--color-text)] sm:text-2xl">
-                {video.title}
-              </h2>
-              {isAdmin && (
-                <div className="flex shrink-0 gap-2">
-                  <button
-                    type="button"
-                    onClick={startEdit}
-                    className="rounded-xl border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-textMuted)] hover:border-[var(--color-accent)]"
-                  >
-                    {t("edit")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDelete}
-                    className="rounded-xl border border-red-300 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
-                  >
-                    {t("delete")}
-                  </button>
+            <div className="space-y-2 p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 flex-wrap gap-2">
+                  <Badge>{t(video.category)}</Badge>
+                  {video.tags.map((tag) => (
+                    <Badge key={tag}>{tag}</Badge>
+                  ))}
                 </div>
-              )}
-            </div>
+                {isAdmin && (
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={startEdit}
+                      className="border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-textMuted)] hover:border-[var(--color-accent)]"
+                    >
+                      {t("edit")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      className="border border-red-300 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                    >
+                      {t("delete")}
+                    </button>
+                  </div>
+                )}
+              </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
-              {video.sources.map((s) => (
-                <a
-                  key={s.id}
-                  href={s.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-sm font-medium text-[var(--color-text)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+              <div>
+                <h2 className="text-xl font-bold leading-snug text-[var(--color-text)] sm:text-2xl">
+                  {video.title}
+                </h2>
+                <time
+                  dateTime={video.publishedDate}
+                  className="mt-1 block text-sm text-[var(--color-textSubtle)]"
                 >
-                  <PlatformIcon platform={s.platform} className="h-4 w-4 shrink-0" />
-                  {getPlatformLabel(s.platform)}
-                  <IconExternal className="h-3.5 w-3.5 opacity-60" />
-                </a>
-              ))}
-              <button
-                type="button"
-                onClick={onToggleFavorite}
-                className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${
-                  isFavorite
-                    ? "border-[var(--color-accent)] bg-[var(--color-accentMuted)] text-[var(--color-accent)]"
-                    : "border-[var(--color-border)]"
-                }`}
-                aria-label={isFavorite ? t("unfavorite") : t("favorite")}
-              >
-                <IconHeart filled={isFavorite} className="h-4 w-4" />
-              </button>
+                  {video.publishedDate}
+                </time>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
+                {video.sources.map((s) => (
+                  <a
+                    key={s.id}
+                    href={s.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-sm font-medium text-[var(--color-text)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                  >
+                    <PlatformIcon platform={s.platform} className="h-4 w-4 shrink-0" />
+                    {getPlatformLabel(s.platform)}
+                    <IconExternal className="h-3.5 w-3.5 opacity-60" />
+                  </a>
+                ))}
+                <button
+                  type="button"
+                  onClick={onToggleChecked}
+                  className={`inline-flex h-10 w-10 shrink-0 items-center justify-center border ${
+                    isChecked
+                      ? "border-emerald-500 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                      : "border-[var(--color-border)] text-[var(--color-textMuted)] hover:border-[var(--color-accent)]"
+                  }`}
+                  aria-label={isChecked ? t("markUnwatched") : t("markWatched")}
+                  title={isChecked ? t("markUnwatched") : t("markWatched")}
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={onToggleFavorite}
+                  className={`inline-flex h-10 w-10 shrink-0 items-center justify-center border ${
+                    isFavorite
+                      ? "border-[var(--color-accent)] bg-[var(--color-accentMuted)] text-[var(--color-accent)]"
+                      : "border-[var(--color-border)] text-[var(--color-textMuted)] hover:border-[var(--color-accent)]"
+                  }`}
+                  aria-label={isFavorite ? t("unfavorite") : t("favorite")}
+                >
+                  <IconHeart filled={isFavorite} className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
 

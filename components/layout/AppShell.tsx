@@ -382,6 +382,8 @@ export function AppShell({
         onClose={() => setSelectedVideo(null)}
         isFavorite={selectedVideo ? isFavorite(selectedVideo.id) : false}
         onToggleFavorite={() => selectedVideo && toggle(selectedVideo.id)}
+        isChecked={selectedVideo ? isChecked(selectedVideo.id) : false}
+        onToggleChecked={() => selectedVideo && void toggleChecked(selectedVideo.id)}
         onVideoUpdated={(updated) => {
           setVideos((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
           setSelectedVideo(updated);

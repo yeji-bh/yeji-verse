@@ -172,7 +172,7 @@ export function VideoCard({
       className="group cursor-pointer [content-visibility:auto] [contain-intrinsic-size:auto_260px]"
       onClick={onClick}
     >
-      <div className="relative aspect-video overflow-hidden rounded-2xl bg-[var(--color-bgMuted)] shadow-[var(--color-shadow)]">
+      <div className="relative aspect-video overflow-hidden bg-[var(--color-bgMuted)] shadow-[var(--color-shadow)]">
         <LazyThumbnail
           src={getThumbnailDisplayUrl(video.thumbnail)}
           alt={video.title}

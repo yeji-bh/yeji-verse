@@ -14,6 +14,12 @@ body {
   color: var(--color-text);
 }
 
+*,
+*::before,
+*::after {
+  border-radius: 4px !important;
+}
+
 @keyframes modal-in {
   from {
     opacity: 0;
@@ -51,7 +57,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: var(--color-scrollbar);
-  border-radius: 3px;
+  border-radius: 0;
 }
 
 input[type="search"]::-webkit-search-cancel-button {
@@ -104,5 +110,9 @@ button:disabled {
 
 .animate-drawer-in {
   animation: drawer-in 0.25s ease-out;
+}
+
+.modal-shell {
+  border-radius: 8px !important;
 }
 

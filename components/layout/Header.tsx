@@ -53,7 +53,7 @@ function SearchField({
         onFocus={onFocus}
         onBlur={onBlur}
         placeholder={placeholder}
-        className={`w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] py-2 pl-9 text-sm outline-none focus:border-[var(--color-accent)] ${
+        className={`w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] h-9 py-0 pl-9 text-sm outline-none focus:border-[var(--color-accent)] ${
           value ? "pr-9" : "pr-3"
         }`}
       />
@@ -187,10 +187,10 @@ export function Header({
             <button
               type="button"
               onClick={onSubmitClick}
-              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--color-accent)] text-[var(--color-accentText)]"
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--color-accent)] text-[var(--color-accentText)]"
               aria-label={t("submitVideo")}
             >
-              <IconPlus className="h-5 w-5" />
+              <IconPlus className="h-4 w-4" />
             </button>
           )}
         </div>

@@ -28,7 +28,7 @@ export function LeftDrawer({ open, onClose, children }: LeftDrawerProps) {
         onClick={onClose}
         aria-label="close"
       />
-      <div className="relative h-full w-[min(88vw,320px)] animate-drawer-in bg-[var(--color-bgElevated)] shadow-[var(--color-shadowLg)]">
+      <div className="relative flex h-full w-[min(88vw,320px)] animate-drawer-in flex-col bg-[var(--color-bgElevated)] shadow-[var(--color-shadowLg)]">
         <button
           type="button"
           onClick={onClose}
@@ -36,7 +36,7 @@ export function LeftDrawer({ open, onClose, children }: LeftDrawerProps) {
         >
           <IconClose className="h-5 w-5" />
         </button>
-        <div className="flex h-full flex-col p-5 pt-12">{children}</div>
+        <div className="flex min-h-0 flex-1 flex-col pt-12">{children}</div>
       </div>
     </div>
   );

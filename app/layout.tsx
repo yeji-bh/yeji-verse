@@ -30,6 +30,9 @@ export default function RootLayout({
   return (
     <html lang="zh-TW" className={`${notoSansTC.variable} h-full`} suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://player.bilibili.com" />
+        <link rel="dns-prefetch" href="https://player.bilibili.com" />
+        <link rel="preconnect" href="https://www.bilibili.com" />
         <script dangerouslySetInnerHTML={{ __html: themeScript() }} />
         <SiteJsonLd />
       </head>

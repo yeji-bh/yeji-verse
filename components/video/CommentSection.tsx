@@ -12,6 +12,8 @@ interface CommentSectionProps {
   className?: string;
   fillHeight?: boolean;
   onClose?: () => void;
+  /** 桌面版評論區標題列的關閉按鈕；手機版由 Modal 頂部處理 */
+  showCloseButton?: boolean;
 }
 
 function CommentTime({ createdAt }: { createdAt: string }) {
@@ -50,6 +52,7 @@ export function CommentSection({
   className = "",
   fillHeight = false,
   onClose,
+  showCloseButton = true,
 }: CommentSectionProps) {
   const { t } = useTranslation("common");
   const { user } = useAuth();
@@ -151,11 +154,11 @@ export function CommentSection({
         <h3 className="text-base font-semibold text-[var(--color-text)]">
           {t("commentsCount", { count: comments.length })}
         </h3>
-        {onClose && (
+        {onClose && showCloseButton && (
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--color-textMuted)] transition-colors hover:bg-[var(--color-bgMuted)] hover:text-[var(--color-text)]"
+            className="hidden h-8 w-8 items-center justify-center rounded-full text-[var(--color-textMuted)] transition-colors hover:bg-[var(--color-bgMuted)] hover:text-[var(--color-text)] lg:flex"
             aria-label={t("close")}
           >
             <IconClose className="h-4 w-4" />

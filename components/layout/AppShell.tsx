@@ -108,6 +108,18 @@ export function AppShell({
 
   const prevHasActiveFiltersRef = useRef(hasActiveFilters || showUnwatchedOnly);
   const prevModeRef = useRef(mode);
+  const prevDefaultSortRef = useRef(true);
+
+  const isDefaultPaginationSort =
+    filters.sortBy === "createdAt" && filters.sortOrder === "desc";
+
+  const needsFullCatalog =
+    mode === "all" &&
+    !hasActiveFilters &&
+    !showUnwatchedOnly &&
+    !isDefaultPaginationSort;
+
+  const catalogLoading = loading || (needsFullCatalog && !fullyLoaded);
 
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [submitOpen, setSubmitOpen] = useState(false);
@@ -230,6 +242,30 @@ export function AppShell({
   }, [mode, hasActiveFilters, showUnwatchedOnly, fullyLoaded, loadAll]);
 
   useEffect(() => {
+    if (mode !== "all") return;
+
+    const isDefault = filters.sortBy === "createdAt" && filters.sortOrder === "desc";
+    const wasDefault = prevDefaultSortRef.current;
+    prevDefaultSortRef.current = isDefault;
+
+    if (!isDefault) {
+      if (!fullyLoaded) void loadAll();
+      return;
+    }
+
+    if (!wasDefault && isDefault && fullyLoaded) {
+      resetPagination();
+    }
+  }, [
+    mode,
+    filters.sortBy,
+    filters.sortOrder,
+    fullyLoaded,
+    loadAll,
+    resetPagination,
+  ]);
+
+  useEffect(() => {
     if (mode !== "all") {
       prevHasActiveFiltersRef.current = hasActiveFilters;
       return;
@@ -319,12 +355,12 @@ export function AppShell({
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <h1
-                    className="text-2xl font-bold tracking-tight bg-clip-text text-transparent"
+                    className="text-base font-bold tracking-tight bg-clip-text text-transparent lg:text-2xl"
                     style={{ backgroundImage: "var(--color-gradient)" }}
                   >
                     {t("starterTitle")}
                   </h1>
-                  <p className="mt-1 text-sm text-[var(--color-textMuted)]">
+                  <p className="mt-1 text-xs text-[var(--color-textMuted)] lg:text-sm">
                     {t("starterSubtitle")}
                   </p>
                 </div>
@@ -340,7 +376,7 @@ export function AppShell({
               </div>
             </header>
           )}
-          {loading ? (
+          {catalogLoading ? (
             <div className="flex justify-center py-24">
               <LoadingSpinner size="lg" />
             </div>
@@ -361,7 +397,13 @@ export function AppShell({
                 onToggleChecked={toggleChecked}
                 emptyMessage={emptyMessage}
                 emptyHint={emptyHint}
-                hasMore={mode === "all" && hasMore && !hasActiveFilters && !showUnwatchedOnly}
+                hasMore={
+                  mode === "all" &&
+                  hasMore &&
+                  !hasActiveFilters &&
+                  !showUnwatchedOnly &&
+                  isDefaultPaginationSort
+                }
                 loadingMore={mode === "all" && loadingMore}
                 onLoadMore={mode === "all" ? handleLoadMore : undefined}
               />

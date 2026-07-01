@@ -10,31 +10,57 @@ interface VideoPlayerProps {
   platform: string;
   title: string;
   thumbnail?: string;
+  /** 直接嵌入播放器，不顯示縮圖與自訂播放按鈕 */
+  embedOnMount?: boolean;
 }
 
-export function VideoPlayer({ url, platform, title, thumbnail }: VideoPlayerProps) {
-  const [playing, setPlaying] = useState(false);
-  const embedUrl = playing ? getEmbedUrl(url, platform, { autoplay: true }) : null;
+export function VideoPlayer({
+  url,
+  platform,
+  title,
+  thumbnail,
+  embedOnMount = false,
+}: VideoPlayerProps) {
+  const [playing, setPlaying] = useState(embedOnMount);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const embedUrl =
+    embedOnMount || playing
+      ? getEmbedUrl(url, platform, { autoplay: !embedOnMount && playing })
+      : null;
+  const thumbSrc = thumbnail ? getThumbnailDisplayUrl(thumbnail) : null;
 
   useEffect(() => {
-    setPlaying(false);
-  }, [url]);
+    setPlaying(embedOnMount);
+    setIframeLoaded(false);
+  }, [url, embedOnMount]);
 
   if (embedUrl) {
     return (
       <div className="relative block aspect-video w-full overflow-hidden bg-black">
+        {thumbSrc && !iframeLoaded && (
+          <Image
+            src={thumbSrc}
+            alt=""
+            fill
+            sizes="(max-width: 896px) 100vw, 896px"
+            className="object-cover"
+            unoptimized
+            priority={embedOnMount}
+          />
+        )}
         <iframe
           src={embedUrl}
           title={title}
-          className="absolute inset-0 h-full w-full"
+          className={`absolute inset-0 h-full w-full transition-opacity duration-200 ${
+            iframeLoaded ? "opacity-100" : "opacity-0"
+          }`}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
+          onLoad={() => setIframeLoaded(true)}
         />
       </div>
     );
   }
-
-  const thumbSrc = thumbnail ? getThumbnailDisplayUrl(thumbnail) : null;
 
   return (
     <button

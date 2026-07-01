@@ -84,7 +84,7 @@ function CardMetaRow({ tags, date }: { tags: string[]; date: string }) {
               <Badge
                 key={`measure-${index}`}
                 size="sm"
-                className="card-tag-measure shrink-0 whitespace-nowrap"
+                className="card-tag-measure max-lg:!px-1.5 max-lg:!py-0.5 max-lg:!text-[10px] shrink-0 whitespace-nowrap"
               >
                 {tag}
               </Badge>
@@ -93,7 +93,7 @@ function CardMetaRow({ tags, date }: { tags: string[]; date: string }) {
 
           <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-hidden">
             {tags.slice(0, visibleCount).map((tag, index) => (
-              <Badge key={`${index}-${tag}`} size="sm" className="shrink-0 whitespace-nowrap">
+              <Badge key={`${index}-${tag}`} size="sm" className="max-lg:!px-1.5 max-lg:!py-0.5 max-lg:!text-[10px] shrink-0 whitespace-nowrap">
                 {tag}
               </Badge>
             ))}
@@ -104,7 +104,7 @@ function CardMetaRow({ tags, date }: { tags: string[]; date: string }) {
       <time
         ref={dateRef}
         dateTime={date}
-        className="ml-auto shrink-0 whitespace-nowrap text-xs text-[var(--color-textSubtle)]"
+        className="ml-auto shrink-0 whitespace-nowrap text-[10px] text-[var(--color-textSubtle)] sm:text-xs"
       >
         {date}
       </time>
@@ -178,26 +178,26 @@ export function VideoCard({
           alt={video.title}
         />
 
-        <div className="absolute top-2.5 right-2.5 z-10">
+        <div className="absolute top-2 right-2 z-10 sm:top-2.5 sm:right-2.5">
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               onToggleChecked(e);
             }}
-            className={`flex h-7 w-7 items-center justify-center rounded-full text-white transition-colors ${
+            className={`flex h-6 w-6 items-center justify-center rounded-full text-white transition-colors sm:h-7 sm:w-7 ${
               isChecked ? "bg-emerald-500/95" : "bg-black/45"
             }`}
             aria-label={isChecked ? t("markUnwatched") : t("markWatched")}
           >
-            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="h-3 w-3 sm:h-3.5 sm:w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" />
             </svg>
           </button>
         </div>
       </div>
 
-      <h3 className="mt-3 line-clamp-2 text-sm font-semibold leading-snug text-[var(--color-text)] transition-colors group-hover:text-[var(--color-accent)]">
+      <h3 className="mt-2 line-clamp-2 text-xs font-semibold leading-snug text-[var(--color-text)] transition-colors group-hover:text-[var(--color-accent)] sm:mt-3 sm:text-sm">
         {video.title}
       </h3>
 

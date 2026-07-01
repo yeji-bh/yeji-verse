@@ -162,7 +162,7 @@ export function Sidebar({
 
       <div className="h-px bg-[var(--color-borderSubtle)]" />
 
-      <div className="space-y-1">
+      <div className="space-y-1 border-b border-[var(--color-borderSubtle)] pb-5">
         <NavLink href="/" active={pathname === "/"} onNavigate={onNavigate}>
           <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
@@ -187,9 +187,7 @@ export function Sidebar({
         </NavLink>
       </div>
 
-      <div className="h-px bg-[var(--color-borderSubtle)]" />
-
-      <div className="flex flex-col gap-5 px-3">
+      <div className="flex flex-col gap-5">
         {!hideSort && (
           <SortControls
             sortBy={filters.sortBy}
@@ -250,20 +248,14 @@ export function Sidebar({
                 {t("clearFilters")}
               </button>
             )}
+
+            <p className="soft-muted-text pt-1 text-xs leading-relaxed lg:hidden">
+              *{t("thumbnailDisclaimer")}
+            </p>
           </>
         )}
       </div>
     </>
-  );
-
-  const mobileDisclaimer = (
-    <p
-      className={`soft-muted-text shrink-0 pt-4 text-xs leading-relaxed lg:hidden ${
-        scrollable ? "" : "mt-auto"
-      }`}
-    >
-      *{t("thumbnailDisclaimer")}
-    </p>
   );
 
   return (
@@ -273,12 +265,12 @@ export function Sidebar({
           <div className="min-h-0 flex-1 overflow-y-auto">
             <div className="flex flex-col gap-5 pl-5 pr-5 pb-12 pt-5">{content}</div>
           </div>
-          <div className="shrink-0 px-5 pb-5">{mobileDisclaimer}</div>
         </aside>
       ) : (
         <aside className={`flex min-h-0 flex-1 flex-col ${className}`}>
-          <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto">{content}</div>
-          {mobileDisclaimer}
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <div className="flex flex-col gap-5 px-5 pb-5">{content}</div>
+          </div>
         </aside>
       )}
 

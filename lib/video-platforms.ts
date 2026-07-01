@@ -109,10 +109,10 @@ export function getEmbedUrl(
   if (p === "bilibili") {
     const ids = extractBilibiliId(url);
     if (ids?.bvid) {
-      return `https://player.bilibili.com/player.html?bvid=${ids.bvid}&high_quality=1&danmaku=0&autoplay=${autoplay}`;
+      return `https://player.bilibili.com/player.html?bvid=${ids.bvid}&danmaku=0&autoplay=${autoplay}`;
     }
     if (ids?.aid) {
-      return `https://player.bilibili.com/player.html?aid=${ids.aid}&high_quality=1&danmaku=0&autoplay=${autoplay}`;
+      return `https://player.bilibili.com/player.html?aid=${ids.aid}&danmaku=0&autoplay=${autoplay}`;
     }
   }
 

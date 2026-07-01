@@ -78,7 +78,7 @@ export function usePaginatedVideos(enabled: boolean) {
   }, [fetchPage]);
 
   const loadAll = useCallback(async () => {
-    if (fullyLoaded || loadingMoreRef.current) return;
+    if (fullyLoaded) return;
 
     abortLoadAll();
     const ac = new AbortController();

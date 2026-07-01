@@ -240,6 +240,15 @@ export function VideoModal({
         </div>
         </>
       ) : (
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-bgMuted)] text-[var(--color-textMuted)] hover:text-[var(--color-text)] lg:hidden"
+            aria-label={t("close")}
+          >
+            <IconClose className="h-4 w-4" />
+          </button>
         <div className="flex min-h-0 flex-1 flex-col lg:max-h-[90vh] lg:flex-row lg:overflow-hidden">
           <div className="min-h-0 lg:flex-[1.65] lg:overflow-y-auto">
             {source && (
@@ -249,16 +258,21 @@ export function VideoModal({
                   platform={source.platform}
                   title={video.title}
                   thumbnail={video.thumbnail}
+                  embedOnMount
                 />
               </div>
             )}
 
-            <div className="space-y-2 p-5">
+            <div className="space-y-2 p-4 sm:p-5">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex min-w-0 flex-wrap gap-2">
-                  <Badge>{t(video.category)}</Badge>
+                <div className="flex min-w-0 flex-wrap gap-1.5 sm:gap-2">
+                  <Badge className="max-lg:!px-2 max-lg:!py-0.5 max-lg:!text-[10px]">
+                    {t(video.category)}
+                  </Badge>
                   {video.tags.map((tag) => (
-                    <Badge key={tag}>{tag}</Badge>
+                    <Badge key={tag} className="max-lg:!px-2 max-lg:!py-0.5 max-lg:!text-[10px]">
+                      {tag}
+                    </Badge>
                   ))}
                 </div>
                 {isAdmin && (
@@ -282,12 +296,12 @@ export function VideoModal({
               </div>
 
               <div>
-                <h2 className="text-xl font-bold leading-snug text-[var(--color-text)] sm:text-2xl">
+                <h2 className="text-base font-bold leading-snug text-[var(--color-text)] sm:text-xl lg:text-2xl">
                   {video.title}
                 </h2>
                 <time
                   dateTime={video.publishedDate}
-                  className="mt-1 block text-sm text-[var(--color-textSubtle)]"
+                  className="mt-1 block text-xs text-[var(--color-textSubtle)] sm:text-sm"
                 >
                   {video.publishedDate}
                 </time>
@@ -300,11 +314,11 @@ export function VideoModal({
                       href={s.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-2.5 text-sm font-medium text-[var(--color-text)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                      className="inline-flex items-center gap-1.5 border border-[var(--color-border)] bg-[var(--color-bg)] px-2.5 py-1.5 text-xs font-medium text-[var(--color-text)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] sm:gap-2 sm:px-3 sm:py-2.5 sm:text-sm"
                     >
-                      <PlatformIcon platform={s.platform} className="h-4 w-4 shrink-0" />
+                      <PlatformIcon platform={s.platform} className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
                       {getPlatformLabel(s.platform)}
-                      <IconExternal className="h-3.5 w-3.5 opacity-60" />
+                      <IconExternal className="h-3 w-3 opacity-60 sm:h-3.5 sm:w-3.5" />
                     </a>
                   </HoverTooltip>
                 ))}
@@ -314,14 +328,14 @@ export function VideoModal({
                   <button
                     type="button"
                     onClick={onToggleChecked}
-                    className={`inline-flex h-10 w-10 shrink-0 items-center justify-center border ${
+                    className={`inline-flex h-8 w-8 shrink-0 items-center justify-center border sm:h-10 sm:w-10 ${
                       isChecked
                         ? "border-emerald-500 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                         : "border-[var(--color-border)] text-[var(--color-textMuted)] hover:border-[var(--color-accent)]"
                     }`}
                     aria-label={isChecked ? t("markUnwatched") : t("markWatched")}
                   >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <svg className="h-3.5 w-3.5 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" />
                     </svg>
                   </button>
@@ -330,24 +344,25 @@ export function VideoModal({
                   <button
                     type="button"
                     onClick={onToggleFavorite}
-                    className={`inline-flex h-10 w-10 shrink-0 items-center justify-center border ${
+                    className={`inline-flex h-8 w-8 shrink-0 items-center justify-center border sm:h-10 sm:w-10 ${
                       isFavorite
                         ? "border-[var(--color-accent)] bg-[var(--color-accentMuted)] text-[var(--color-accent)]"
                         : "border-[var(--color-border)] text-[var(--color-textMuted)] hover:border-[var(--color-accent)]"
                     }`}
                     aria-label={isFavorite ? t("unfavorite") : t("favorite")}
                   >
-                    <IconHeart filled={isFavorite} className="h-4 w-4" />
+                    <IconHeart filled={isFavorite} className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </button>
                 </HoverTooltip>
               </div>
             </div>
           </div>
 
-          <div className="flex min-h-0 flex-col border-t border-[var(--color-borderSubtle)] p-5 lg:flex-1 lg:border-l lg:border-t-0">
+          <div className="flex min-h-0 flex-col border-t border-[var(--color-borderSubtle)] p-4 sm:p-5 lg:flex-1 lg:border-l lg:border-t-0">
             <CommentSection videoId={video.id} fillHeight onClose={onClose} />
           </div>
         </div>
+        </>
       )}
     </Modal>
   );

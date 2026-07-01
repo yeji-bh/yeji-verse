@@ -119,6 +119,7 @@
   "confirmDeleteVideo": "この動画を削除しますか？",
   "confirmDeleteComment": "このコメントを削除しますか？",
   "comments": "コメント",
+  "commentsCount": "コメント ({{count}})",
   "commentPlaceholder": "コメントを入力…",
   "commentNickname": "ニックネーム（任意）",
   "commentSubmit": "投稿",

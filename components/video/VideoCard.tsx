@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/Badge";
 import { useTranslation } from "react-i18next";
@@ -12,6 +12,104 @@ interface VideoCardProps {
   onClick: () => void;
   isChecked: boolean;
   onToggleChecked: (e: React.MouseEvent) => void;
+}
+
+const TAG_GAP_PX = 6;
+
+function CardMetaRow({ tags, date }: { tags: string[]; date: string }) {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const dateRef = useRef<HTMLTimeElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState(tags.length);
+
+  const recompute = useCallback(() => {
+    const row = rowRef.current;
+    const measure = measureRef.current;
+    const dateEl = dateRef.current;
+
+    if (!row || !dateEl) {
+      setVisibleCount(tags.length);
+      return;
+    }
+
+    if (tags.length === 0) return;
+
+    const rowWidth = row.clientWidth;
+    const dateWidth = dateEl.offsetWidth;
+    const available = rowWidth - dateWidth - TAG_GAP_PX;
+
+    if (available <= 0) {
+      setVisibleCount(0);
+      return;
+    }
+
+    const badges = measure?.querySelectorAll(".card-tag-measure") ?? [];
+    let used = 0;
+    let count = 0;
+
+    for (let i = 0; i < badges.length; i++) {
+      const badgeWidth = (badges[i] as HTMLElement).offsetWidth;
+      const nextUsed = count === 0 ? badgeWidth : used + TAG_GAP_PX + badgeWidth;
+      if (nextUsed > available) break;
+      used = nextUsed;
+      count++;
+    }
+
+    setVisibleCount(count);
+  }, [tags]);
+
+  useLayoutEffect(() => {
+    recompute();
+  }, [recompute, date]);
+
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+
+    const observer = new ResizeObserver(() => recompute());
+    observer.observe(row);
+    return () => observer.disconnect();
+  }, [recompute]);
+
+  return (
+    <div ref={rowRef} className="relative mt-2 flex flex-nowrap items-center gap-1.5">
+      {tags.length > 0 && (
+        <>
+          <div
+            ref={measureRef}
+            className="pointer-events-none absolute left-0 top-0 -z-10 flex gap-1.5 opacity-0"
+            aria-hidden
+          >
+            {tags.map((tag, index) => (
+              <Badge
+                key={`measure-${index}`}
+                size="sm"
+                className="card-tag-measure shrink-0 whitespace-nowrap"
+              >
+                {tag}
+              </Badge>
+            ))}
+          </div>
+
+          <div className="flex min-w-0 flex-1 flex-nowrap items-center gap-1.5 overflow-hidden">
+            {tags.slice(0, visibleCount).map((tag, index) => (
+              <Badge key={`${index}-${tag}`} size="sm" className="shrink-0 whitespace-nowrap">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        </>
+      )}
+
+      <time
+        ref={dateRef}
+        dateTime={date}
+        className="ml-auto shrink-0 whitespace-nowrap text-xs text-[var(--color-textSubtle)]"
+      >
+        {date}
+      </time>
+    </div>
+  );
 }
 
 function LazyThumbnail({ src, alt }: { src: string; alt: string }) {
@@ -67,26 +165,26 @@ export function VideoCard({
   onToggleChecked,
 }: VideoCardProps) {
   const { t } = useTranslation("common");
+  const displayTags = [t(video.category), ...video.tags];
 
   return (
     <article
-      className="group cursor-pointer [content-visibility:auto] [contain-intrinsic-size:auto_220px]"
+      className="group cursor-pointer [content-visibility:auto] [contain-intrinsic-size:auto_260px]"
       onClick={onClick}
     >
-      <div className="relative aspect-video overflow-hidden rounded-xl bg-[var(--color-bgMuted)]">
+      <div className="relative aspect-video overflow-hidden rounded-2xl bg-[var(--color-bgMuted)] shadow-[var(--color-shadow)]">
         <LazyThumbnail
           src={getThumbnailDisplayUrl(video.thumbnail)}
           alt={video.title}
         />
 
-        <span className="absolute top-2 left-2 z-10 rounded-md bg-black/55 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
-          {t(video.category)}
-        </span>
-
-        <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
+        <div className="absolute top-2.5 right-2.5 z-10">
           <button
             type="button"
-            onClick={onToggleChecked}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleChecked(e);
+            }}
             className={`flex h-7 w-7 items-center justify-center rounded-full text-white transition-colors ${
               isChecked ? "bg-emerald-500/95" : "bg-black/45"
             }`}
@@ -99,19 +197,11 @@ export function VideoCard({
         </div>
       </div>
 
-      <h3 className="mt-2 line-clamp-2 text-sm font-medium leading-snug text-[var(--color-text)] group-hover:text-[var(--color-accent)] transition-colors">
+      <h3 className="mt-3 line-clamp-2 text-sm font-semibold leading-snug text-[var(--color-text)] transition-colors group-hover:text-[var(--color-accent)]">
         {video.title}
       </h3>
 
-      {video.tags.length > 0 && (
-        <div className="mt-1.5 flex flex-wrap gap-1">
-          {video.tags.slice(0, 3).map((tag) => (
-            <Badge key={tag} size="sm">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      )}
+      <CardMetaRow tags={displayTags} date={video.publishedDate} />
     </article>
   );
 }

@@ -119,6 +119,7 @@
   "confirmDeleteVideo": "确定要删除这部影片吗？",
   "confirmDeleteComment": "确定要删除这条评论吗？",
   "comments": "评论",
+  "commentsCount": "评论 ({{count}})",
   "commentPlaceholder": "写下你的想法…",
   "commentNickname": "昵称（选填）",
   "commentSubmit": "发表评论",

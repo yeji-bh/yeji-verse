@@ -119,6 +119,7 @@
   "confirmDeleteVideo": "Delete this video?",
   "confirmDeleteComment": "Delete this comment?",
   "comments": "Comments",
+  "commentsCount": "Comments ({{count}})",
   "commentPlaceholder": "Share your thoughts…",
   "commentNickname": "Nickname (optional)",
   "commentSubmit": "Post comment",

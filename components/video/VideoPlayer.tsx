@@ -16,7 +16,7 @@ interface VideoPlayerProps {
 export function VideoPlayer({ url, platform, title, thumbnail, flat = false }: VideoPlayerProps) {
   const [playing, setPlaying] = useState(false);
   const embedUrl = playing ? getEmbedUrl(url, platform, { autoplay: true }) : null;
-  const shape = flat ? "rounded-none" : "rounded-xl";
+  const shape = flat ? "rounded-none" : "rounded-2xl";
 
   useEffect(() => {
     setPlaying(false);

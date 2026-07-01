@@ -11,7 +11,6 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import {
   IconClose,
   IconExternal,
-  IconEye,
   IconHeart,
 } from "@/components/ui/IconButton";
 import { PlatformIcon } from "@/components/ui/PlatformIcon";
@@ -24,7 +23,7 @@ import {
 import { useVideoUrlParser } from "@/hooks/useVideoUrlParser";
 import { CATEGORIES } from "@/lib/constants";
 import type { Category, Video } from "@/lib/types";
-import { getPlatformLabel, getPlatformViewCount } from "@/lib/video-platforms";
+import { getPlatformLabel } from "@/lib/video-platforms";
 
 interface VideoModalProps {
   video: Video | null;
@@ -86,7 +85,6 @@ export function VideoModal({
   if (!video) return null;
 
   const source = video.sources[0];
-  const platformViews = getPlatformViewCount(video);
 
   const startEdit = () => {
     setEditTitle(video.title);
@@ -147,18 +145,18 @@ export function VideoModal({
   };
 
   return (
-    <Modal open={open} onClose={onClose} size="lg" mobileFullscreen>
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white"
-        aria-label={t("close")}
-      >
-        <IconClose className="h-4 w-4" />
-      </button>
-
+    <Modal open={open} onClose={onClose} size="xl" mobileFullscreen>
       {editing ? (
-        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 sm:flex-none sm:max-h-[90vh]">
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-bgMuted)] text-[var(--color-textMuted)] hover:text-[var(--color-text)]"
+            aria-label={t("close")}
+          >
+            <IconClose className="h-4 w-4" />
+          </button>
+        <div className="min-h-0 flex-1 overflow-y-auto p-5 space-y-4 sm:flex-none sm:max-h-[90vh]">
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="space-y-4">
               <div>
@@ -235,53 +233,43 @@ export function VideoModal({
             </button>
           </div>
         </div>
+        </>
       ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto pb-8 lg:grid lg:max-h-[90vh] lg:grid-cols-[minmax(0,1.15fr)_minmax(280px,0.85fr)] lg:overflow-hidden lg:pb-0">
-          <div className="space-y-4 p-4 sm:p-5 lg:min-h-0 lg:overflow-y-auto">
+        <div className="flex min-h-0 flex-1 flex-col lg:max-h-[90vh] lg:flex-row lg:overflow-hidden">
+          <div className="min-h-0 space-y-4 overflow-y-auto p-5 lg:flex-[1.65]">
             {source && (
-              <div className="-mx-4 -mt-4 sm:-mx-5 sm:-mt-5 lg:-mx-5 lg:-mt-5">
-                <VideoPlayer
-                  url={source.url}
-                  platform={source.platform}
-                  title={video.title}
-                  thumbnail={video.thumbnail}
-                  flat
-                />
-              </div>
+              <VideoPlayer
+                url={source.url}
+                platform={source.platform}
+                title={video.title}
+                thumbnail={video.thumbnail}
+              />
             )}
 
-            <h2 className="text-lg font-semibold leading-snug sm:text-xl">{video.title}</h2>
-
-            <div className="flex flex-wrap items-center gap-3 text-sm text-[var(--color-textMuted)]">
-              <span>{video.publishedDate}</span>
-              {platformViews !== null && (
-                <span className="inline-flex items-center gap-1">
-                  <IconEye className="h-3.5 w-3.5" />
-                  {platformViews.toLocaleString()} {t("views")}
-                </span>
-              )}
+            <div className="flex flex-wrap gap-2">
+              <Badge>{t(video.category)}</Badge>
+              {video.tags.map((tag) => (
+                <Badge key={tag}>{tag}</Badge>
+              ))}
             </div>
 
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
-                <Badge active>{t(video.category)}</Badge>
-                {video.tags.map((tag) => (
-                  <Badge key={tag}>{tag}</Badge>
-                ))}
-              </div>
+            <div className="flex items-start justify-between gap-4">
+              <h2 className="text-xl font-bold leading-snug text-[var(--color-text)] sm:text-2xl">
+                {video.title}
+              </h2>
               {isAdmin && (
                 <div className="flex shrink-0 gap-2">
                   <button
                     type="button"
                     onClick={startEdit}
-                    className="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-textMuted)] hover:border-[var(--color-accent)]"
+                    className="rounded-xl border border-[var(--color-border)] px-3 py-1.5 text-xs text-[var(--color-textMuted)] hover:border-[var(--color-accent)]"
                   >
                     {t("edit")}
                   </button>
                   <button
                     type="button"
                     onClick={handleDelete}
-                    className="rounded-lg border border-red-300 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+                    className="rounded-xl border border-red-300 px-3 py-1.5 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
                   >
                     {t("delete")}
                   </button>
@@ -289,7 +277,7 @@ export function VideoModal({
               )}
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
               {video.sources.map((s) => (
                 <a
                   key={s.id}
@@ -318,8 +306,8 @@ export function VideoModal({
             </div>
           </div>
 
-          <div className="border-t border-[var(--color-borderSubtle)] p-4 sm:p-5 lg:flex lg:flex-col lg:overflow-hidden lg:border-l lg:border-t-0">
-            <CommentSection videoId={video.id} fillHeight className="border-t-0 pt-0" />
+          <div className="flex min-h-0 flex-col border-t border-[var(--color-borderSubtle)] p-5 lg:flex-1 lg:border-l lg:border-t-0">
+            <CommentSection videoId={video.id} fillHeight onClose={onClose} />
           </div>
         </div>
       )}

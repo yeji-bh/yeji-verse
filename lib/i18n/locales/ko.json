@@ -119,6 +119,7 @@
   "confirmDeleteVideo": "이 영상을 삭제할까요?",
   "confirmDeleteComment": "이 댓글을 삭제할까요?",
   "comments": "댓글",
+  "commentsCount": "댓글 ({{count}})",
   "commentPlaceholder": "댓글을 입력하세요…",
   "commentNickname": "닉네임 (선택)",
   "commentSubmit": "댓글 작성",

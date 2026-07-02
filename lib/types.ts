@@ -1,6 +1,8 @@
 export type Category =
   | "vlog"
   | "variety"
+  | "mv"
+  | "practiceRoom"
   | "fancam"
   | "solo"
   | "stage"
@@ -13,6 +15,11 @@ export type Category =
   | "fanmade"
   | "concert"
   | "live"
+  | "preview"
+  | "stats"
+  | "skill"
+  | "clarification"
+  | "radio"
   | "other";
 
 export type SortBy = "createdAt" | "title";

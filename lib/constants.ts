@@ -3,6 +3,8 @@ import type { Category, SortBy } from "./types";
 export const CATEGORIES: Category[] = [
   "vlog",
   "variety",
+  "mv",
+  "practiceRoom",
   "fancam",
   "solo",
   "stage",
@@ -15,6 +17,11 @@ export const CATEGORIES: Category[] = [
   "fanmade",
   "concert",
   "live",
+  "preview",
+  "stats",
+  "skill",
+  "clarification",
+  "radio",
   "other",
 ];
 
@@ -31,9 +38,10 @@ export const CHECKLIST_KEY = "yeji-verse-checklist";
 export const THEME_KEY = "yeji-verse-theme";
 export const LOCALE_KEY = "yeji-verse-locale";
 
-/** @deprecated fansite merged into fancam */
+/** @deprecated merged categories */
 const LEGACY_CATEGORY_ALIASES: Record<string, Category> = {
   fansite: "fancam",
+  officialVariety: "variety",
 };
 
 export function normalizeCategory(category: string): Category {

@@ -92,6 +92,7 @@
   "skill": "实力",
   "clarification": "澄清",
   "radio": "电台",
+  "audioSource": "音源",
   "other": "其他",
   "viewCountNote": "显示各平台最高观看数",
   "resultsCount": "共 {{count}} 部",

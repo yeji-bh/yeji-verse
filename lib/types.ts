@@ -20,6 +20,7 @@ export type Category =
   | "skill"
   | "clarification"
   | "radio"
+  | "audioSource"
   | "other";
 
 export type SortBy = "createdAt" | "title";

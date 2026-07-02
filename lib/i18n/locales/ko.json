@@ -92,6 +92,7 @@
   "skill": "실력",
   "clarification": "해명",
   "radio": "라디오",
+  "audioSource": "음원",
   "other": "기타",
   "viewCountNote": "플랫폼별 최고 조회수 표시",
   "resultsCount": "총 {{count}}개",

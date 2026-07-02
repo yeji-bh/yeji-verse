@@ -22,6 +22,7 @@ export const CATEGORIES: Category[] = [
   "skill",
   "clarification",
   "radio",
+  "audioSource",
   "other",
 ];
 

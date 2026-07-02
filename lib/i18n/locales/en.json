@@ -92,6 +92,7 @@
   "skill": "Skill",
   "clarification": "Clarification",
   "radio": "Radio",
+  "audioSource": "Audio",
   "other": "Other",
   "viewCountNote": "Shows highest count across platforms",
   "resultsCount": "{{count}} videos",

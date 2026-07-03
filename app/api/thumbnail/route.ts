@@ -18,7 +18,8 @@ export async function GET(request: Request) {
   try {
     const upstream = await fetch(url, {
       headers: BILIBILI_HEADERS,
-      next: { revalidate: 86400 },
+      // 不走 Next.js Data Cache（單檔上限 2MB）；改由下方 Cache-Control 讓瀏覽器/CDN 快取
+      cache: "no-store",
     });
 
     if (!upstream.ok) {

@@ -126,6 +126,29 @@ export function IconGlobe({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
+export function IconDice({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <rect
+        x="3.5"
+        y="3.5"
+        width="17"
+        height="17"
+        rx="4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2.25"
+        strokeLinejoin="round"
+      />
+      <circle cx="8" cy="8" r="1.5" />
+      <circle cx="16" cy="8" r="1.5" />
+      <circle cx="12" cy="12" r="1.5" />
+      <circle cx="8" cy="16" r="1.5" />
+      <circle cx="16" cy="16" r="1.5" />
+    </svg>
+  );
+}
+
 export function IconSettings({ className = "h-5 w-5" }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>

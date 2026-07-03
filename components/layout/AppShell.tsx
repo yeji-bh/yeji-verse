@@ -122,6 +122,7 @@ export function AppShell({
   const catalogLoading = loading || (needsFullCatalog && !fullyLoaded);
 
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
+  const [randomLoading, setRandomLoading] = useState(false);
   const [submitOpen, setSubmitOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [starterManageOpen, setStarterManageOpen] = useState(false);
@@ -290,6 +291,21 @@ export function AppShell({
     resetPagination,
   ]);
 
+  const handleRandomVideo = useCallback(async () => {
+    if (randomLoading) return;
+    setRandomLoading(true);
+    try {
+      const res = await fetch("/api/videos/random");
+      if (!res.ok) return;
+      const video = (await res.json()) as Video;
+      setSelectedVideo(video);
+    } catch {
+      /* ignore */
+    } finally {
+      setRandomLoading(false);
+    }
+  }, [randomLoading]);
+
   const sidebarProps = {
     filters,
     allTags,
@@ -345,6 +361,8 @@ export function AppShell({
           search={filters.search}
           onSearchChange={setSearch}
           onSubmitClick={() => setSubmitOpen(true)}
+          onRandomClick={handleRandomVideo}
+          randomLoading={randomLoading}
           onFilterClick={() => setFilterOpen(true)}
           showFilterButton
         />

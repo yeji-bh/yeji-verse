@@ -194,6 +194,24 @@ export async function getVideoById(id: string): Promise<Video | null> {
   return rowToVideo(rows[0] as Record<string, unknown>, sources);
 }
 
+export async function getRandomVideoFromDb(): Promise<Video | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  try {
+    const { rows } = await db.execute(
+      "SELECT * FROM videos WHERE status = 'approved' ORDER BY RANDOM() LIMIT 1",
+    );
+    if (rows.length === 0) return null;
+
+    const row = rows[0] as Record<string, unknown>;
+    const sources = await loadSources(db, row.id as string);
+    return rowToVideo(row, sources);
+  } catch {
+    return null;
+  }
+}
+
 export async function getVideosByIds(ids: string[]): Promise<Video[] | null> {
   const db = getClient();
   if (!db || ids.length === 0) return null;

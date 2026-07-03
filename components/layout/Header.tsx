@@ -6,6 +6,7 @@ import { useTheme } from "@/components/providers/ThemeProvider";
 import { localeLabels, locales, setAppLocale, type AppLocale } from "@/lib/i18n/client";
 import {
   IconClose,
+  IconDice,
   IconFilter,
   IconGlobe,
   IconMoon,
@@ -19,6 +20,8 @@ interface HeaderProps {
   search: string;
   onSearchChange: (value: string) => void;
   onSubmitClick: () => void;
+  onRandomClick?: () => void;
+  randomLoading?: boolean;
   onFilterClick?: () => void;
   showFilterButton?: boolean;
 }
@@ -75,6 +78,8 @@ export function Header({
   search,
   onSearchChange,
   onSubmitClick,
+  onRandomClick,
+  randomLoading = false,
   onFilterClick,
   showFilterButton = false,
 }: HeaderProps) {
@@ -83,6 +88,17 @@ export function Header({
   const [langOpen, setLangOpen] = useState(false);
   const [mobileSearchFocused, setMobileSearchFocused] = useState(false);
   const mobileSearchRef = useRef<HTMLInputElement>(null);
+
+  const randomButton = onRandomClick ? (
+    <PlainIconButton
+      label={t("randomVideo")}
+      onClick={onRandomClick}
+      disabled={randomLoading}
+      className="h-8 w-8"
+    >
+      <IconDice className={`h-5 w-5 ${randomLoading ? "animate-pulse" : ""}`} />
+    </PlainIconButton>
+  ) : null;
 
   const langThemeControls = (
     <div className="flex items-center -space-x-1">
@@ -184,14 +200,17 @@ export function Header({
             onBlur={() => setMobileSearchFocused(false)}
           />
           {!mobileSearchFocused && (
-            <button
-              type="button"
-              onClick={onSubmitClick}
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--color-accent)] text-[var(--color-accentText)]"
-              aria-label={t("submitVideo")}
-            >
-              <IconPlus className="h-4 w-4" />
-            </button>
+            <>
+              {randomButton}
+              <button
+                type="button"
+                onClick={onSubmitClick}
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--color-accent)] text-[var(--color-accentText)]"
+                aria-label={t("submitVideo")}
+              >
+                <IconPlus className="h-4 w-4" />
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -201,6 +220,7 @@ export function Header({
         <p className="soft-muted-text min-w-0 flex-1 text-xs leading-relaxed">
           *{t("thumbnailDisclaimer")}
         </p>
+        {randomButton}
         <SearchField
           value={search}
           onChange={onSearchChange}

@@ -102,6 +102,7 @@
   "other": "その他",
   "viewCountNote": "各プラットフォームの最高再生数を表示",
   "resultsCount": "{{count}} 件",
+  "loading": "読み込み中…",
   "thumbnailDisclaimer": "サムネイルは自動取得です。すべて Yeji であるとは限りません。",
   "backToHome": "ホームに戻る",
   "backToTop": "ページトップへ",

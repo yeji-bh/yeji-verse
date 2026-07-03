@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --font-sans: var(--font-tc), var(--font-sc), var(--font-jp), system-ui, -apple-system, sans-serif;
+  --font-sans: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", var(--font-tc), var(--font-sc), var(--font-jp), sans-serif;
 }
 
 @theme inline {

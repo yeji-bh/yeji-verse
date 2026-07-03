@@ -102,6 +102,7 @@
   "other": "其他",
   "viewCountNote": "顯示各平台最高觀看數",
   "resultsCount": "共 {{count}} 部",
+  "loading": "載入中…",
   "thumbnailDisclaimer": "封面是自動截取，無法保證都是 yeji",
   "backToHome": "返回首頁",
   "backToTop": "回到頂部",

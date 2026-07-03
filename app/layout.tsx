@@ -10,18 +10,24 @@ const notoSansTC = Noto_Sans_TC({
   variable: "--font-tc",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: false,
 });
 
 const notoSansSC = Noto_Sans_SC({
   variable: "--font-sc",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: false,
 });
 
 const notoSansJP = Noto_Sans_JP({
   variable: "--font-jp",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+  display: "swap",
+  preload: false,
 });
 
 export const metadata: Metadata = createMetadata();

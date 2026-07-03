@@ -102,6 +102,7 @@
   "other": "기타",
   "viewCountNote": "플랫폼별 최고 조회수 표시",
   "resultsCount": "총 {{count}}개",
+  "loading": "불러오는 중…",
   "thumbnailDisclaimer": "썸네일은 자동으로 가져옵니다. 모두 예지가 아닐 수 있습니다.",
   "backToHome": "홈으로",
   "backToTop": "맨 위로",

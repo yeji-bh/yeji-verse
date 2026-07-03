@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MobileFilterDrawer } from "@/components/layout/MobileFilterDrawer";
 import { VideoGrid } from "@/components/video/VideoGrid";
+import { VideoGridSkeleton } from "@/components/video/VideoGridSkeleton";
 import { VideoModal } from "@/components/video/VideoModal";
 import { SubmitModal } from "@/components/video/SubmitModal";
 import { StarterManageModal } from "@/components/starter/StarterManageModal";
@@ -22,16 +23,10 @@ import { BackToTop } from "@/components/ui/BackToTop";
 import type { Video } from "@/lib/types";
 
 interface AppShellProps {
-  initialVideos: Video[] | null;
   mode?: "all" | "favorites" | "starter" | "checklist";
-  onStarterVideosChange?: (videos: Video[]) => void;
 }
 
-export function AppShell({
-  initialVideos,
-  mode = "all",
-  onStarterVideosChange,
-}: AppShellProps) {
+export function AppShell({ mode = "all" }: AppShellProps) {
   const { t } = useTranslation("common");
   const { user } = useAuth();
   const paginated = mode === "all";
@@ -50,10 +45,8 @@ export function AppShell({
     reset: resetPagination,
     abortLoadAll,
   } = pagination;
-  const [starterVideos, setStarterVideos] = useState<Video[]>(initialVideos ?? []);
-  const [starterLoading, setStarterLoading] = useState(
-    mode === "starter" && initialVideos === null,
-  );
+  const [starterVideos, setStarterVideos] = useState<Video[]>([]);
+  const [starterLoading, setStarterLoading] = useState(mode === "starter");
 
   const { favorites, toggle, isFavorite, hydrated } = useFavorites();
   const {
@@ -122,6 +115,7 @@ export function AppShell({
     !isDefaultPaginationSort;
 
   const catalogLoading = loading || (needsFullCatalog && !fullyLoaded);
+  const showGridSkeleton = catalogLoading && videos.length === 0;
 
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [randomLoading, setRandomLoading] = useState(false);
@@ -217,12 +211,6 @@ export function AppShell({
 
     if (paginated) return;
 
-    if (initialVideos !== null) {
-      setStarterVideos(initialVideos);
-      setStarterLoading(false);
-      return;
-    }
-
     let cancelled = false;
 
     (async () => {
@@ -242,7 +230,7 @@ export function AppShell({
     return () => {
       cancelled = true;
     };
-  }, [initialVideos, paginated]);
+  }, [paginated, mode]);
 
   useEffect(() => {
     if (mode !== "all" || (!hasActiveFilters && !showUnwatchedOnly) || fullyLoaded) return;
@@ -396,49 +384,52 @@ export function AppShell({
               </div>
             </header>
           )}
-          {catalogLoading ? (
-            <div className="flex justify-center py-24">
-              <LoadingSpinner size="lg" />
-            </div>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <p className="text-xs text-[var(--color-textSubtle)]">
+              {showGridSkeleton
+                ? t("loading")
+                : mode === "checklist"
+                  ? t("checklistProgress", {
+                      completed: checkedIds.length,
+                      total: checklistTotal,
+                    })
+                  : t("resultsCount", { count: resultCount })}
+            </p>
+            {mode === "all" && (hasActiveFilters || showUnwatchedOnly) && (
+              <button
+                type="button"
+                onClick={handleClearFilters}
+                className="shrink-0 text-xs font-medium text-[var(--color-accent)] lg:hidden"
+              >
+                {t("clearFilters")}
+              </button>
+            )}
+          </div>
+          {showGridSkeleton ? (
+            <VideoGridSkeleton />
           ) : (
-            <>
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <p className="text-xs text-[var(--color-textSubtle)]">
-                  {mode === "checklist"
-                    ? t("checklistProgress", {
-                        completed: checkedIds.length,
-                        total: checklistTotal,
-                      })
-                    : t("resultsCount", { count: resultCount })}
-                </p>
-                {mode === "all" && (hasActiveFilters || showUnwatchedOnly) && (
-                  <button
-                    type="button"
-                    onClick={handleClearFilters}
-                    className="shrink-0 text-xs font-medium text-[var(--color-accent)] lg:hidden"
-                  >
-                    {t("clearFilters")}
-                  </button>
-                )}
-              </div>
-              <VideoGrid
-                videos={displayVideos}
-                onVideoClick={setSelectedVideo}
-                isChecked={isChecked}
-                onToggleChecked={toggleChecked}
-                emptyMessage={emptyMessage}
-                emptyHint={emptyHint}
-                hasMore={
-                  mode === "all" &&
-                  hasMore &&
-                  !hasActiveFilters &&
-                  !showUnwatchedOnly &&
-                  isDefaultPaginationSort
-                }
-                loadingMore={mode === "all" && loadingMore}
-                onLoadMore={mode === "all" ? handleLoadMore : undefined}
-              />
-            </>
+            <VideoGrid
+              videos={displayVideos}
+              onVideoClick={setSelectedVideo}
+              isChecked={isChecked}
+              onToggleChecked={toggleChecked}
+              emptyMessage={emptyMessage}
+              emptyHint={emptyHint}
+              hasMore={
+                mode === "all" &&
+                hasMore &&
+                !hasActiveFilters &&
+                !showUnwatchedOnly &&
+                isDefaultPaginationSort
+              }
+              loadingMore={mode === "all" && loadingMore}
+              onLoadMore={mode === "all" ? handleLoadMore : undefined}
+            />
+          )}
+          {catalogLoading && videos.length > 0 && (
+            <div className="flex justify-center py-6">
+              <LoadingSpinner size="md" />
+            </div>
           )}
         </main>
       </div>
@@ -474,7 +465,6 @@ export function AppShell({
           currentVideos={starterVideos}
           onUpdated={(updated) => {
             setStarterVideos(updated);
-            onStarterVideosChange?.(updated);
           }}
         />
       )}

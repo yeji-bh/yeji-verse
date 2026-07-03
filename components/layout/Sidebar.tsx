@@ -52,11 +52,10 @@ function NavLink({
     <Link
       href={href}
       onClick={onNavigate}
-      className={`flex items-center gap-2.5 rounded-xl py-2.5 px-3 text-sm font-medium transition-colors ${
-        active
-          ? "bg-[var(--color-accentMuted)] text-[var(--color-accent)]"
-          : "text-[var(--color-textMuted)] hover:bg-[var(--color-bgMuted)] hover:text-[var(--color-text)]"
-      }`}
+      className={`flex items-center gap-2.5 rounded-xl py-2.5 px-3 text-sm font-medium transition-colors ${active
+        ? "bg-[var(--color-accentMuted)] text-[var(--color-accent)]"
+        : "text-[var(--color-textMuted)] hover:bg-[var(--color-bgMuted)] hover:text-[var(--color-text)]"
+        }`}
     >
       {children}
     </Link>
@@ -193,6 +192,15 @@ export function Sidebar({
       </div>
 
       <div className="flex flex-col gap-5">
+        {(hasActiveFilters || showUnwatchedOnly) && (
+          <button
+            type="button"
+            onClick={onClearFilters}
+            className="w-full rounded-lg border border-[var(--color-border)] px-3 py-2 text-xs font-medium text-[var(--color-accent)] hover:bg-[var(--color-bgMuted)]"
+          >
+            {t("clearFilters")}
+          </button>
+        )}
         {!hideSort && (
           <SortControls
             sortBy={filters.sortBy}
@@ -243,17 +251,6 @@ export function Sidebar({
               selected={filters.tags}
               onToggle={onToggleTag}
             />
-
-            {(hasActiveFilters || showUnwatchedOnly) && (
-              <button
-                type="button"
-                onClick={onClearFilters}
-                className="text-xs text-[var(--color-accent)] hover:underline"
-              >
-                {t("clearFilters")}
-              </button>
-            )}
-
             <p className="soft-muted-text pt-1 text-xs leading-relaxed lg:hidden">
               *{t("thumbnailDisclaimer")}
             </p>

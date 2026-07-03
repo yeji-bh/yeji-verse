@@ -91,6 +91,16 @@ export function useFilters(videos: Video[], options?: { preserveOrder?: boolean 
   }, []);
 
   const clearFilters = useCallback(() => {
+    setFilters((f) => ({
+      ...f,
+      categories: [],
+      tags: [],
+      years: [],
+      search: "",
+    }));
+  }, []);
+
+  const resetFilters = useCallback(() => {
     setFilters(defaultFilters);
   }, []);
 
@@ -149,6 +159,7 @@ export function useFilters(videos: Video[], options?: { preserveOrder?: boolean 
     setSortOrder,
     setSearch,
     clearFilters,
+    resetFilters,
     hasActiveFilters,
   };
 }

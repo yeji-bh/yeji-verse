@@ -104,6 +104,7 @@ export function AppShell({
     setSortOrder,
     setSearch,
     clearFilters,
+    resetFilters,
     hasActiveFilters,
   } = useFilters(videos, { preserveOrder: mode === "starter" });
 
@@ -137,6 +138,11 @@ export function AppShell({
     : filtered;
 
   const checklistTotal = Math.max(videoTotal, siteVideoTotal);
+
+  const handleClearFilters = useCallback(() => {
+    clearFilters();
+    setShowUnwatchedOnly(false);
+  }, [clearFilters]);
 
   useEffect(() => {
     if (videoTotal > 0) {
@@ -202,9 +208,9 @@ export function AppShell({
   useEffect(() => {
     if (prevModeRef.current === mode) return;
     prevModeRef.current = mode;
-    clearFilters();
+    resetFilters();
     setShowUnwatchedOnly(false);
-  }, [mode, clearFilters, setShowUnwatchedOnly]);
+  }, [mode, resetFilters, setShowUnwatchedOnly]);
 
   useEffect(() => {
     setSelectedVideo(null);
@@ -319,12 +325,9 @@ export function AppShell({
     onClearYears: clearYears,
     onSetSortBy: setSortBy,
     onSetSortOrder: setSortOrder,
-    onClearFilters: () => {
-      clearFilters();
-      setShowUnwatchedOnly(false);
-    },
-    hasActiveFilters,
     showUnwatchedOnly,
+    onClearFilters: handleClearFilters,
+    hasActiveFilters,
     onToggleShowUnwatchedOnly: () => setShowUnwatchedOnly((v) => !v),
     onClearShowUnwatchedOnly: () => setShowUnwatchedOnly(false),
     hideSort: mode === "starter",
@@ -399,14 +402,25 @@ export function AppShell({
             </div>
           ) : (
             <>
-              <p className="mb-4 text-xs text-[var(--color-textSubtle)]">
-                {mode === "checklist"
-                  ? t("checklistProgress", {
-                      completed: checkedIds.length,
-                      total: checklistTotal,
-                    })
-                  : t("resultsCount", { count: resultCount })}
-              </p>
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <p className="text-xs text-[var(--color-textSubtle)]">
+                  {mode === "checklist"
+                    ? t("checklistProgress", {
+                        completed: checkedIds.length,
+                        total: checklistTotal,
+                      })
+                    : t("resultsCount", { count: resultCount })}
+                </p>
+                {mode === "all" && (hasActiveFilters || showUnwatchedOnly) && (
+                  <button
+                    type="button"
+                    onClick={handleClearFilters}
+                    className="shrink-0 text-xs font-medium text-[var(--color-accent)] lg:hidden"
+                  >
+                    {t("clearFilters")}
+                  </button>
+                )}
+              </div>
               <VideoGrid
                 videos={displayVideos}
                 onVideoClick={setSelectedVideo}

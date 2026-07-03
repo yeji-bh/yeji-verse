@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // @libsql/client/web needs workerd-specific transitive deps copied into the bundle.
+  // See https://opennext.js.org/cloudflare/howtos/workerd
+  serverExternalPackages: ["@libsql/isomorphic-ws", "@libsql/isomorphic-fetch"],
   allowedDevOrigins: ["192.168.100.187"],
   images: {
     remotePatterns: [

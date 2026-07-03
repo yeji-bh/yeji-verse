@@ -327,6 +327,7 @@ export function AppShell({
     showUnwatchedOnly,
     onToggleShowUnwatchedOnly: () => setShowUnwatchedOnly((v) => !v),
     onClearShowUnwatchedOnly: () => setShowUnwatchedOnly(false),
+    hideSort: mode === "starter",
   };
 
   const emptyMessage =
@@ -379,9 +380,6 @@ export function AppShell({
                   >
                     {t("starterTitle")}
                   </h1>
-                  <p className="mt-1 text-xs text-[var(--color-textMuted)] lg:text-sm">
-                    {t("starterSubtitle")}
-                  </p>
                 </div>
                 {user?.role === "admin" && (
                   <button

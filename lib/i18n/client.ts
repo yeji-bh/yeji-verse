@@ -52,6 +52,7 @@ export function categoryLabelKey(category: string): string {
 export function sortByLabelKey(sortBy: string): string {
   const map: Record<string, string> = {
     createdAt: "sortByCreatedAt",
+    publishedDate: "sortByPublishedDate",
     views: "sortByViews",
     title: "sortByTitle",
   };

@@ -116,10 +116,15 @@ export function Sidebar({
 
       <div className="flex flex-col gap-2">
         {user ? (
-          <div className="flex items-center justify-end gap-1">
-            <span className="soft-muted-text min-w-0 truncate text-right text-xs">
-              {user.username}
-            </span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-2">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--color-bgMuted)] text-xs font-semibold uppercase text-[var(--color-text)]">
+                {user.username.charAt(0)}
+              </span>
+              <span className="min-w-0 truncate text-sm font-medium text-[var(--color-text)]">
+                {user.username}
+              </span>
+            </div>
             <div className="flex shrink-0 items-center gap-0.5">
               {user.role === "admin" && (
                 <Link

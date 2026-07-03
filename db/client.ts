@@ -1,6 +1,5 @@
 import { createClient, type Client } from "@libsql/client";
 import type {
-  Comment,
   SubmitVideoPayload,
   User,
   UserRole,
@@ -340,6 +339,7 @@ export async function updateVideoInDb(
   id: string,
   data: {
     title: string;
+    description?: string;
     category: Video["category"];
     tags: string[];
     publishedDate: string;
@@ -354,14 +354,16 @@ export async function updateVideoInDb(
   const year = Number(data.publishedDate.slice(0, 4));
   const tags = dedupeTags(data.tags);
   const category = normalizeCategory(data.category);
+  const description = data.description ?? "";
 
   try {
     await db.execute({
       sql: `UPDATE videos
-            SET title = ?, category = ?, tags = ?, year = ?, published_date = ?, thumbnail = ?, updated_at = ?
+            SET title = ?, description = ?, category = ?, tags = ?, year = ?, published_date = ?, thumbnail = ?, updated_at = ?
             WHERE id = ?`,
       args: [
         data.title,
+        description,
         category,
         JSON.stringify(tags),
         year,
@@ -377,10 +379,11 @@ export async function updateVideoInDb(
 
     await db.execute({
       sql: `UPDATE videos
-            SET title = ?, category = ?, tags = ?, year = ?, thumbnail = ?, updated_at = ?
+            SET title = ?, description = ?, category = ?, tags = ?, year = ?, thumbnail = ?, updated_at = ?
             WHERE id = ?`,
       args: [
         data.title,
+        description,
         category,
         JSON.stringify(tags),
         year,
@@ -676,109 +679,6 @@ export async function toggleUserChecklist(
     args: [now, userId, videoId],
   });
   return false;
-}
-
-// --- Comments ---
-
-export async function getCommentsByVideoId(videoId: string): Promise<Comment[]> {
-  const db = getClient();
-  if (!db) return [];
-
-  const { rows } = await db.execute({
-    sql: "SELECT * FROM comments WHERE video_id = ? ORDER BY created_at DESC",
-    args: [videoId],
-  });
-
-  return rows.map((r) => ({
-    id: r.id as string,
-    videoId: r.video_id as string,
-    nickname: (r.nickname as string | null) ?? null,
-    content: r.content as string,
-    userId: (r.user_id as string | null) ?? null,
-    createdAt: r.created_at as string,
-  }));
-}
-
-export async function insertComment(data: {
-  id: string;
-  videoId: string;
-  content: string;
-  nickname?: string | null;
-  userId?: string | null;
-}): Promise<Comment | null> {
-  const db = getClient();
-  if (!db) return null;
-
-  const now = new Date().toISOString();
-  await db.execute({
-    sql: "INSERT INTO comments (id, video_id, nickname, content, user_id, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-    args: [
-      data.id,
-      data.videoId,
-      data.nickname ?? null,
-      data.content,
-      data.userId ?? null,
-      now,
-    ],
-  });
-
-  return {
-    id: data.id,
-    videoId: data.videoId,
-    nickname: data.nickname ?? null,
-    content: data.content,
-    userId: data.userId ?? null,
-    createdAt: now,
-  };
-}
-
-export async function getCommentById(id: string): Promise<Comment | null> {
-  const db = getClient();
-  if (!db) return null;
-
-  const { rows } = await db.execute({
-    sql: "SELECT * FROM comments WHERE id = ? LIMIT 1",
-    args: [id],
-  });
-
-  const r = rows[0];
-  if (!r) return null;
-
-  return {
-    id: r.id as string,
-    videoId: r.video_id as string,
-    nickname: (r.nickname as string | null) ?? null,
-    content: r.content as string,
-    userId: (r.user_id as string | null) ?? null,
-    createdAt: r.created_at as string,
-  };
-}
-
-export async function updateComment(
-  id: string,
-  content: string,
-): Promise<Comment | null> {
-  const db = getClient();
-  if (!db) return null;
-
-  await db.execute({
-    sql: "UPDATE comments SET content = ? WHERE id = ?",
-    args: [content, id],
-  });
-
-  return getCommentById(id);
-}
-
-export async function deleteComment(id: string): Promise<boolean> {
-  const db = getClient();
-  if (!db) return false;
-
-  await db.execute({
-    sql: "DELETE FROM comments WHERE id = ?",
-    args: [id],
-  });
-
-  return true;
 }
 
 // --- Starter picks (入坑必看) ---

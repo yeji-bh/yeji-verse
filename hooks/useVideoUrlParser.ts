@@ -6,6 +6,7 @@ import { detectPlatform, getThumbnailUrl } from "@/lib/video-platforms";
 export interface ParsedVideoUrl {
   platform: string;
   title: string | null;
+  description: string | null;
   publishedDate: string | null;
   thumbnail: string;
 }
@@ -40,6 +41,7 @@ export function useVideoUrlParser() {
       return {
         platform,
         title: data.title ?? null,
+        description: data.description ?? null,
         publishedDate: data.publishedDate ?? null,
         thumbnail: data.thumbnail ?? getThumbnailUrl(trimmed, platform) ?? "",
       };
@@ -49,6 +51,7 @@ export function useVideoUrlParser() {
       return {
         platform,
         title: null,
+        description: null,
         publishedDate: null,
         thumbnail: getThumbnailUrl(trimmed, platform) ?? "",
       };

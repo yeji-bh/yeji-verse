@@ -31,6 +31,7 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
   const { t } = useTranslation("common");
   const { user } = useAuth();
   const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Category>("vlog");
   const [tags, setTags] = useState<string[]>([]);
   const [publishedDate, setPublishedDate] = useState(todayString());
@@ -46,6 +47,7 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
   const reset = () => {
     cancelParse();
     setTitle("");
+    setDescription("");
     setCategory("vlog");
     setTags([]);
     setPublishedDate(todayString());
@@ -64,6 +66,7 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
     if (!primaryUrl.trim()) {
       setThumbnail("");
       setPublishedDate(todayString());
+      setDescription("");
       return;
     }
     const timer = setTimeout(async () => {
@@ -73,6 +76,7 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
         prev.map((s, i) => (i === 0 ? { ...s, platform: data.platform } : s)),
       );
       if (data.title) setTitle(data.title);
+      if (data.description) setDescription(data.description);
       if (data.publishedDate) setPublishedDate(data.publishedDate);
       if (data.thumbnail) setThumbnail(data.thumbnail);
     }, 500);
@@ -93,6 +97,7 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
 
     const payload: SubmitVideoPayload = {
       title: title.trim(),
+      description: description.trim(),
       category,
       tags,
       publishedDate,
@@ -198,6 +203,19 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
         </div>
 
         <SourceFields sources={sources} onChange={setSources} parsing={parsing} />
+
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
+            {t("description")}
+          </label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={4}
+            placeholder={t("videoDescriptionPlaceholder")}
+            className="w-full resize-y rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
+          />
+        </div>
 
         <div>
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">

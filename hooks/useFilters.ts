@@ -27,6 +27,9 @@ function compareVideos(
     case "title":
       cmp = a.title.localeCompare(b.title);
       break;
+    case "publishedDate":
+      cmp = a.publishedDate.localeCompare(b.publishedDate);
+      break;
     default:
       cmp =
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();

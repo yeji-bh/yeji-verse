@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { localeLabels, locales, setAppLocale, type AppLocale } from "@/lib/i18n/client";
+import { HeaderSettingsModal } from "@/components/layout/HeaderSettingsModal";
 import {
   IconClose,
   IconDice,
@@ -12,6 +13,7 @@ import {
   IconMoon,
   IconPlus,
   IconSearch,
+  IconSettings,
   IconSun,
 } from "@/components/ui/IconButton";
 import { PlainIconButton } from "@/components/ui/PlainIconButton";
@@ -34,6 +36,7 @@ function SearchField({
   inputRef,
   onFocus,
   onBlur,
+  inputClassName = "",
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -42,6 +45,7 @@ function SearchField({
   inputRef?: React.RefObject<HTMLInputElement | null>;
   onFocus?: () => void;
   onBlur?: () => void;
+  inputClassName?: string;
 }) {
   const { t } = useTranslation("common");
 
@@ -56,9 +60,9 @@ function SearchField({
         onFocus={onFocus}
         onBlur={onBlur}
         placeholder={placeholder}
-        className={`w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-input)] h-9 py-0 pl-9 text-sm outline-none focus:border-[var(--color-accent)] ${
+        className={`w-full border border-[var(--color-border)] bg-[var(--color-input)] h-9 py-0 pl-9 text-sm outline-none focus:border-[var(--color-accent)] ${
           value ? "pr-9" : "pr-3"
-        }`}
+        } ${inputClassName}`}
       />
       {value && (
         <button
@@ -86,30 +90,33 @@ export function Header({
   const { t, i18n } = useTranslation("common");
   const { theme, toggleTheme } = useTheme();
   const [langOpen, setLangOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [mobileSearchFocused, setMobileSearchFocused] = useState(false);
   const mobileSearchRef = useRef<HTMLInputElement>(null);
 
   const randomButton = onRandomClick ? (
-    <PlainIconButton
-      label={t("randomVideo")}
+    <button
+      type="button"
       onClick={onRandomClick}
       disabled={randomLoading}
-      className="h-8 w-8"
+      aria-label={t("randomVideo")}
+      className="header-toolbar-btn header-toolbar-btn--pink"
     >
-      <IconDice className={`h-5 w-5 ${randomLoading ? "animate-pulse" : ""}`} />
-    </PlainIconButton>
+      <IconDice className={`h-4 w-4 text-white ${randomLoading ? "animate-pulse" : ""}`} />
+    </button>
   ) : null;
 
   const langThemeControls = (
-    <div className="flex items-center -space-x-1">
+    <div className="flex items-center gap-1.5">
       <div className="relative">
-        <PlainIconButton
-          label={t("language")}
+        <button
+          type="button"
           onClick={() => setLangOpen((o) => !o)}
-          className="h-8 w-8"
+          aria-label={t("language")}
+          className="header-toolbar-btn"
         >
-          <IconGlobe className="h-5 w-5" />
-        </PlainIconButton>
+          <IconGlobe className="h-4 w-4" />
+        </button>
         {langOpen && (
           <>
             <button
@@ -118,7 +125,7 @@ export function Header({
               onClick={() => setLangOpen(false)}
               aria-hidden
             />
-            <div className="absolute right-0 top-full z-50 mt-1 min-w-[140px] rounded-xl border border-[var(--color-border)] bg-[var(--color-bgElevated)] py-1 shadow-[var(--color-shadow)]">
+            <div className="absolute right-0 top-full z-50 mt-1 min-w-[140px] border border-[var(--color-border)] bg-[var(--color-bgElevated)] py-1 shadow-[var(--color-shadow)]">
               {locales.map((code) => (
                 <button
                   key={code}
@@ -140,13 +147,14 @@ export function Header({
           </>
         )}
       </div>
-      <PlainIconButton
-        label={theme === "dark" ? t("themeLight") : t("themeDark")}
+      <button
+        type="button"
         onClick={toggleTheme}
-        className="h-8 w-8"
+        aria-label={theme === "dark" ? t("themeLight") : t("themeDark")}
+        className="header-toolbar-btn"
       >
-        {theme === "dark" ? <IconSun className="h-5 w-5" /> : <IconMoon className="h-5 w-5" />}
-      </PlainIconButton>
+        {theme === "dark" ? <IconSun className="h-4 w-4" /> : <IconMoon className="h-4 w-4" />}
+      </button>
     </div>
   );
 
@@ -158,25 +166,22 @@ export function Header({
   };
 
   return (
+    <>
     <header className="sticky top-0 z-30 border-b border-[var(--color-borderSubtle)] bg-[var(--color-bg)]/90 backdrop-blur-xl">
       {/* Mobile */}
-      <div className="scroll-mt-4 px-3 py-3 lg:hidden">
+      <div className="scroll-mt-4 py-3 pr-3 pl-3.5 lg:hidden">
         {!mobileSearchFocused && (
-          <div className="relative mb-3 flex min-h-8 items-center">
-            <div className="z-10 flex shrink-0 items-center">
+          <div className="mb-3 grid grid-cols-[1fr_auto_1fr] items-center">
+            <div className="flex justify-start">
               {showFilterButton ? (
-                <PlainIconButton
-                  label={t("filters")}
-                  onClick={onFilterClick}
-                  className="h-8 w-8"
-                >
+                <PlainIconButton label={t("filters")} onClick={onFilterClick}>
                   <IconFilter className="h-5 w-5" />
                 </PlainIconButton>
               ) : (
-                <div className="h-8 w-8" />
+                <div className="h-9 w-9" />
               )}
             </div>
-            <h1 className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-base font-bold">
+            <h1 className="pointer-events-none px-2 text-center text-lg font-bold whitespace-nowrap">
               <span
                 className="bg-clip-text text-transparent"
                 style={{ backgroundImage: "var(--color-gradient)" }}
@@ -184,31 +189,47 @@ export function Header({
                 {t("siteName")}
               </span>
             </h1>
-            <div className="z-10 ml-auto flex shrink-0 items-center">
-              {langThemeControls}
+            <div className="flex justify-end">
+              <PlainIconButton
+                label={t("settings")}
+                onClick={() => setSettingsOpen(true)}
+              >
+                <IconSettings className="h-5 w-5" />
+              </PlainIconButton>
             </div>
           </div>
         )}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <SearchField
             inputRef={mobileSearchRef}
             value={search}
             onChange={onSearchChange}
             placeholder={t("search")}
             className="min-w-0 flex-1"
+            inputClassName="!pl-10"
             onFocus={handleMobileSearchFocus}
             onBlur={() => setMobileSearchFocused(false)}
           />
           {!mobileSearchFocused && (
             <>
-              {randomButton}
+              {onRandomClick ? (
+                <button
+                  type="button"
+                  onClick={onRandomClick}
+                  disabled={randomLoading}
+                  aria-label={t("randomVideo")}
+                  className="header-toolbar-btn header-toolbar-btn--pink"
+                >
+                  <IconDice className={`h-4 w-4 text-white ${randomLoading ? "animate-pulse" : ""}`} />
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={onSubmitClick}
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--color-accent)] text-[var(--color-accentText)]"
+                className="header-submit-btn !h-9 !w-9 shrink-0 !px-0 justify-center"
                 aria-label={t("submitVideo")}
               >
-                <IconPlus className="h-4 w-4" />
+                <IconPlus className="h-3.5 w-3.5" />
               </button>
             </>
           )}
@@ -216,27 +237,28 @@ export function Header({
       </div>
 
       {/* Desktop */}
-      <div className="hidden lg:flex items-center gap-3 px-6 py-3">
+      <div className="hidden items-center gap-2 px-6 py-3 lg:flex">
         <p className="soft-muted-text min-w-0 flex-1 text-xs leading-relaxed">
           *{t("thumbnailDisclaimer")}
         </p>
-        {randomButton}
-        <SearchField
-          value={search}
-          onChange={onSearchChange}
-          placeholder={t("search")}
-          className="w-72 shrink-0"
-        />
-        {langThemeControls}
-        <button
-          type="button"
-          onClick={onSubmitClick}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-[var(--color-accent)] px-4 py-2 text-sm font-medium text-[var(--color-accentText)]"
-        >
+        <div className="flex shrink-0 items-center gap-1.5">
+          {randomButton}
+          <SearchField
+            value={search}
+            onChange={onSearchChange}
+            placeholder={t("search")}
+            className="w-72"
+          />
+          {langThemeControls}
+        </div>
+        <button type="button" onClick={onSubmitClick} className="header-submit-btn shrink-0">
           <IconPlus className="h-4 w-4" />
           {t("submitVideo")}
         </button>
       </div>
     </header>
+
+    <HeaderSettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    </>
   );
 }

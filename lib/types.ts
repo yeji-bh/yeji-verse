@@ -24,7 +24,7 @@ export type Category =
   | "audioSource"
   | "other";
 
-export type SortBy = "createdAt" | "title";
+export type SortBy = "createdAt" | "publishedDate" | "title";
 export type SortOrder = "asc" | "desc";
 
 export type Platform =
@@ -72,15 +72,6 @@ export interface Video {
   createdAt: string;
 }
 
-export interface Comment {
-  id: string;
-  videoId: string;
-  nickname: string | null;
-  content: string;
-  userId: string | null;
-  createdAt: string;
-}
-
 export interface VideoFilters {
   categories: Category[];
   tags: string[];
@@ -92,6 +83,7 @@ export interface VideoFilters {
 
 export interface VideoMetadata {
   title: string | null;
+  description: string | null;
   thumbnail: string | null;
   platform: Platform | string;
   embedUrl: string | null;
@@ -100,6 +92,7 @@ export interface VideoMetadata {
 
 export interface SubmitVideoPayload {
   title: string;
+  description?: string;
   category: Category;
   tags: string[];
   publishedDate: string;

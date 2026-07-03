@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 
 interface ModalProps {
@@ -10,6 +11,8 @@ interface ModalProps {
   className?: string;
   size?: "md" | "lg" | "xl";
   mobileFullscreen?: boolean;
+  /** 手機版也垂直置中（預設為底部滑出） */
+  centered?: boolean;
 }
 
 const sizeClasses = {
@@ -25,9 +28,15 @@ export function Modal({
   className = "",
   size = "lg",
   mobileFullscreen = false,
+  centered = false,
 }: ModalProps) {
   const { t } = useTranslation("common");
   const dialogRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -45,32 +54,37 @@ export function Modal({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  const overlayAlign = mobileFullscreen
+    ? "items-end sm:items-center"
+    : centered
+      ? "items-center px-4"
+      : "items-end p-0 sm:items-center sm:p-4";
+
+  return createPortal(
     <div
-      className={`fixed inset-0 z-50 flex justify-center p-0 sm:p-4 ${
-        mobileFullscreen ? "items-stretch sm:items-center" : "items-end sm:items-center"
-      }`}
+      className={`fixed inset-0 z-50 flex justify-center ${overlayAlign}`}
       role="dialog"
       aria-modal="true"
     >
       <button
         type="button"
-        className="absolute inset-0 bg-[var(--color-bgOverlay)] backdrop-blur-md"
+        className="absolute inset-0 z-0 bg-[var(--color-bgOverlay)] backdrop-blur-md"
         onClick={onClose}
         aria-label={t("close")}
       />
       <div
         ref={dialogRef}
-        className={`modal-shell relative w-full ${sizeClasses[size]} overflow-hidden bg-[var(--color-bgElevated)] shadow-[var(--color-shadowLg)] animate-modal-in ${
+        className={`modal-shell relative z-10 w-full ${sizeClasses[size]} overflow-hidden bg-[var(--color-bgElevated)] shadow-[var(--color-shadowLg)] animate-modal-in ${
           mobileFullscreen
-            ? "flex h-[100dvh] max-h-[100dvh] flex-col sm:h-auto sm:max-h-[90vh] sm:flex-none"
+            ? "flex h-auto max-h-[100dvh] flex-col self-end sm:max-h-[90vh] sm:self-auto sm:flex-none"
             : "max-h-[95vh] sm:max-h-[90vh]"
         } ${className}`}
       >
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

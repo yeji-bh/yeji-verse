@@ -27,7 +27,7 @@ export const CATEGORIES: Category[] = [
   "other",
 ];
 
-export const SORT_BY_OPTIONS: SortBy[] = ["createdAt", "title"];
+export const SORT_BY_OPTIONS: SortBy[] = ["createdAt", "publishedDate", "title"];
 
 export const KNOWN_PLATFORMS = ["youtube", "bilibili", "other"] as const;
 

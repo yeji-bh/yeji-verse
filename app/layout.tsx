@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Noto_Sans_TC } from "next/font/google";
+import { Noto_Sans_JP, Noto_Sans_SC, Noto_Sans_TC } from "next/font/google";
 import { AppProviders } from "@/components/providers/AppProviders";
 import { SiteJsonLd } from "@/components/seo/SiteJsonLd";
 import { colors } from "@/lib/colors";
@@ -7,7 +7,19 @@ import { createMetadata } from "@/lib/seo";
 import "./globals.css";
 
 const notoSansTC = Noto_Sans_TC({
-  variable: "--font-sans",
+  variable: "--font-tc",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const notoSansSC = Noto_Sans_SC({
+  variable: "--font-sc",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const notoSansJP = Noto_Sans_JP({
+  variable: "--font-jp",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
@@ -28,7 +40,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-TW" className={`${notoSansTC.variable} h-full`} suppressHydrationWarning>
+    <html
+      lang="zh-TW"
+      className={`${notoSansTC.variable} ${notoSansSC.variable} ${notoSansJP.variable} h-full`}
+      suppressHydrationWarning
+    >
       <head>
         <link rel="preconnect" href="https://player.bilibili.com" />
         <link rel="dns-prefetch" href="https://player.bilibili.com" />

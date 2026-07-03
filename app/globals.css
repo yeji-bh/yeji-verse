@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --font-sans: "Noto Sans TC", system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-tc), var(--font-sc), var(--font-jp), system-ui, -apple-system, sans-serif;
 }
 
 @theme inline {
@@ -114,22 +114,161 @@ button:disabled {
 
 .back-to-top-btn {
   border-radius: 9999px !important;
+  border: none !important;
+}
+
+.modal-close-btn {
+  border-radius: 9999px !important;
+}
+
+.header-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-input) !important;
+  color: var(--color-textMuted) !important;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.header-toolbar-btn:hover:not(:disabled) {
+  background-color: var(--color-bgMuted) !important;
+  color: var(--color-text) !important;
+}
+
+.header-toolbar-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.header-toolbar-btn--pink {
+  border: none !important;
+  background-color: #f472b6 !important;
+  color: #fff !important;
+}
+
+.header-toolbar-btn--pink:hover:not(:disabled) {
+  background-color: #ec4899 !important;
+  color: #fff !important;
+}
+
+.header-submit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  height: 2.25rem;
+  padding: 0 1rem;
+  border: none !important;
+  background-color: var(--color-accent) !important;
+  color: var(--color-accentText) !important;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+}
+
+[data-theme="light"] .header-submit-btn {
+  background-color: #3f3f46 !important;
+  color: #ffffff !important;
+}
+
+.header-submit-btn:hover {
+  opacity: 0.92;
+}
+
+[data-theme="light"] .header-submit-btn:hover {
+  background-color: #52525b !important;
+  opacity: 1;
 }
 
 .modal-shell {
-  border-radius: 6px !important;
+  border-radius: 12px !important;
+}
+
+@media (max-width: 639px) {
+  .modal-shell:has(.modal-mobile-footer) {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+  }
+}
+
+.modal-video-shell--desktop {
+  border-radius: 12px !important;
+}
+
+.modal-cta-gradient {
+  background-color: var(--color-accent) !important;
+  background-image: var(--color-gradient) !important;
+  color: var(--color-accentText) !important;
+  border: none !important;
+  border-radius: 12px !important;
+  transition: opacity 0.15s ease;
+}
+
+.modal-cta-gradient:hover {
+  opacity: 0.92;
+}
+
+.modal-cta-gradient:disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed;
+}
+
+.modal-action-ghost {
+  border: 1px solid var(--color-border) !important;
+  background-color: var(--color-bgMuted) !important;
+  border-radius: 12px !important;
+  color: var(--color-textMuted) !important;
+  transition:
+    border-color 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.modal-action-ghost:hover {
+  border-color: var(--color-accent) !important;
+  color: var(--color-text) !important;
+}
+
+[data-theme="light"] .modal-action-ghost {
+  background-color: #ffffff !important;
+}
+
+.modal-sheet-handle {
+  width: 2.25rem;
+  height: 0.25rem;
+  border-radius: 9999px !important;
+  background-color: var(--color-border);
+}
+
+.modal-category-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-accent) !important;
+}
+
+.modal-tag-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: var(--color-textMuted) !important;
+  background-color: var(--color-bgMuted) !important;
+  border: none !important;
+  border-radius: 9999px !important;
 }
 
 .modal-video-shell {
   background: #000;
   overflow: hidden;
-  border-radius: 6px 6px 0 0 !important;
-}
-
-@media (min-width: 1024px) {
-  .modal-video-shell {
-    border-radius: 6px 0 0 0 !important;
-  }
+  border-radius: 0 !important;
 }
 
 html.theme-switching *,

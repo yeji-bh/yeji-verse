@@ -13,6 +13,7 @@ interface SortControlsProps {
 
 const sortByLabelKey: Record<SortBy, string> = {
   createdAt: "sortByCreatedAt",
+  publishedDate: "sortByPublishedDate",
   title: "sortByTitle",
 };
 

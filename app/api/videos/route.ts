@@ -128,7 +128,7 @@ export async function POST(request: Request) {
       ...payload,
       id,
       thumbnail,
-      description: "",
+      description: payload.description?.trim() ?? "",
       status,
       submittedBy: session?.id ?? null,
     };
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
     const newVideo: Video = {
       id,
       title: payload.title,
-      description: "",
+      description: payload.description?.trim() ?? "",
       category: payload.category,
       tags: payload.tags,
       publishedDate: payload.publishedDate,

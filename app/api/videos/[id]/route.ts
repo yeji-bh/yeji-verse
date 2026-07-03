@@ -31,6 +31,7 @@ export async function PATCH(
 
     const video = await updateVideoInDb(id, {
       title: String(body.title).trim(),
+      description: typeof body.description === "string" ? body.description.trim() : "",
       category: body.category as Category,
       tags: dedupeTags(body.tags ?? []),
       publishedDate: body.publishedDate,

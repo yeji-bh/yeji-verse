@@ -212,7 +212,7 @@ const en: Record<TranslationKey, string> = {
   solo: "Solo",
   stage: "Stage",
   cover: "Cover",
-  behind: "BTS",
+  behind: "Behind",
   challenge: "Challenge",
   brand: "Brand / Magazine",
   interview: "Interview",

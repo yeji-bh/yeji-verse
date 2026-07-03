@@ -45,23 +45,11 @@ CREATE TABLE IF NOT EXISTS favorites (
   FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS comments (
-  id TEXT PRIMARY KEY,
-  video_id TEXT NOT NULL,
-  nickname TEXT,
-  content TEXT NOT NULL,
-  user_id TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
-);
-
 CREATE INDEX IF NOT EXISTS idx_videos_category ON videos(category);
 CREATE INDEX IF NOT EXISTS idx_videos_year ON videos(year);
 CREATE INDEX IF NOT EXISTS idx_videos_status ON videos(status);
 CREATE INDEX IF NOT EXISTS idx_videos_created_at ON videos(created_at);
 CREATE INDEX IF NOT EXISTS idx_video_sources_video_id ON video_sources(video_id);
-CREATE INDEX IF NOT EXISTS idx_comments_video_id ON comments(video_id);
 CREATE INDEX IF NOT EXISTS idx_favorites_user_id ON favorites(user_id);
 
 CREATE TABLE IF NOT EXISTS starter_picks (

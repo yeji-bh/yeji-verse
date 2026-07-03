@@ -18,6 +18,7 @@ import { useChecklist } from "@/hooks/useChecklist";
 import { useSidebarTags } from "@/hooks/useSidebarTags";
 import { getAllTags } from "@/lib/videos";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
+import { BackToTop } from "@/components/ui/BackToTop";
 import type { Video } from "@/lib/types";
 
 interface AppShellProps {
@@ -471,6 +472,8 @@ export function AppShell({
         onClose={() => setSubmitOpen(false)}
         onSubmitted={refreshVideos}
       />
+
+      <BackToTop />
     </div>
   );
 }

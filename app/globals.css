@@ -112,6 +112,10 @@ button:disabled {
   animation: drawer-in 0.25s ease-out;
 }
 
+.back-to-top-btn {
+  border-radius: 9999px !important;
+}
+
 .modal-shell {
   border-radius: 6px !important;
 }

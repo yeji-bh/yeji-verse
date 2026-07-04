@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
@@ -20,6 +20,7 @@ import {
   type SourceInput,
 } from "@/components/video/SourceFields";
 import { useVideoUrlParser } from "@/hooks/useVideoUrlParser";
+import { RelatedVideos } from "@/components/video/RelatedVideos";
 import { CATEGORIES } from "@/lib/constants";
 import type { Category, Video } from "@/lib/types";
 import { getPlatformLabel } from "@/lib/video-platforms";
@@ -61,6 +62,7 @@ interface VideoModalProps {
   onToggleChecked: () => void;
   onVideoUpdated?: (video: Video) => void;
   onVideoDeleted?: (id: string) => void;
+  onSelectVideo?: (video: Video) => void;
 }
 
 export function VideoModal({
@@ -73,6 +75,7 @@ export function VideoModal({
   onToggleChecked,
   onVideoUpdated,
   onVideoDeleted,
+  onSelectVideo,
 }: VideoModalProps) {
   const { t } = useTranslation("common");
   const { user } = useAuth();
@@ -88,11 +91,55 @@ export function VideoModal({
   const [editSources, setEditSources] = useState<SourceInput[]>([createEmptySource()]);
   const [editThumbnail, setEditThumbnail] = useState("");
   const { parseUrl, parsing, cancelParse } = useVideoUrlParser();
+  const dragStartY = useRef(0);
+  const dragOffsetY = useRef(0);
+  const sheetDraggingRef = useRef(false);
+  const [sheetOffset, setSheetOffset] = useState(0);
+  const [sheetDragging, setSheetDragging] = useState(false);
+  const [isLg, setIsLg] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setIsLg(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     setEditing(false);
     cancelParse();
+    sheetDraggingRef.current = false;
+    setSheetOffset(0);
+    setSheetDragging(false);
   }, [video?.id, cancelParse]);
+
+  const onSheetTouchStart = (e: React.TouchEvent) => {
+    dragStartY.current = e.touches[0].clientY;
+    dragOffsetY.current = 0;
+    sheetDraggingRef.current = true;
+    setSheetDragging(true);
+  };
+
+  const onSheetTouchMove = (e: React.TouchEvent) => {
+    if (!sheetDraggingRef.current) return;
+    const dy = e.touches[0].clientY - dragStartY.current;
+    const next = Math.max(0, dy);
+    dragOffsetY.current = next;
+    setSheetOffset(next);
+  };
+
+  const onSheetTouchEnd = () => {
+    if (!sheetDraggingRef.current) return;
+    sheetDraggingRef.current = false;
+    setSheetDragging(false);
+    if (dragOffsetY.current > 96) {
+      setSheetOffset(0);
+      onClose();
+      return;
+    }
+    setSheetOffset(0);
+  };
 
   const primaryEditUrl = editSources[0]?.url ?? "";
 
@@ -179,13 +226,20 @@ export function VideoModal({
   };
 
   return (
-    <Modal open={open} onClose={onClose} size="lg" mobileFullscreen>
+    <Modal
+      open={open}
+      onClose={onClose}
+      size="lg"
+      mobileFullscreen
+      sheetOffset={sheetOffset}
+      sheetDragging={sheetDragging}
+    >
       {editing ? (
         <>
           <button
             type="button"
             onClick={onClose}
-            className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center modal-close-btn bg-[var(--color-bgMuted)] text-[var(--color-textMuted)] hover:text-[var(--color-text)]"
+            className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center modal-close-btn text-[var(--color-textMuted)] hover:text-[var(--color-text)]"
             aria-label={t("close")}
           >
             <IconClose className="h-4 w-4" />
@@ -283,20 +337,21 @@ export function VideoModal({
         <>
           {/* Mobile */}
           <div className="flex min-h-0 max-h-[inherit] flex-col lg:hidden">
-            <div className="relative z-30 shrink-0 flex flex-col items-center bg-[var(--color-bgElevated)] px-5 pt-3 pb-2">
+            <div
+              className="relative z-30 shrink-0 flex touch-none flex-col items-center bg-[var(--color-bgElevated)] px-5 pt-3 pb-2"
+              onTouchStart={onSheetTouchStart}
+              onTouchMove={onSheetTouchMove}
+              onTouchEnd={onSheetTouchEnd}
+              onTouchCancel={onSheetTouchEnd}
+              role="button"
+              tabIndex={0}
+              aria-label={t("close")}
+            >
               <div className="modal-sheet-handle" aria-hidden />
-              <button
-                type="button"
-                onClick={onClose}
-                className="absolute top-2.5 right-3 z-30 flex h-8 w-8 items-center justify-center modal-close-btn bg-[var(--color-bgMuted)] text-[var(--color-textMuted)] hover:text-[var(--color-text)]"
-                aria-label={t("close")}
-              >
-                <IconClose className="h-4 w-4" />
-              </button>
             </div>
 
             {source && (
-              <div className="relative z-0 shrink-0">
+              <div className="relative z-10 shrink-0">
                 <div className="modal-video-shell">
                   <VideoPlayer
                     url={source.url}
@@ -309,7 +364,7 @@ export function VideoModal({
               </div>
             )}
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pb-[max(1rem,env(safe-area-inset-bottom))]">
               <div className="px-5 pt-4 pb-4 text-left">
                 <h2 className="m-0 w-full text-left text-lg font-bold leading-snug text-[var(--color-text)] [hanging-punctuation:allow-end]">
                   {video.title}
@@ -339,84 +394,77 @@ export function VideoModal({
                     {video.description}
                   </p>
                 )}
-              </div>
-            </div>
 
-            <div className="modal-mobile-footer shrink-0 border-t border-[var(--color-borderSubtle)] px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-              <div className="flex items-stretch gap-2">
-                {video.sources.map((s) => (
-                  <a
-                    key={s.id}
-                    href={s.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="modal-cta-gradient inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium"
-                  >
-                    <PlatformIcon platform={s.platform} className="h-4 w-4 shrink-0" />
-                    <span className="truncate">{getPlatformLabel(s.platform)}</span>
-                    <IconExternal className="h-3.5 w-3.5 shrink-0 opacity-90" />
-                  </a>
-                ))}
-                <button
-                  type="button"
-                  onClick={onToggleChecked}
-                  className={`modal-action-ghost inline-flex h-11 w-11 shrink-0 items-center justify-center ${
-                    isChecked
-                      ? "!border-emerald-500 !bg-emerald-500/15 !text-emerald-600 dark:!text-emerald-400"
-                      : ""
-                  }`}
-                  aria-label={isChecked ? t("markUnwatched") : t("markWatched")}
-                >
-                  <IconCheck className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={onToggleFavorite}
-                  className={`modal-action-ghost inline-flex h-11 w-11 shrink-0 items-center justify-center ${
-                    isFavorite
-                      ? "!border-[var(--color-accent)] !bg-[var(--color-accentMuted)] !text-[var(--color-accent)]"
-                      : ""
-                  }`}
-                  aria-label={isFavorite ? t("unfavorite") : t("favorite")}
-                >
-                  <IconHeart filled={isFavorite} className="h-4 w-4" />
-                </button>
-              </div>
-
-              {isAdmin && (
-                <div className="mt-3 flex items-center gap-4 text-xs">
+                <div className="mt-4 flex items-stretch gap-2">
+                  {video.sources.map((s) => (
+                    <a
+                      key={s.id}
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="modal-cta-gradient inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-medium"
+                    >
+                      <PlatformIcon platform={s.platform} className="h-4 w-4 shrink-0" />
+                      <span className="truncate">{getPlatformLabel(s.platform)}</span>
+                      <IconExternal className="h-3.5 w-3.5 shrink-0 opacity-90" />
+                    </a>
+                  ))}
                   <button
                     type="button"
-                    onClick={startEdit}
-                    className="text-[var(--color-textMuted)] hover:text-[var(--color-accent)]"
+                    onClick={onToggleChecked}
+                    className={`modal-action-ghost inline-flex h-11 w-11 shrink-0 items-center justify-center ${
+                      isChecked
+                        ? "!border-emerald-500 !bg-emerald-500/15 !text-emerald-600 dark:!text-emerald-400"
+                        : ""
+                    }`}
+                    aria-label={isChecked ? t("markUnwatched") : t("markWatched")}
                   >
-                    {t("edit")}
+                    <IconCheck className="h-4 w-4" />
                   </button>
                   <button
                     type="button"
-                    onClick={handleDelete}
-                    className="text-red-500 hover:underline"
+                    onClick={onToggleFavorite}
+                    className={`modal-action-ghost inline-flex h-11 w-11 shrink-0 items-center justify-center ${
+                      isFavorite
+                        ? "!border-[var(--color-accent)] !bg-[var(--color-accentMuted)] !text-[var(--color-accent)]"
+                        : ""
+                    }`}
+                    aria-label={isFavorite ? t("unfavorite") : t("favorite")}
                   >
-                    {t("delete")}
+                    <IconHeart filled={isFavorite} className="h-4 w-4" />
                   </button>
                 </div>
-              )}
+
+                {isAdmin && (
+                  <div className="mt-3 flex items-center gap-4 text-xs">
+                    <button
+                      type="button"
+                      onClick={startEdit}
+                      className="text-[var(--color-textMuted)] hover:text-[var(--color-accent)]"
+                    >
+                      {t("edit")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDelete}
+                      className="text-red-500 hover:underline"
+                    >
+                      {t("delete")}
+                    </button>
+                  </div>
+                )}
+
+                {onSelectVideo && !isLg && (
+                  <RelatedVideos videoId={video.id} onSelect={onSelectVideo} />
+                )}
+              </div>
             </div>
           </div>
 
           {/* Desktop */}
           <div className="relative hidden min-h-0 flex-1 flex-col overflow-y-auto lg:flex lg:max-h-[90vh]">
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center modal-close-btn bg-[var(--color-bgMuted)] text-[var(--color-textMuted)] transition-colors hover:text-[var(--color-text)]"
-              aria-label={t("close")}
-            >
-              <IconClose className="h-4 w-4" />
-            </button>
-
-            {source && (
-              <div className="p-5 pb-0">
+            {source ? (
+              <div className="relative p-5 pb-0">
                 <div className="modal-video-shell modal-video-shell--desktop">
                   <VideoPlayer
                     url={source.url}
@@ -426,11 +474,28 @@ export function VideoModal({
                     embedOnMount
                   />
                 </div>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="absolute top-7 right-7 z-20 flex h-9 w-9 items-center justify-center modal-close-btn text-[var(--color-textMuted)] transition-colors hover:text-[var(--color-text)]"
+                  aria-label={t("close")}
+                >
+                  <IconClose className="h-4 w-4" />
+                </button>
               </div>
+            ) : (
+              <button
+                type="button"
+                onClick={onClose}
+                className="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center modal-close-btn text-[var(--color-textMuted)] transition-colors hover:text-[var(--color-text)]"
+                aria-label={t("close")}
+              >
+                <IconClose className="h-4 w-4" />
+              </button>
             )}
 
             <div className="space-y-4 p-5">
-              <h2 className="pr-10 text-xl font-bold leading-snug text-[var(--color-text)] lg:text-2xl">
+              <h2 className="text-xl font-bold leading-snug text-[var(--color-text)] lg:text-2xl">
                 {video.title}
               </h2>
 
@@ -518,6 +583,10 @@ export function VideoModal({
                     {t("delete")}
                   </button>
                 </div>
+              )}
+
+              {onSelectVideo && isLg && (
+                <RelatedVideos videoId={video.id} onSelect={onSelectVideo} />
               )}
             </div>
           </div>

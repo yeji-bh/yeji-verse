@@ -59,7 +59,7 @@ export function VideoGrid({
   return (
     <>
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-        {videos.map((video) => (
+        {videos.map((video, index) => (
           <VideoCard
             key={video.id}
             video={video}
@@ -69,6 +69,7 @@ export function VideoGrid({
               e.stopPropagation();
               onToggleChecked(video.id);
             }}
+            priority={index < 4}
           />
         ))}
       </div>

@@ -12,6 +12,8 @@ interface VideoCardProps {
   onClick: () => void;
   isChecked: boolean;
   onToggleChecked: (e: React.MouseEvent) => void;
+  /** Above-the-fold cards: load eagerly for LCP */
+  priority?: boolean;
 }
 
 const TAG_GAP_PX = 6;
@@ -112,11 +114,24 @@ function CardMetaRow({ tags, date }: { tags: string[]; date: string }) {
   );
 }
 
-function LazyThumbnail({ src, alt }: { src: string; alt: string }) {
+function LazyThumbnail({
+  src,
+  alt,
+  priority = false,
+}: {
+  src: string;
+  alt: string;
+  priority?: boolean;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [shouldLoad, setShouldLoad] = useState(false);
+  const [shouldLoad, setShouldLoad] = useState(priority);
 
   useEffect(() => {
+    if (priority) {
+      setShouldLoad(true);
+      return;
+    }
+
     const el = containerRef.current;
     if (!el) return;
 
@@ -137,7 +152,7 @@ function LazyThumbnail({ src, alt }: { src: string; alt: string }) {
 
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [priority]);
 
   return (
     <div ref={containerRef} className="absolute inset-0">
@@ -146,7 +161,8 @@ function LazyThumbnail({ src, alt }: { src: string; alt: string }) {
           src={src}
           alt={alt}
           fill
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
+          priority={priority}
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
           className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           unoptimized
@@ -163,6 +179,7 @@ export function VideoCard({
   onClick,
   isChecked,
   onToggleChecked,
+  priority = false,
 }: VideoCardProps) {
   const { t } = useTranslation("common");
   const displayTags = [t(video.category), ...video.tags];
@@ -176,6 +193,7 @@ export function VideoCard({
         <LazyThumbnail
           src={getThumbnailDisplayUrl(video.thumbnail)}
           alt={video.title}
+          priority={priority}
         />
 
         <div className="absolute top-2 right-2 z-10 sm:top-2.5 sm:right-2.5">

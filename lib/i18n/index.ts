@@ -11,7 +11,7 @@ export const LOCALES: { code: Locale; label: string }[] = [
 export type TranslationKey = keyof typeof zhTW;
 
 const zhTW = {
-  siteName: "Yeji Verse",
+  siteName: "YEJI VERSE",
   siteTagline: "Pocket every Yeji moment",
   allVideos: "全部影片",
   favorites: "我的收藏",
@@ -154,7 +154,7 @@ const zhCN: Record<TranslationKey, string> = {
 };
 
 const en: Record<TranslationKey, string> = {
-  siteName: "Yeji Verse",
+  siteName: "YEJI VERSE",
   siteTagline: "Pocket every Yeji moment",
   allVideos: "All Videos",
   favorites: "Favorites",
@@ -238,7 +238,7 @@ const en: Record<TranslationKey, string> = {
 };
 
 const ja: Record<TranslationKey, string> = {
-  siteName: "Yeji Verse",
+  siteName: "YEJI VERSE",
   siteTagline: "Pocket every Yeji moment",
   allVideos: "すべての動画",
   favorites: "お気に入り",
@@ -322,7 +322,7 @@ const ja: Record<TranslationKey, string> = {
 };
 
 const ko: Record<TranslationKey, string> = {
-  siteName: "Yeji Verse",
+  siteName: "YEJI VERSE",
   siteTagline: "Pocket every Yeji moment",
   allVideos: "전체 영상",
   favorites: "즐겨찾기",

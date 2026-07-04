@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@/components/providers/ThemeProvider";
 import { localeLabels, locales, setAppLocale, type AppLocale } from "@/lib/i18n/client";
@@ -28,6 +28,8 @@ interface HeaderProps {
   showFilterButton?: boolean;
 }
 
+const SEARCH_DEBOUNCE_MS = 400;
+
 function SearchField({
   value,
   onChange,
@@ -48,6 +50,28 @@ function SearchField({
   inputClassName?: string;
 }) {
   const { t } = useTranslation("common");
+  const [localValue, setLocalValue] = useState(value);
+  const [isComposing, setIsComposing] = useState(false);
+
+  useEffect(() => {
+    setLocalValue(value);
+  }, [value]);
+
+  useEffect(() => {
+    if (isComposing) return;
+    if (localValue === value) return;
+
+    const timer = window.setTimeout(() => {
+      onChange(localValue);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [localValue, isComposing, value, onChange]);
+
+  const clearSearch = () => {
+    setLocalValue("");
+    onChange("");
+  };
 
   return (
     <div className={`relative ${className}`}>
@@ -55,19 +79,24 @@ function SearchField({
       <input
         ref={inputRef}
         type="search"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        value={localValue}
+        onChange={(e) => setLocalValue(e.target.value)}
+        onCompositionStart={() => setIsComposing(true)}
+        onCompositionEnd={(e) => {
+          setIsComposing(false);
+          setLocalValue(e.currentTarget.value);
+        }}
         onFocus={onFocus}
         onBlur={onBlur}
         placeholder={placeholder}
         className={`w-full border border-[var(--color-border)] bg-[var(--color-input)] h-9 py-0 pl-9 text-sm outline-none focus:border-[var(--color-accent)] ${
-          value ? "pr-9" : "pr-3"
+          localValue ? "pr-9" : "pr-3"
         } ${inputClassName}`}
       />
-      {value && (
+      {localValue && (
         <button
           type="button"
-          onClick={() => onChange("")}
+          onClick={clearSearch}
           className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-[var(--color-textMuted)] hover:bg-[var(--color-bgMuted)] hover:text-[var(--color-text)]"
           aria-label={t("clearSearch")}
         >
@@ -218,9 +247,9 @@ export function Header({
                   onClick={onRandomClick}
                   disabled={randomLoading}
                   aria-label={t("randomVideo")}
-                  className="header-toolbar-btn header-toolbar-btn--pink"
+                  className="header-toolbar-btn"
                 >
-                  <IconDice className={`h-4 w-4 text-white ${randomLoading ? "animate-pulse" : ""}`} />
+                  <IconDice className={`h-4 w-4 ${randomLoading ? "animate-pulse" : ""}`} />
                 </button>
               ) : null}
               <button

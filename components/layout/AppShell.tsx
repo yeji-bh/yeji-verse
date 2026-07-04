@@ -123,6 +123,7 @@ export function AppShell({ mode = "all" }: AppShellProps) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [starterManageOpen, setStarterManageOpen] = useState(false);
   const [siteVideoTotal, setSiteVideoTotal] = useState(0);
+  const skipFilterScrollRef = useRef(true);
   const { tags: sidebarTags, refresh: refreshSidebarTags } = useSidebarTags();
 
   const allTags = sidebarTags.length > 0 ? sidebarTags : getAllTags(videos);
@@ -143,6 +144,23 @@ export function AppShell({ mode = "all" }: AppShellProps) {
       setSiteVideoTotal(videoTotal);
     }
   }, [videoTotal]);
+
+  useEffect(() => {
+    if (skipFilterScrollRef.current) {
+      skipFilterScrollRef.current = false;
+      return;
+    }
+    if (typeof window === "undefined") return;
+    if (!window.matchMedia("(max-width: 1023px)").matches) return;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [
+    filters.categories,
+    filters.tags,
+    filters.years,
+    filters.sortBy,
+    filters.sortOrder,
+    showUnwatchedOnly,
+  ]);
 
   useEffect(() => {
     if (siteVideoTotal > 0) return;
@@ -448,6 +466,7 @@ export function AppShell({ mode = "all" }: AppShellProps) {
         onToggleFavorite={() => selectedVideo && toggle(selectedVideo.id)}
         isChecked={selectedVideo ? isChecked(selectedVideo.id) : false}
         onToggleChecked={() => selectedVideo && void toggleChecked(selectedVideo.id)}
+        onSelectVideo={setSelectedVideo}
         onVideoUpdated={(updated) => {
           setVideos((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
           setSelectedVideo(updated);

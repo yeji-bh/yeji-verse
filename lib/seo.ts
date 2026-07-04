@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const siteConfig = {
-  name: "Yeji Verse",
-  title: "Yeji Verse",
+  name: "YEJI VERSE",
+  title: "YEJI VERSE",
   description:
     "YEJI的影像庫",
   keywords: [

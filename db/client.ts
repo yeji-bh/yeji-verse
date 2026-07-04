@@ -211,6 +211,63 @@ export async function getRandomVideoFromDb(): Promise<Video | null> {
   }
 }
 
+/** Score by shared category / tags / year; fall back to newest when no overlap. */
+export async function getRelatedVideosFromDb(
+  videoId: string,
+  limit: number,
+): Promise<Video[] | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  try {
+    const { rows: currentRows } = await db.execute({
+      sql: "SELECT * FROM videos WHERE id = ? AND status = 'approved'",
+      args: [videoId],
+    });
+    if (currentRows.length === 0) return [];
+
+    const current = currentRows[0] as Record<string, unknown>;
+    const currentCategory = current.category as string;
+    const currentTags = new Set(
+      dedupeTags(JSON.parse((current.tags as string) || "[]")).map((t) =>
+        t.toLowerCase(),
+      ),
+    );
+    const currentYear =
+      Number(String(current.published_date ?? "").slice(0, 4)) ||
+      (current.year as number);
+
+    const { rows } = await db.execute({
+      sql: "SELECT * FROM videos WHERE status = 'approved' AND id != ? ORDER BY created_at DESC",
+      args: [videoId],
+    });
+
+    const scored = (rows as Record<string, unknown>[]).map((row) => {
+      const tags = dedupeTags(JSON.parse((row.tags as string) || "[]"));
+      let score = 0;
+      if ((row.category as string) === currentCategory) score += 3;
+      for (const tag of tags) {
+        if (currentTags.has(tag.toLowerCase())) score += 2;
+      }
+      const year =
+        Number(String(row.published_date ?? "").slice(0, 4)) ||
+        (row.year as number);
+      if (year === currentYear) score += 1;
+      return { row, score };
+    });
+
+    scored.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return String(b.row.created_at).localeCompare(String(a.row.created_at));
+    });
+
+    const topRows = scored.slice(0, Math.max(1, limit)).map((s) => s.row);
+    return rowsToVideos(db, topRows);
+  } catch {
+    return null;
+  }
+}
+
 export async function getVideosByIds(ids: string[]): Promise<Video[] | null> {
   const db = getClient();
   if (!db || ids.length === 0) return null;

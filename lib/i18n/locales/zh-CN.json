@@ -1,5 +1,5 @@
 {
-  "siteName": "Yeji Verse",
+  "siteName": "YEJI VERSE",
   "siteTagline": "Pocket every Yeji moment",
   "allVideos": "全部影片",
   "favorites": "我的收藏",
@@ -103,6 +103,7 @@
   "viewCountNote": "显示各平台最高观看数",
   "resultsCount": "共 {{count}} 部",
   "loading": "加载中…",
+  "relatedVideos": "相关视频",
   "thumbnailDisclaimer": "封面是自动截取，无法保证都是 yeji",
   "backToHome": "返回首页",
   "backToTop": "回到顶部",

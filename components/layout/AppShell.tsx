@@ -20,6 +20,7 @@ import { useChecklist } from "@/hooks/useChecklist";
 import { useClips } from "@/hooks/useClips";
 import { useSidebarTags } from "@/hooks/useSidebarTags";
 import { getAllTags } from "@/lib/videos";
+import { Badge } from "@/components/ui/Badge";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { BackToTop } from "@/components/ui/BackToTop";
 import type { ClipBookmark, Video } from "@/lib/types";
@@ -397,9 +398,6 @@ export function AppShell({
     showBrowseFilters: mode === "all",
     onToggleCategory: toggleCategory,
     onClearCategories: clearCategories,
-    activeSubcategoryOptions,
-    onToggleSubcategory: toggleSubcategory,
-    onClearSubcategories: clearSubcategories,
     onToggleTag: toggleTag,
     onClearTags: clearTags,
     onToggleYear: toggleYear,
@@ -413,6 +411,9 @@ export function AppShell({
     onClearShowUnwatchedOnly: () => setShowUnwatchedOnly(false),
     hideSort: mode === "starter" || mode === "clips",
   };
+
+  const showSubcategoryBar =
+    mode === "all" && activeSubcategoryOptions.length > 0;
 
   const emptyMessage =
     mode === "checklist"
@@ -517,6 +518,25 @@ export function AppShell({
               </button>
             )}
           </div>
+          {showSubcategoryBar && (
+            <div className="mb-4 flex flex-wrap items-center gap-1.5">
+              <Badge
+                active={filters.subcategories.length === 0}
+                onClick={clearSubcategories}
+              >
+                {t("filterAll")}
+              </Badge>
+              {activeSubcategoryOptions.map((s) => (
+                <Badge
+                  key={s}
+                  active={filters.subcategories.includes(s)}
+                  onClick={() => toggleSubcategory(s)}
+                >
+                  {t(s)}
+                </Badge>
+              ))}
+            </div>
+          )}
           {showGridSkeleton ? (
             <VideoGridSkeleton />
           ) : mode === "clips" ? (

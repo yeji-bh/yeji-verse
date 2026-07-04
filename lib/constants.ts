@@ -29,7 +29,7 @@ export const CATEGORIES: Category[] = [
 
 export const CATEGORY_SUBCATEGORIES: Partial<Record<Category, Subcategory[]>> = {
   variety: ["varietySolo", "varietyMulti"],
-  cover: ["coverDance", "coverVocal"],
+  cover: ["coverDance", "coverVocal", "coverSingDance"],
 };
 
 const ALL_SUBCATEGORIES = new Set<Subcategory>([
@@ -37,6 +37,7 @@ const ALL_SUBCATEGORIES = new Set<Subcategory>([
   "varietyMulti",
   "coverDance",
   "coverVocal",
+  "coverSingDance",
 ]);
 
 export function getSubcategoriesForCategory(

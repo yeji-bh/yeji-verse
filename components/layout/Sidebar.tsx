@@ -9,7 +9,7 @@ import { FilterBadgeGroup } from "@/components/ui/FilterBadgeGroup";
 import { SortControls } from "@/components/ui/SortControls";
 import { CATEGORIES } from "@/lib/constants";
 import { getFilterYears } from "@/lib/years";
-import type { SortBy, SortOrder, Subcategory, VideoFilters } from "@/lib/types";
+import type { SortBy, SortOrder, VideoFilters } from "@/lib/types";
 import { IconHeart, IconLogout, IconSettings } from "@/components/ui/IconButton";
 import { AuthModal } from "@/components/auth/AuthModal";
 
@@ -18,9 +18,6 @@ interface SidebarProps {
   allTags: string[];
   onToggleCategory: (category: string) => void;
   onClearCategories: () => void;
-  activeSubcategoryOptions?: Subcategory[];
-  onToggleSubcategory?: (subcategory: string) => void;
-  onClearSubcategories?: () => void;
   onToggleTag: (tag: string) => void;
   onClearTags: () => void;
   onToggleYear: (year: number) => void;
@@ -70,9 +67,6 @@ export function Sidebar({
   allTags,
   onToggleCategory,
   onClearCategories,
-  activeSubcategoryOptions = [],
-  onToggleSubcategory,
-  onClearSubcategories,
   onToggleTag,
   onClearTags,
   onToggleYear,
@@ -243,21 +237,6 @@ export function Sidebar({
               selected={filters.categories}
               onToggle={onToggleCategory}
             />
-
-            {activeSubcategoryOptions.length > 0 && onToggleSubcategory && (
-              <FilterBadgeGroup
-                label={t("subcategory")}
-                showAll
-                allLabel={t("filterAll")}
-                onSelectAll={onClearSubcategories}
-                items={activeSubcategoryOptions.map((s) => ({
-                  value: s,
-                  label: t(s),
-                }))}
-                selected={filters.subcategories}
-                onToggle={onToggleSubcategory}
-              />
-            )}
 
             <FilterBadgeGroup
               label={t("checklistFilter")}

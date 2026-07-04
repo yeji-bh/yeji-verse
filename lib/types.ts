@@ -29,7 +29,8 @@ export type Subcategory =
   | "varietySolo"
   | "varietyMulti"
   | "coverDance"
-  | "coverVocal";
+  | "coverVocal"
+  | "coverSingDance";
 
 export type SortBy = "createdAt" | "publishedDate" | "title";
 export type SortOrder = "asc" | "desc";

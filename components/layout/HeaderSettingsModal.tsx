@@ -39,9 +39,9 @@ export function HeaderSettingsModal({ open, onClose }: HeaderSettingsModalProps)
       onClose={onClose}
       size="md"
       centered
-      className="flex max-h-[50dvh] w-full max-w-md flex-col"
+      className="modal-shell--rounded-full flex max-h-[50dvh] w-full max-w-md flex-col"
     >
-      <div className="flex flex-col p-4">
+      <div className="flex flex-col px-6 py-5">
         <div className="mb-3 flex items-center justify-between gap-3 border-b border-[var(--color-borderSubtle)] pb-3">
           <h2 className="text-sm font-semibold text-[var(--color-text)]">
             {t("settings")}

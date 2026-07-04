@@ -63,7 +63,7 @@ export function useClips() {
         id: createId(),
         videoId,
         startSeconds: start,
-        note: note.trim().slice(0, 200),
+        note: note.trim().slice(0, 50),
         createdAt: new Date().toISOString(),
       };
 

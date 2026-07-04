@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   const body = await request.json();
   const videoId = typeof body.videoId === "string" ? body.videoId : "";
   const startSeconds = Number(body.startSeconds);
-  const note = typeof body.note === "string" ? body.note.trim().slice(0, 200) : "";
+  const note = typeof body.note === "string" ? body.note.trim().slice(0, 50) : "";
   const id =
     typeof body.id === "string" && body.id.trim()
       ? body.id.trim()

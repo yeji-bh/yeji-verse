@@ -213,8 +213,12 @@ html.dark .modal-close-btn {
   border-radius: 12px !important;
 }
 
+.modal-shell--rounded-full {
+  border-radius: 9999px !important;
+}
+
 @media (max-width: 639px) {
-  .modal-shell {
+  .modal-shell:not(.modal-shell--rounded-full) {
     border-bottom-left-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
   }

@@ -460,8 +460,8 @@ export function AppShell({
 
         <main className="flex-1 p-4 sm:p-6">
           {mode === "starter" && (
-            <header className="mb-6">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <header className="mb-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <h1
                     className="text-base font-bold tracking-tight bg-clip-text text-transparent lg:text-2xl"
@@ -483,19 +483,20 @@ export function AppShell({
             </header>
           )}
           {mode === "clips" && (
-            <header className="mb-6">
+            <header className="mb-2">
               <h1
                 className="text-base font-bold tracking-tight bg-clip-text text-transparent lg:text-2xl"
                 style={{ backgroundImage: "var(--color-gradient)" }}
               >
                 {t("clipsTitle")}
               </h1>
-              <p className="mt-1 text-sm text-[var(--color-textMuted)]">
-                {t("clipsSubtitle")}
-              </p>
             </header>
           )}
-          <div className="mb-4 flex items-center justify-between gap-3">
+          <div
+            className={`flex items-center justify-between gap-3 ${
+              mode === "starter" || mode === "clips" ? "mb-2" : "mb-4"
+            }`}
+          >
             <p className="text-xs text-[var(--color-textSubtle)]">
               {showGridSkeleton
                 ? t("loading")

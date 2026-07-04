@@ -21,7 +21,7 @@ export function AddClipForm({ onAdd, onCancel }: AddClipFormProps) {
       setError(t("clipTimeInvalid"));
       return;
     }
-    onAdd(seconds, noteInput);
+    onAdd(seconds, noteInput.trim().slice(0, 50));
     setTimeInput("");
     setNoteInput("");
     setError("");
@@ -63,7 +63,7 @@ export function AddClipForm({ onAdd, onCancel }: AddClipFormProps) {
           }}
           placeholder={t("clipNotePlaceholder")}
           className="min-w-0 flex-1 border border-[var(--color-border)] bg-[var(--color-input)] px-3 py-2 text-sm outline-none focus:border-[var(--color-accent)]"
-          maxLength={200}
+          maxLength={50}
         />
       </div>
       {error && <p className="mt-1.5 text-xs text-red-500">{error}</p>}

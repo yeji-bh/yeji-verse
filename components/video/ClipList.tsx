@@ -91,7 +91,7 @@ export function ClipList({
                     {video.title}
                   </p>
                   {clip.note ? (
-                    <p className="mt-1 line-clamp-1 text-xs text-[var(--color-textMuted)]">
+                    <p className="mt-1 whitespace-pre-wrap break-words text-xs text-[var(--color-textMuted)]">
                       {clip.note}
                     </p>
                   ) : (

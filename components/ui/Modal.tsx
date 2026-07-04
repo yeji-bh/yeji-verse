@@ -82,8 +82,8 @@ export function Modal({
       <div
         ref={dialogRef}
         className={`modal-shell relative z-10 w-full ${sizeClasses[size]} overflow-hidden bg-[var(--color-bgElevated)] shadow-[var(--color-shadowLg)] ${
-          sheetDragging || sheetOffset > 0 ? "" : "animate-modal-in"
-        } ${
+          centered ? "modal-shell--centered" : "modal-shell--sheet"
+        } ${sheetDragging || sheetOffset > 0 ? "" : "animate-modal-in"} ${
           mobileFullscreen
             ? "flex h-auto max-h-[100dvh] flex-col self-end sm:max-h-[90vh] sm:self-auto sm:flex-none"
             : "max-h-[95vh] sm:max-h-[90vh]"

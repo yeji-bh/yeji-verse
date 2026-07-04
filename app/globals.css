@@ -210,18 +210,26 @@ html.dark .modal-close-btn {
 }
 
 .modal-shell {
-  border-radius: 12px !important;
-}
-
-.modal-shell--rounded-full {
-  border-radius: 9999px !important;
+  border-top-left-radius: 12px !important;
+  border-top-right-radius: 12px !important;
+  border-bottom-left-radius: 12px !important;
+  border-bottom-right-radius: 12px !important;
 }
 
 @media (max-width: 639px) {
-  .modal-shell:not(.modal-shell--rounded-full) {
+  /* Bottom sheets flush to screen edge */
+  .modal-shell--sheet {
     border-bottom-left-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
   }
+}
+
+/* Centered modals (e.g. settings): always equal radius on all corners */
+.modal-shell--centered {
+  border-top-left-radius: 12px !important;
+  border-top-right-radius: 12px !important;
+  border-bottom-left-radius: 12px !important;
+  border-bottom-right-radius: 12px !important;
 }
 
 .modal-video-shell--desktop {

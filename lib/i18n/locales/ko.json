@@ -124,6 +124,7 @@
   "hasAccount": "이미 계정이 있으신가요?",
   "goLogin": "로그인",
   "admin": "관리",
+  "submittedAt": "제출 시간",
   "pending": "검토 대기",
   "approved": "승인됨",
   "rejected": "거절됨",

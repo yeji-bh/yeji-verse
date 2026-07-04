@@ -124,6 +124,7 @@
   "hasAccount": "已有账号？",
   "goLogin": "立即登录",
   "admin": "管理后台",
+  "submittedAt": "投稿时间",
   "pending": "待审核",
   "approved": "已通过",
   "rejected": "已拒绝",

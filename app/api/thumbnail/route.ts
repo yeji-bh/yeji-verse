@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { isAllowedThumbnailProxyUrl } from "@/lib/thumbnail";
+import {
+  bilibiliSizedUrl,
+  isAllowedThumbnailProxyUrl,
+  THUMB_DISPLAY_WIDTH,
+} from "@/lib/thumbnail";
 
 const BILIBILI_HEADERS = {
   Referer: "https://www.bilibili.com",
@@ -8,15 +12,28 @@ const BILIBILI_HEADERS = {
 };
 
 const FETCH_TIMEOUT_MS = 8_000;
+const CACHE_CONTROL =
+  "public, max-age=604800, stale-while-revalidate=2592000, immutable";
 
-function candidateUrls(url: string): string[] {
-  const urls = [url];
+function withProtocolFallbacks(url: string): string[] {
   if (url.startsWith("http://")) {
-    urls.push(`https://${url.slice("http://".length)}`);
-  } else if (url.startsWith("https://")) {
-    urls.push(`http://${url.slice("https://".length)}`);
+    return [url, `https://${url.slice("http://".length)}`];
   }
-  return urls;
+  if (url.startsWith("https://")) {
+    return [url, `http://${url.slice("https://".length)}`];
+  }
+  return [url];
+}
+
+function candidateUrls(url: string, width: number): string[] {
+  const sized = bilibiliSizedUrl(url, width);
+  const out: string[] = [];
+  for (const candidate of sized) {
+    for (const withProto of withProtocolFallbacks(candidate)) {
+      out.push(withProto);
+    }
+  }
+  return out;
 }
 
 async function fetchUpstream(url: string): Promise<Response> {
@@ -31,6 +48,10 @@ async function fetchUpstream(url: string): Promise<Response> {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const url = searchParams.get("url");
+  const width = Math.min(
+    Math.max(Number(searchParams.get("w")) || THUMB_DISPLAY_WIDTH, 320),
+    1280,
+  );
 
   if (!url || !isAllowedThumbnailProxyUrl(url)) {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
@@ -38,7 +59,7 @@ export async function GET(request: Request) {
 
   let lastError: unknown;
 
-  for (const candidate of candidateUrls(url)) {
+  for (const candidate of candidateUrls(url, width)) {
     try {
       const upstream = await fetchUpstream(candidate);
       if (!upstream.ok) {
@@ -46,13 +67,23 @@ export async function GET(request: Request) {
         continue;
       }
 
+      const contentType = upstream.headers.get("content-type") ?? "";
+      // Skip HTML error pages sometimes returned by CDN
+      if (contentType.includes("text/html")) {
+        lastError = new Error("Unexpected HTML response");
+        continue;
+      }
+
       const body = await upstream.arrayBuffer();
-      const contentType = upstream.headers.get("content-type") ?? "image/jpeg";
+      if (body.byteLength < 100) {
+        lastError = new Error("Empty body");
+        continue;
+      }
 
       return new NextResponse(body, {
         headers: {
-          "Content-Type": contentType,
-          "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+          "Content-Type": contentType || "image/jpeg",
+          "Cache-Control": CACHE_CONTROL,
         },
       });
     } catch (err) {

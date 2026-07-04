@@ -1,7 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --font-sans: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", var(--font-tc), var(--font-sc), var(--font-jp), sans-serif;
+  /* System fonts only — avoids downloading multi-MB Google Fonts on mobile. */
+  --font-sans: system-ui, -apple-system, "Segoe UI", "PingFang TC", "PingFang SC",
+    "Hiragino Sans", "Microsoft YaHei", "Noto Sans TC", "Noto Sans SC",
+    "Noto Sans JP", sans-serif;
 }
 
 @theme inline {

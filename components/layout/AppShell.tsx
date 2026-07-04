@@ -24,14 +24,25 @@ import type { Video } from "@/lib/types";
 
 interface AppShellProps {
   mode?: "all" | "favorites" | "starter" | "checklist";
+  initialVideos?: Video[];
+  initialTotal?: number;
 }
 
-export function AppShell({ mode = "all" }: AppShellProps) {
+export function AppShell({
+  mode = "all",
+  initialVideos = [],
+  initialTotal = 0,
+}: AppShellProps) {
   const { t } = useTranslation("common");
   const { user } = useAuth();
   const paginated = mode === "all";
 
-  const pagination = usePaginatedVideos(paginated);
+  const pagination = usePaginatedVideos(
+    paginated,
+    paginated && initialVideos.length > 0
+      ? { videos: initialVideos, total: initialTotal }
+      : null,
+  );
   const {
     videos: paginatedVideos,
     setVideos: setPaginatedVideos,

@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
+import type { Video } from "@/lib/types";
 
 type BrowseMode = "all" | "favorites" | "starter" | "checklist";
 
@@ -12,13 +13,27 @@ function getMode(pathname: string): BrowseMode {
   return "all";
 }
 
-export function BrowseAppShell({ children }: { children: React.ReactNode }) {
+interface BrowseAppShellProps {
+  children: React.ReactNode;
+  initialVideos?: Video[];
+  initialTotal?: number;
+}
+
+export function BrowseAppShell({
+  children,
+  initialVideos = [],
+  initialTotal = 0,
+}: BrowseAppShellProps) {
   const pathname = usePathname();
   const mode = getMode(pathname);
 
   return (
     <>
-      <AppShell mode={mode} />
+      <AppShell
+        mode={mode}
+        initialVideos={initialVideos}
+        initialTotal={initialTotal}
+      />
       {children}
     </>
   );

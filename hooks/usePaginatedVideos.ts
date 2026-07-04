@@ -23,17 +23,33 @@ function mergeVideos(prev: Video[], next: Video[]): Video[] {
   return merged;
 }
 
-export function usePaginatedVideos(enabled: boolean) {
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [loading, setLoading] = useState(enabled);
+interface InitialPage {
+  videos: Video[];
+  total: number;
+}
+
+export function usePaginatedVideos(
+  enabled: boolean,
+  initialPage?: InitialPage | null,
+) {
+  const hasInitial = Boolean(initialPage && initialPage.videos.length > 0);
+  const [videos, setVideos] = useState<Video[]>(
+    () => initialPage?.videos ?? [],
+  );
+  const [loading, setLoading] = useState(enabled && !hasInitial);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
-  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(() =>
+    hasInitial
+      ? initialPage!.videos.length < initialPage!.total
+      : false,
+  );
+  const [total, setTotal] = useState(() => initialPage?.total ?? 0);
   const [fullyLoaded, setFullyLoaded] = useState(false);
-  const offsetRef = useRef(0);
-  const totalRef = useRef(0);
+  const offsetRef = useRef(hasInitial ? initialPage!.videos.length : 0);
+  const totalRef = useRef(initialPage?.total ?? 0);
   const loadingMoreRef = useRef(false);
   const loadAllAbortRef = useRef<AbortController | null>(null);
+  const initialUsedRef = useRef(hasInitial);
   const stateRef = useRef({ hasMore: false, fullyLoaded: false });
   stateRef.current = { hasMore, fullyLoaded };
   totalRef.current = total;
@@ -134,6 +150,17 @@ export function usePaginatedVideos(enabled: boolean) {
     if (!enabled) return;
 
     const ac = new AbortController();
+
+    // First paint already has build-time data for LCP — refresh in the background
+    // without clearing the grid (avoids skeleton flash and keeps HTML LCP image).
+    if (initialUsedRef.current) {
+      initialUsedRef.current = false;
+      void fetchPage(0, false, ac.signal).catch(() => {
+        /* keep initial snapshot */
+      });
+      return () => ac.abort();
+    }
+
     setLoading(true);
     offsetRef.current = 0;
     setFullyLoaded(false);

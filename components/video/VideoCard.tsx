@@ -127,10 +127,7 @@ function LazyThumbnail({
   const [shouldLoad, setShouldLoad] = useState(priority);
 
   useEffect(() => {
-    if (priority) {
-      setShouldLoad(true);
-      return;
-    }
+    if (priority) return;
 
     const el = containerRef.current;
     if (!el) return;
@@ -154,6 +151,21 @@ function LazyThumbnail({
     return () => observer.disconnect();
   }, [priority]);
 
+  // Native <img> for LCP candidates so loading/fetchpriority are explicit in HTML.
+  if (priority) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={alt}
+        loading="eager"
+        fetchPriority="high"
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+      />
+    );
+  }
+
   return (
     <div ref={containerRef} className="absolute inset-0">
       {shouldLoad ? (
@@ -161,8 +173,7 @@ function LazyThumbnail({
           src={src}
           alt={alt}
           fill
-          loading={priority ? "eager" : "lazy"}
-          priority={priority}
+          loading="lazy"
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
           className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           unoptimized
@@ -186,7 +197,11 @@ export function VideoCard({
 
   return (
     <article
-      className="group cursor-pointer [content-visibility:auto] [contain-intrinsic-size:auto_260px]"
+      className={`group cursor-pointer ${
+        priority
+          ? ""
+          : "[content-visibility:auto] [contain-intrinsic-size:auto_260px]"
+      }`}
       onClick={onClick}
     >
       <div className="relative aspect-video overflow-hidden bg-[var(--color-bgMuted)] shadow-[var(--color-shadow)]">

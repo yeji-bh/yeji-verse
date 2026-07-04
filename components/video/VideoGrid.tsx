@@ -69,23 +69,26 @@ export function VideoGrid({
               e.stopPropagation();
               onToggleChecked(video.id);
             }}
-            priority={index < 4}
+            // First row on desktop can be 5 cards; keep LCP candidates eager.
+            priority={index < 8}
           />
         ))}
       </div>
-      {hasMore && (
+      {/* Always reserve height when pagination exists to avoid CLS from "Loading more…". */}
+      {onLoadMore && (
         <div
           ref={sentinelRef}
-          className="flex items-center justify-center gap-2 py-10 text-xs text-[var(--color-textSubtle)]"
+          className="flex min-h-14 items-center justify-center gap-2 py-6 text-xs text-[var(--color-textSubtle)]"
+          aria-hidden={!hasMore}
         >
-          {loadingMore ? (
+          {hasMore && loadingMore ? (
             <>
               <LoadingSpinner size="sm" />
               <span>{t("loadingMore")}</span>
             </>
-          ) : (
+          ) : hasMore ? (
             <span className="sr-only">{t("loadingMore")}</span>
-          )}
+          ) : null}
         </div>
       )}
     </>

@@ -54,7 +54,7 @@ export function VideoPlayer({
           className={`absolute inset-0 h-full w-full transition-opacity duration-200 ${
             iframeLoaded ? "opacity-100" : "opacity-0"
           }`}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture;"
           allowFullScreen
           onLoad={() => setIframeLoaded(true)}
         />

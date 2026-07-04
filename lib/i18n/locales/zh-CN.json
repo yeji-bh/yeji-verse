@@ -104,7 +104,7 @@
   "resultsCount": "共 {{count}} 部",
   "loading": "加载中…",
   "relatedVideos": "相关视频",
-  "thumbnailDisclaimer": "封面是自动截取，无法保证都是 yeji",
+  "thumbnailDisclaimer": "封面来自原视频",
   "backToHome": "返回首页",
   "backToTop": "回到顶部",
   "favorite": "收藏",

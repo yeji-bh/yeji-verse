@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import type { SessionUser } from "@/lib/types";
-import { CHECKLIST_KEY, FAVORITES_KEY } from "@/lib/constants";
+import { CHECKLIST_KEY, CLIPS_KEY, FAVORITES_KEY } from "@/lib/constants";
 
 interface AuthContextValue {
   user: SessionUser | null;
@@ -62,6 +62,26 @@ async function syncChecklistOnLogin() {
   }
 }
 
+async function syncClipsOnLogin() {
+  try {
+    const stored = localStorage.getItem(CLIPS_KEY);
+    const clips = stored ? JSON.parse(stored) : [];
+    if (!Array.isArray(clips) || clips.length === 0) return;
+
+    const res = await fetch("/api/clips/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clips }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      localStorage.setItem(CLIPS_KEY, JSON.stringify(data.clips));
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -97,6 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(data.user);
     await syncFavoritesOnLogin();
     await syncChecklistOnLogin();
+    await syncClipsOnLogin();
     return true;
   }, []);
 
@@ -111,6 +132,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(data.user);
     await syncFavoritesOnLogin();
     await syncChecklistOnLogin();
+    await syncClipsOnLogin();
     return true;
   }, []);
 

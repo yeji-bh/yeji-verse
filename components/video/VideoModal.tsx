@@ -21,9 +21,18 @@ import {
 } from "@/components/video/SourceFields";
 import { useVideoUrlParser } from "@/hooks/useVideoUrlParser";
 import { RelatedVideos } from "@/components/video/RelatedVideos";
-import { CATEGORIES } from "@/lib/constants";
-import type { Category, Video } from "@/lib/types";
+import { AddClipForm } from "@/components/video/AddClipForm";
+import { CATEGORIES, getSubcategoriesForCategory } from "@/lib/constants";
+import type { Category, Subcategory, Video } from "@/lib/types";
 import { getPlatformLabel } from "@/lib/video-platforms";
+
+function IconBookmark({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </svg>
+  );
+}
 
 function IconCalendar({ className }: { className?: string }) {
   return (
@@ -63,6 +72,8 @@ interface VideoModalProps {
   onVideoUpdated?: (video: Video) => void;
   onVideoDeleted?: (id: string) => void;
   onSelectVideo?: (video: Video) => void;
+  startSeconds?: number;
+  onAddClip?: (startSeconds: number, note: string) => void;
 }
 
 export function VideoModal({
@@ -76,6 +87,8 @@ export function VideoModal({
   onVideoUpdated,
   onVideoDeleted,
   onSelectVideo,
+  startSeconds = 0,
+  onAddClip,
 }: VideoModalProps) {
   const { t } = useTranslation("common");
   const { user } = useAuth();
@@ -86,7 +99,9 @@ export function VideoModal({
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editCategory, setEditCategory] = useState<Category>("vlog");
+  const [editSubcategory, setEditSubcategory] = useState<Subcategory | null>(null);
   const [editTags, setEditTags] = useState<string[]>([]);
+  const editSubcategoryOptions = getSubcategoriesForCategory(editCategory);
   const [editDate, setEditDate] = useState("");
   const [editSources, setEditSources] = useState<SourceInput[]>([createEmptySource()]);
   const [editThumbnail, setEditThumbnail] = useState("");
@@ -94,9 +109,12 @@ export function VideoModal({
   const dragStartY = useRef(0);
   const dragOffsetY = useRef(0);
   const sheetDraggingRef = useRef(false);
+  const sheetMovedRef = useRef(false);
   const [sheetOffset, setSheetOffset] = useState(0);
   const [sheetDragging, setSheetDragging] = useState(false);
   const [isLg, setIsLg] = useState(false);
+  const [playStartSeconds, setPlayStartSeconds] = useState(startSeconds);
+  const [addingClip, setAddingClip] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)");
@@ -108,15 +126,21 @@ export function VideoModal({
 
   useEffect(() => {
     setEditing(false);
+    setAddingClip(false);
     cancelParse();
     sheetDraggingRef.current = false;
     setSheetOffset(0);
     setSheetDragging(false);
   }, [video?.id, cancelParse]);
 
+  useEffect(() => {
+    setPlayStartSeconds(startSeconds);
+  }, [video?.id, startSeconds]);
+
   const onSheetTouchStart = (e: React.TouchEvent) => {
     dragStartY.current = e.touches[0].clientY;
     dragOffsetY.current = 0;
+    sheetMovedRef.current = false;
     sheetDraggingRef.current = true;
     setSheetDragging(true);
   };
@@ -125,6 +149,7 @@ export function VideoModal({
     if (!sheetDraggingRef.current) return;
     const dy = e.touches[0].clientY - dragStartY.current;
     const next = Math.max(0, dy);
+    if (next > 8) sheetMovedRef.current = true;
     dragOffsetY.current = next;
     setSheetOffset(next);
   };
@@ -139,6 +164,11 @@ export function VideoModal({
       return;
     }
     setSheetOffset(0);
+  };
+
+  const onSheetHandleClick = () => {
+    if (sheetMovedRef.current) return;
+    onClose();
   };
 
   const primaryEditUrl = editSources[0]?.url ?? "";
@@ -169,6 +199,7 @@ export function VideoModal({
     setEditTitle(video.title);
     setEditDescription(video.description);
     setEditCategory(video.category);
+    setEditSubcategory(video.subcategory);
     setEditTags([...video.tags]);
     setEditDate(video.publishedDate);
     setEditSources(
@@ -196,6 +227,8 @@ export function VideoModal({
           title: editTitle.trim(),
           description: editDescription.trim(),
           category: editCategory,
+          subcategory:
+            editSubcategoryOptions.length > 0 ? editSubcategory : null,
           tags: editTags,
           publishedDate: editDate,
           thumbnail: editThumbnail || video.thumbnail,
@@ -296,13 +329,38 @@ export function VideoModal({
                       <Badge
                         key={c}
                         active={editCategory === c}
-                        onClick={() => setEditCategory(c)}
+                        onClick={() => {
+                          setEditCategory(c);
+                          setEditSubcategory(null);
+                        }}
                       >
                         {t(c)}
                       </Badge>
                     ))}
                   </div>
                 </div>
+                {editSubcategoryOptions.length > 0 && (
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
+                      {t("subcategory")}
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {editSubcategoryOptions.map((s) => (
+                        <Badge
+                          key={s}
+                          active={editSubcategory === s}
+                          onClick={() =>
+                            setEditSubcategory((prev) =>
+                              prev === s ? null : s,
+                            )
+                          }
+                        >
+                          {t(s)}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div>
                   <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
                     {t("tags")}
@@ -343,6 +401,13 @@ export function VideoModal({
               onTouchMove={onSheetTouchMove}
               onTouchEnd={onSheetTouchEnd}
               onTouchCancel={onSheetTouchEnd}
+              onClick={onSheetHandleClick}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onClose();
+                }
+              }}
               role="button"
               tabIndex={0}
               aria-label={t("close")}
@@ -354,11 +419,13 @@ export function VideoModal({
               <div className="relative z-10 shrink-0">
                 <div className="modal-video-shell">
                   <VideoPlayer
+                    key={`${source.id}-${playStartSeconds}`}
                     url={source.url}
                     platform={source.platform}
                     title={video.title}
                     thumbnail={video.thumbnail}
                     embedOnMount
+                    startSeconds={playStartSeconds}
                   />
                 </div>
               </div>
@@ -376,7 +443,10 @@ export function VideoModal({
                     <time dateTime={video.publishedDate}>{video.publishedDate}</time>
                   </span>
                   <span aria-hidden>·</span>
-                  <span className="modal-category-label">{t(video.category)}</span>
+                  <span className="modal-category-label">
+                    {t(video.category)}
+                    {video.subcategory ? ` · ${t(video.subcategory)}` : ""}
+                  </span>
                 </div>
 
                 {video.tags.length > 0 && (
@@ -433,7 +503,31 @@ export function VideoModal({
                   >
                     <IconHeart filled={isFavorite} className="h-4 w-4" />
                   </button>
+                  {onAddClip && (
+                    <button
+                      type="button"
+                      onClick={() => setAddingClip((v) => !v)}
+                      className={`modal-action-ghost inline-flex h-11 w-11 shrink-0 items-center justify-center ${
+                        addingClip
+                          ? "!border-[var(--color-accent)] !bg-[var(--color-accentMuted)] !text-[var(--color-accent)]"
+                          : ""
+                      }`}
+                      aria-label={t("clipAdd")}
+                      aria-expanded={addingClip}
+                    >
+                      <IconBookmark className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
+
+                {onAddClip && addingClip && (
+                  <div className="mt-3">
+                    <AddClipForm
+                      onAdd={onAddClip}
+                      onCancel={() => setAddingClip(false)}
+                    />
+                  </div>
+                )}
 
                 {isAdmin && (
                   <div className="mt-3 flex items-center gap-4 text-xs">
@@ -467,11 +561,13 @@ export function VideoModal({
               <div className="relative p-5 pb-0">
                 <div className="modal-video-shell modal-video-shell--desktop">
                   <VideoPlayer
+                    key={`${source.id}-${playStartSeconds}`}
                     url={source.url}
                     platform={source.platform}
                     title={video.title}
                     thumbnail={video.thumbnail}
                     embedOnMount
+                    startSeconds={playStartSeconds}
                   />
                 </div>
                 <button
@@ -505,7 +601,10 @@ export function VideoModal({
                   <time dateTime={video.publishedDate}>{video.publishedDate}</time>
                 </span>
                 <span aria-hidden>·</span>
-                <span className="modal-category-label">{t(video.category)}</span>
+                <span className="modal-category-label">
+                  {t(video.category)}
+                  {video.subcategory ? ` · ${t(video.subcategory)}` : ""}
+                </span>
               </div>
 
               {video.tags.length > 0 && (
@@ -564,7 +663,30 @@ export function VideoModal({
                   <IconHeart filled={isFavorite} className="h-4 w-4 shrink-0" />
                   <span>{isFavorite ? t("unfavorite") : t("favorite")}</span>
                 </button>
+                {onAddClip && (
+                  <button
+                    type="button"
+                    onClick={() => setAddingClip((v) => !v)}
+                    className={`modal-action-ghost inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium ${
+                      addingClip
+                        ? "!border-[var(--color-accent)] !bg-[var(--color-accentMuted)] !text-[var(--color-accent)]"
+                        : ""
+                    }`}
+                    aria-label={t("clipAdd")}
+                    aria-expanded={addingClip}
+                  >
+                    <IconBookmark className="h-4 w-4 shrink-0" />
+                    <span>{t("clipAdd")}</span>
+                  </button>
+                )}
               </div>
+
+              {onAddClip && addingClip && (
+                <AddClipForm
+                  onAdd={onAddClip}
+                  onCancel={() => setAddingClip(false)}
+                />
+              )}
 
               {isAdmin && (
                 <div className="flex items-center gap-2 border-t border-[var(--color-borderSubtle)] pt-4">

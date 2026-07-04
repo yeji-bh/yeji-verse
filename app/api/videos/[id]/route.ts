@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { deleteVideo, updateVideoInDb, updateVideoStatus } from "@/db/client";
 import { dedupeTags } from "@/lib/tags";
 import { requireAdmin } from "@/lib/session";
-import type { Category, VideoStatus } from "@/lib/types";
+import type { Category, Subcategory, VideoStatus } from "@/lib/types";
 
 export async function PATCH(
   request: Request,
@@ -33,6 +33,10 @@ export async function PATCH(
       title: String(body.title).trim(),
       description: typeof body.description === "string" ? body.description.trim() : "",
       category: body.category as Category,
+      subcategory:
+        body.subcategory === null || body.subcategory === undefined
+          ? null
+          : (body.subcategory as Subcategory),
       tags: dedupeTags(body.tags ?? []),
       publishedDate: body.publishedDate,
       thumbnail: body.thumbnail ?? "",

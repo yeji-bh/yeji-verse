@@ -12,6 +12,8 @@ interface VideoPlayerProps {
   thumbnail?: string;
   /** 直接嵌入播放器，不顯示縮圖與自訂播放按鈕 */
   embedOnMount?: boolean;
+  /** Start playback at this offset (YouTube / Bilibili embed). */
+  startSeconds?: number;
 }
 
 export function VideoPlayer({
@@ -20,19 +22,23 @@ export function VideoPlayer({
   title,
   thumbnail,
   embedOnMount = false,
+  startSeconds = 0,
 }: VideoPlayerProps) {
   const [playing, setPlaying] = useState(embedOnMount);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const embedUrl =
     embedOnMount || playing
-      ? getEmbedUrl(url, platform, { autoplay: !embedOnMount && playing })
+      ? getEmbedUrl(url, platform, {
+          autoplay: !embedOnMount && playing,
+          startSeconds,
+        })
       : null;
   const thumbSrc = thumbnail ? getThumbnailDisplayUrl(thumbnail) : null;
 
   useEffect(() => {
     setPlaying(embedOnMount);
     setIframeLoaded(false);
-  }, [url, embedOnMount]);
+  }, [url, embedOnMount, startSeconds]);
 
   if (embedUrl) {
     return (

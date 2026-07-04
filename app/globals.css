@@ -214,7 +214,7 @@ html.dark .modal-close-btn {
 }
 
 @media (max-width: 639px) {
-  .modal-shell:has(.modal-mobile-footer) {
+  .modal-shell {
     border-bottom-left-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
   }
@@ -263,10 +263,11 @@ html.dark .modal-close-btn {
 }
 
 .modal-sheet-handle {
-  width: 2.25rem;
-  height: 0.25rem;
+  width: 2.75rem;
+  height: 0.3rem;
   border-radius: 9999px !important;
-  background-color: var(--color-border);
+  background-color: var(--color-textSubtle);
+  opacity: 0.45;
 }
 
 .modal-category-label {

@@ -66,6 +66,18 @@ const statements = [
   FOREIGN KEY (added_by) REFERENCES users(id) ON DELETE SET NULL
 )`,
   "CREATE INDEX IF NOT EXISTS idx_starter_picks_sort ON starter_picks(sort_order)",
+  `CREATE TABLE IF NOT EXISTS clip_bookmarks (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  video_id TEXT NOT NULL,
+  start_seconds INTEGER NOT NULL,
+  note TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
+)`,
+  "CREATE INDEX IF NOT EXISTS idx_clip_bookmarks_user ON clip_bookmarks(user_id)",
+  "CREATE INDEX IF NOT EXISTS idx_clip_bookmarks_video ON clip_bookmarks(video_id)",
 ];
 
 for (const sql of statements) {
@@ -82,6 +94,7 @@ const migrations = [
   "ALTER TABLE videos ADD COLUMN status TEXT NOT NULL DEFAULT 'approved'",
   "ALTER TABLE videos ADD COLUMN submitted_by TEXT",
   "ALTER TABLE videos ADD COLUMN published_date TEXT",
+  "ALTER TABLE videos ADD COLUMN subcategory TEXT",
   "DROP TABLE IF EXISTS comments",
 ];
 

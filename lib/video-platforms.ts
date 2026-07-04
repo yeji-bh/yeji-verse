@@ -94,25 +94,30 @@ export function getThumbnailUrl(url: string, platform?: Platform | string): stri
 export function getEmbedUrl(
   url: string,
   platform?: Platform | string,
-  options?: { autoplay?: boolean },
+  options?: { autoplay?: boolean; startSeconds?: number },
 ): string | null {
   const p = platform ?? detectPlatform(url);
   const autoplay = options?.autoplay ? 1 : 0;
+  const start =
+    typeof options?.startSeconds === "number" && options.startSeconds > 0
+      ? Math.floor(options.startSeconds)
+      : 0;
 
   if (p === "youtube") {
     const id = extractYouTubeId(url);
-    return id
-      ? `https://www.youtube.com/embed/${id}?autoplay=${autoplay}&rel=0`
-      : null;
+    if (!id) return null;
+    const startParam = start > 0 ? `&start=${start}` : "";
+    return `https://www.youtube.com/embed/${id}?autoplay=${autoplay}&rel=0${startParam}`;
   }
 
   if (p === "bilibili") {
     const ids = extractBilibiliId(url);
+    const startParam = start > 0 ? `&t=${start}` : "";
     if (ids?.bvid) {
-      return `https://player.bilibili.com/player.html?bvid=${ids.bvid}&danmaku=0&autoplay=${autoplay}`;
+      return `https://player.bilibili.com/player.html?bvid=${ids.bvid}&danmaku=0&autoplay=${autoplay}${startParam}`;
     }
     if (ids?.aid) {
-      return `https://player.bilibili.com/player.html?aid=${ids.aid}&danmaku=0&autoplay=${autoplay}`;
+      return `https://player.bilibili.com/player.html?aid=${ids.aid}&danmaku=0&autoplay=${autoplay}${startParam}`;
     }
   }
 

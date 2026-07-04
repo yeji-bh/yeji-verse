@@ -9,7 +9,7 @@ import { FilterBadgeGroup } from "@/components/ui/FilterBadgeGroup";
 import { SortControls } from "@/components/ui/SortControls";
 import { CATEGORIES } from "@/lib/constants";
 import { getFilterYears } from "@/lib/years";
-import type { SortBy, SortOrder, VideoFilters } from "@/lib/types";
+import type { SortBy, SortOrder, Subcategory, VideoFilters } from "@/lib/types";
 import { IconHeart, IconLogout, IconSettings } from "@/components/ui/IconButton";
 import { AuthModal } from "@/components/auth/AuthModal";
 
@@ -18,6 +18,9 @@ interface SidebarProps {
   allTags: string[];
   onToggleCategory: (category: string) => void;
   onClearCategories: () => void;
+  activeSubcategoryOptions?: Subcategory[];
+  onToggleSubcategory?: (subcategory: string) => void;
+  onClearSubcategories?: () => void;
   onToggleTag: (tag: string) => void;
   onClearTags: () => void;
   onToggleYear: (year: number) => void;
@@ -67,6 +70,9 @@ export function Sidebar({
   allTags,
   onToggleCategory,
   onClearCategories,
+  activeSubcategoryOptions = [],
+  onToggleSubcategory,
+  onClearSubcategories,
   onToggleTag,
   onClearTags,
   onToggleYear,
@@ -189,6 +195,12 @@ export function Sidebar({
           </svg>
           {t("checklist")}
         </NavLink>
+        <NavLink href="/clips" active={pathname === "/clips"} onNavigate={onNavigate}>
+          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+          </svg>
+          {t("clipsNav")}
+        </NavLink>
       </div>
 
       <div className="flex flex-col gap-5">
@@ -231,6 +243,21 @@ export function Sidebar({
               selected={filters.categories}
               onToggle={onToggleCategory}
             />
+
+            {activeSubcategoryOptions.length > 0 && onToggleSubcategory && (
+              <FilterBadgeGroup
+                label={t("subcategory")}
+                showAll
+                allLabel={t("filterAll")}
+                onSelectAll={onClearSubcategories}
+                items={activeSubcategoryOptions.map((s) => ({
+                  value: s,
+                  label: t(s),
+                }))}
+                selected={filters.subcategories}
+                onToggle={onToggleSubcategory}
+              />
+            )}
 
             <FilterBadgeGroup
               label={t("checklistFilter")}

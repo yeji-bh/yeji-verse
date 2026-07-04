@@ -1,13 +1,18 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import type { SortBy, SortOrder, Video, VideoFilters } from "@/lib/types";
+import type { SortBy, SortOrder, Subcategory, Video, VideoFilters } from "@/lib/types";
 import { hasTag, videoHasAnyTag } from "@/lib/tags";
-import { normalizeCategory } from "@/lib/constants";
+import {
+  CATEGORY_SUBCATEGORIES,
+  getSubcategoriesForCategory,
+  normalizeCategory,
+} from "@/lib/constants";
 import { getVideoYear } from "@/lib/video-platforms";
 
 const defaultFilters: VideoFilters = {
   categories: [],
+  subcategories: [],
   tags: [],
   years: [],
   sortBy: "createdAt",
@@ -45,15 +50,36 @@ export function useFilters(videos: Video[], options?: { preserveOrder?: boolean 
   const toggleCategory = useCallback((category: string) => {
     setFilters((f) => {
       const cat = category as VideoFilters["categories"][number];
+      const nextCategories = f.categories.includes(cat) ? [] : [cat];
+      const allowed = new Set(
+        nextCategories.flatMap((c) => getSubcategoriesForCategory(c)),
+      );
       return {
         ...f,
-        categories: f.categories.includes(cat) ? [] : [cat],
+        categories: nextCategories,
+        subcategories: f.subcategories.filter((s) => allowed.has(s)),
       };
     });
   }, []);
 
   const clearCategories = useCallback(() => {
-    setFilters((f) => ({ ...f, categories: [] }));
+    setFilters((f) => ({ ...f, categories: [], subcategories: [] }));
+  }, []);
+
+  const toggleSubcategory = useCallback((subcategory: string) => {
+    setFilters((f) => {
+      const sub = subcategory as Subcategory;
+      return {
+        ...f,
+        subcategories: f.subcategories.includes(sub)
+          ? []
+          : [sub],
+      };
+    });
+  }, []);
+
+  const clearSubcategories = useCallback(() => {
+    setFilters((f) => ({ ...f, subcategories: [] }));
   }, []);
 
   const toggleTag = useCallback((tag: string) => {
@@ -94,6 +120,7 @@ export function useFilters(videos: Video[], options?: { preserveOrder?: boolean 
     setFilters((f) => ({
       ...f,
       categories: [],
+      subcategories: [],
       tags: [],
       years: [],
       search: "",
@@ -104,12 +131,25 @@ export function useFilters(videos: Video[], options?: { preserveOrder?: boolean 
     setFilters(defaultFilters);
   }, []);
 
+  const activeSubcategoryOptions = useMemo(() => {
+    if (filters.categories.length === 0) return [];
+    return filters.categories.flatMap(
+      (c) => CATEGORY_SUBCATEGORIES[c] ?? [],
+    );
+  }, [filters.categories]);
+
   const filtered = useMemo(() => {
     let result = [...videos];
 
     if (filters.categories.length > 0) {
       result = result.filter((v) =>
         filters.categories.includes(normalizeCategory(v.category)),
+      );
+    }
+
+    if (filters.subcategories.length > 0) {
+      result = result.filter(
+        (v) => v.subcategory && filters.subcategories.includes(v.subcategory),
       );
     }
 
@@ -142,6 +182,7 @@ export function useFilters(videos: Video[], options?: { preserveOrder?: boolean 
 
   const hasActiveFilters =
     filters.categories.length > 0 ||
+    filters.subcategories.length > 0 ||
     filters.tags.length > 0 ||
     filters.years.length > 0 ||
     filters.search.trim().length > 0;
@@ -149,8 +190,11 @@ export function useFilters(videos: Video[], options?: { preserveOrder?: boolean 
   return {
     filters,
     filtered,
+    activeSubcategoryOptions,
     toggleCategory,
     clearCategories,
+    toggleSubcategory,
+    clearSubcategories,
     toggleTag,
     clearTags,
     toggleYear,

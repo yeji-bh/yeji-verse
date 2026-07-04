@@ -24,6 +24,13 @@ export type Category =
   | "audioSource"
   | "other";
 
+/** Sub-filters under variety / cover. */
+export type Subcategory =
+  | "varietySolo"
+  | "varietyMulti"
+  | "coverDance"
+  | "coverVocal";
+
 export type SortBy = "createdAt" | "publishedDate" | "title";
 export type SortOrder = "asc" | "desc";
 
@@ -61,6 +68,7 @@ export interface Video {
   title: string;
   description: string;
   category: Category;
+  subcategory: Subcategory | null;
   tags: string[];
   publishedDate: string;
   year: number;
@@ -74,6 +82,7 @@ export interface Video {
 
 export interface VideoFilters {
   categories: Category[];
+  subcategories: Subcategory[];
   tags: string[];
   years: number[];
   sortBy: SortBy;
@@ -94,6 +103,7 @@ export interface SubmitVideoPayload {
   title: string;
   description?: string;
   category: Category;
+  subcategory?: Subcategory | null;
   tags: string[];
   publishedDate: string;
   sources: { platform: string; url: string }[];
@@ -104,4 +114,13 @@ export interface SessionUser {
   username: string;
   displayName: string | null;
   role: UserRole;
+}
+
+/** Timestamp bookmark within a video (clip favorite MVP). */
+export interface ClipBookmark {
+  id: string;
+  videoId: string;
+  startSeconds: number;
+  note: string;
+  createdAt: string;
 }

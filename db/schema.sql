@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS videos (
   title TEXT NOT NULL,
   description TEXT DEFAULT '',
   category TEXT NOT NULL,
+  subcategory TEXT,
   tags TEXT NOT NULL DEFAULT '[]',
   year INTEGER NOT NULL,
   published_date TEXT,
@@ -62,3 +63,17 @@ CREATE TABLE IF NOT EXISTS starter_picks (
 );
 
 CREATE INDEX IF NOT EXISTS idx_starter_picks_sort ON starter_picks(sort_order);
+
+CREATE TABLE IF NOT EXISTS clip_bookmarks (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  video_id TEXT NOT NULL,
+  start_seconds INTEGER NOT NULL,
+  note TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_clip_bookmarks_user ON clip_bookmarks(user_id);
+CREATE INDEX IF NOT EXISTS idx_clip_bookmarks_video ON clip_bookmarks(video_id);

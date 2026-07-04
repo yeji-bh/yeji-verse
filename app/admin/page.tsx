@@ -59,7 +59,10 @@ function ReviewCard({
           <dl className="grid gap-2 text-sm">
             <div className="flex flex-wrap gap-x-2">
               <dt className="shrink-0 text-[var(--color-textSubtle)]">{t("category")}</dt>
-              <dd className="text-[var(--color-text)]">{t(video.category)}</dd>
+              <dd className="text-[var(--color-text)]">
+                {t(video.category)}
+                {video.subcategory ? ` · ${t(video.subcategory)}` : ""}
+              </dd>
             </div>
             <div className="flex flex-wrap gap-x-2">
               <dt className="shrink-0 text-[var(--color-textSubtle)]">{t("videoDate")}</dt>

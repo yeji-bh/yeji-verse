@@ -13,9 +13,9 @@ import {
   normalizeSources,
 } from "@/components/video/SourceFields";
 import { useVideoUrlParser } from "@/hooks/useVideoUrlParser";
-import { CATEGORIES } from "@/lib/constants";
+import { CATEGORIES, getSubcategoriesForCategory } from "@/lib/constants";
 import { getThumbnailDisplayUrl } from "@/lib/thumbnail";
-import type { Category, SubmitVideoPayload } from "@/lib/types";
+import type { Category, Subcategory, SubmitVideoPayload } from "@/lib/types";
 
 interface SubmitModalProps {
   open: boolean;
@@ -33,7 +33,9 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Category>("vlog");
+  const [subcategory, setSubcategory] = useState<Subcategory | null>(null);
   const [tags, setTags] = useState<string[]>([]);
+  const subcategoryOptions = getSubcategoriesForCategory(category);
   const [publishedDate, setPublishedDate] = useState(todayString());
   const [sources, setSources] = useState([createEmptySource()]);
   const [thumbnail, setThumbnail] = useState("");
@@ -49,6 +51,7 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
     setTitle("");
     setDescription("");
     setCategory("vlog");
+    setSubcategory(null);
     setTags([]);
     setPublishedDate(todayString());
     setSources([createEmptySource()]);
@@ -99,6 +102,7 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
       title: title.trim(),
       description: description.trim(),
       category,
+      subcategory: subcategoryOptions.length > 0 ? subcategory : null,
       tags,
       publishedDate,
       sources: normalized,
@@ -183,12 +187,40 @@ export function SubmitModal({ open, onClose, onSubmitted }: SubmitModalProps) {
           </label>
           <div className="flex flex-wrap gap-1.5">
             {CATEGORIES.map((c) => (
-              <Badge key={c} active={category === c} onClick={() => setCategory(c)}>
+              <Badge
+                key={c}
+                active={category === c}
+                onClick={() => {
+                  setCategory(c);
+                  setSubcategory(null);
+                }}
+              >
                 {t(c)}
               </Badge>
             ))}
           </div>
         </div>
+
+        {subcategoryOptions.length > 0 && (
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">
+              {t("subcategory")}
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {subcategoryOptions.map((s) => (
+                <Badge
+                  key={s}
+                  active={subcategory === s}
+                  onClick={() =>
+                    setSubcategory((prev) => (prev === s ? null : s))
+                  }
+                >
+                  {t(s)}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div>
           <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[var(--color-textSubtle)]">

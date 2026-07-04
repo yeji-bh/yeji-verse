@@ -1,5 +1,6 @@
 import { createClient, type Client } from "@libsql/client/web";
 import type {
+  ClipBookmark,
   SubmitVideoPayload,
   User,
   UserRole,
@@ -8,11 +9,13 @@ import type {
   VideoStatus,
 } from "@/lib/types";
 import { dedupeTags, collectPopularTags } from "@/lib/tags";
-import { normalizeCategory } from "@/lib/constants";
+import { normalizeCategory, normalizeSubcategory } from "@/lib/constants";
 
 let client: Client | null = null;
 let starterPicksTableReady = false;
 let checklistTableReady = false;
+let clipBookmarksTableReady = false;
+let subcategoryColumnReady = false;
 
 function getClient(): Client | null {
   const url = process.env.TURSO_DATABASE_URL;
@@ -20,6 +23,16 @@ function getClient(): Client | null {
   if (!url || !authToken) return null;
   if (!client) client = createClient({ url, authToken });
   return client;
+}
+
+async function ensureSubcategoryColumn(db: Client): Promise<void> {
+  if (subcategoryColumnReady) return;
+  try {
+    await db.execute("ALTER TABLE videos ADD COLUMN subcategory TEXT");
+  } catch {
+    /* already exists */
+  }
+  subcategoryColumnReady = true;
 }
 
 function rowToVideo(row: Record<string, unknown>, sources: VideoSource[]): Video {
@@ -30,11 +43,16 @@ function rowToVideo(row: Record<string, unknown>, sources: VideoSource[]): Video
     (rawPublished && rawPublished.trim()) ||
     (createdAt ? createdAt.slice(0, 10) : "") ||
     `${year}-01-01`;
+  const category = normalizeCategory(row.category as string);
   return {
     id: row.id as string,
     title: row.title as string,
     description: (row.description as string) ?? "",
-    category: normalizeCategory(row.category as string),
+    category,
+    subcategory: normalizeSubcategory(
+      category,
+      (row.subcategory as string | null | undefined) ?? null,
+    ),
     tags: dedupeTags(JSON.parse((row.tags as string) || "[]")),
     publishedDate,
     year: Number(publishedDate.slice(0, 4)) || year,
@@ -91,6 +109,7 @@ async function loadSourcesForVideos(
 }
 
 async function rowsToVideos(db: Client, rows: Record<string, unknown>[]): Promise<Video[]> {
+  await ensureSubcategoryColumn(db);
   const sourceMap = await loadSourcesForVideos(
     db,
     rows.map((row) => row.id as string),
@@ -183,6 +202,7 @@ export async function getVideoById(id: string): Promise<Video | null> {
   const db = getClient();
   if (!db) return null;
 
+  await ensureSubcategoryColumn(db);
   const { rows } = await db.execute({
     sql: "SELECT * FROM videos WHERE id = ?",
     args: [id],
@@ -198,6 +218,7 @@ export async function getRandomVideoFromDb(): Promise<Video | null> {
   if (!db) return null;
 
   try {
+    await ensureSubcategoryColumn(db);
     const { rows } = await db.execute(
       "SELECT * FROM videos WHERE status = 'approved' ORDER BY RANDOM() LIMIT 1",
     );
@@ -296,20 +317,24 @@ export async function insertVideoToDb(
   const db = getClient();
   if (!db) return null;
 
+  await ensureSubcategoryColumn(db);
+
   const now = new Date().toISOString();
   const status = payload.status ?? "pending";
   const year = Number(payload.publishedDate.slice(0, 4));
   const category = normalizeCategory(payload.category);
+  const subcategory = normalizeSubcategory(category, payload.subcategory);
 
   try {
     await db.execute({
-      sql: `INSERT INTO videos (id, title, description, category, tags, year, published_date, thumbnail, status, submitted_by, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      sql: `INSERT INTO videos (id, title, description, category, subcategory, tags, year, published_date, thumbnail, status, submitted_by, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         payload.id,
         payload.title,
         payload.description ?? "",
         category,
+        subcategory,
         JSON.stringify(dedupeTags(payload.tags)),
         year,
         payload.publishedDate,
@@ -325,13 +350,14 @@ export async function insertVideoToDb(
     if (!message.includes("published_date")) throw err;
 
     await db.execute({
-      sql: `INSERT INTO videos (id, title, description, category, tags, year, thumbnail, status, submitted_by, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      sql: `INSERT INTO videos (id, title, description, category, subcategory, tags, year, thumbnail, status, submitted_by, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         payload.id,
         payload.title,
         payload.description ?? "",
         category,
+        subcategory,
         JSON.stringify(dedupeTags(payload.tags)),
         year,
         payload.thumbnail,
@@ -365,6 +391,7 @@ export async function insertVideoToDb(
       title: payload.title,
       description: payload.description ?? "",
       category,
+      subcategory,
       tags: JSON.stringify(payload.tags),
       year,
       published_date: payload.publishedDate,
@@ -398,6 +425,7 @@ export async function updateVideoInDb(
     title: string;
     description?: string;
     category: Video["category"];
+    subcategory?: Video["subcategory"];
     tags: string[];
     publishedDate: string;
     thumbnail: string;
@@ -407,21 +435,25 @@ export async function updateVideoInDb(
   const db = getClient();
   if (!db) return null;
 
+  await ensureSubcategoryColumn(db);
+
   const now = new Date().toISOString();
   const year = Number(data.publishedDate.slice(0, 4));
   const tags = dedupeTags(data.tags);
   const category = normalizeCategory(data.category);
+  const subcategory = normalizeSubcategory(category, data.subcategory);
   const description = data.description ?? "";
 
   try {
     await db.execute({
       sql: `UPDATE videos
-            SET title = ?, description = ?, category = ?, tags = ?, year = ?, published_date = ?, thumbnail = ?, updated_at = ?
+            SET title = ?, description = ?, category = ?, subcategory = ?, tags = ?, year = ?, published_date = ?, thumbnail = ?, updated_at = ?
             WHERE id = ?`,
       args: [
         data.title,
         description,
         category,
+        subcategory,
         JSON.stringify(tags),
         year,
         data.publishedDate,
@@ -436,12 +468,13 @@ export async function updateVideoInDb(
 
     await db.execute({
       sql: `UPDATE videos
-            SET title = ?, description = ?, category = ?, tags = ?, year = ?, thumbnail = ?, updated_at = ?
+            SET title = ?, description = ?, category = ?, subcategory = ?, tags = ?, year = ?, thumbnail = ?, updated_at = ?
             WHERE id = ?`,
       args: [
         data.title,
         description,
         category,
+        subcategory,
         JSON.stringify(tags),
         year,
         data.thumbnail,
@@ -738,6 +771,120 @@ export async function toggleUserChecklist(
   return false;
 }
 
+// --- Clip bookmarks (timestamp favorites) ---
+
+function rowToClipBookmark(row: Record<string, unknown>): ClipBookmark {
+  return {
+    id: row.id as string,
+    videoId: row.video_id as string,
+    startSeconds: Number(row.start_seconds) || 0,
+    note: (row.note as string) ?? "",
+    createdAt: row.created_at as string,
+  };
+}
+
+async function ensureClipBookmarksTable(db: Client): Promise<void> {
+  if (clipBookmarksTableReady) return;
+
+  await db.execute(`CREATE TABLE IF NOT EXISTS clip_bookmarks (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    video_id TEXT NOT NULL,
+    start_seconds INTEGER NOT NULL,
+    note TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (video_id) REFERENCES videos(id) ON DELETE CASCADE
+  )`);
+  await db.execute(
+    "CREATE INDEX IF NOT EXISTS idx_clip_bookmarks_user ON clip_bookmarks(user_id)",
+  );
+  await db.execute(
+    "CREATE INDEX IF NOT EXISTS idx_clip_bookmarks_video ON clip_bookmarks(video_id)",
+  );
+  clipBookmarksTableReady = true;
+}
+
+export async function getUserClipBookmarks(
+  userId: string,
+): Promise<ClipBookmark[]> {
+  const db = getClient();
+  if (!db) return [];
+
+  await ensureClipBookmarksTable(db);
+  const { rows } = await db.execute({
+    sql: "SELECT * FROM clip_bookmarks WHERE user_id = ? ORDER BY created_at DESC",
+    args: [userId],
+  });
+  return rows.map((r) => rowToClipBookmark(r as Record<string, unknown>));
+}
+
+export async function addUserClipBookmark(
+  userId: string,
+  clip: Omit<ClipBookmark, "createdAt"> & { createdAt?: string },
+): Promise<ClipBookmark | null> {
+  const db = getClient();
+  if (!db) return null;
+
+  await ensureClipBookmarksTable(db);
+  const createdAt = clip.createdAt ?? new Date().toISOString();
+  const startSeconds = Math.max(0, Math.floor(clip.startSeconds));
+
+  await db.execute({
+    sql: `INSERT INTO clip_bookmarks (id, user_id, video_id, start_seconds, note, created_at)
+          VALUES (?, ?, ?, ?, ?, ?)`,
+    args: [clip.id, userId, clip.videoId, startSeconds, clip.note ?? "", createdAt],
+  });
+
+  return {
+    id: clip.id,
+    videoId: clip.videoId,
+    startSeconds,
+    note: clip.note ?? "",
+    createdAt,
+  };
+}
+
+export async function deleteUserClipBookmark(
+  userId: string,
+  clipId: string,
+): Promise<boolean> {
+  const db = getClient();
+  if (!db) return false;
+
+  await ensureClipBookmarksTable(db);
+  const result = await db.execute({
+    sql: "DELETE FROM clip_bookmarks WHERE id = ? AND user_id = ?",
+    args: [clipId, userId],
+  });
+  return (result.rowsAffected ?? 0) > 0;
+}
+
+export async function syncUserClipBookmarks(
+  userId: string,
+  clips: ClipBookmark[],
+): Promise<ClipBookmark[]> {
+  const db = getClient();
+  if (!db) return clips;
+
+  await ensureClipBookmarksTable(db);
+  const existing = await getUserClipBookmarks(userId);
+  const byKey = new Map<string, ClipBookmark>();
+
+  for (const clip of existing) {
+    byKey.set(`${clip.videoId}:${clip.startSeconds}`, clip);
+  }
+
+  for (const clip of clips) {
+    const key = `${clip.videoId}:${clip.startSeconds}`;
+    if (byKey.has(key)) continue;
+    const saved = await addUserClipBookmark(userId, clip);
+    if (saved) byKey.set(key, saved);
+  }
+
+  return getUserClipBookmarks(userId);
+}
+
 // --- Starter picks (入坑必看) ---
 
 async function ensureStarterPicksTable(db: Client): Promise<void> {
@@ -778,6 +925,7 @@ export async function getStarterVideosFromDb(): Promise<Video[] | null> {
 
   try {
     await ensureStarterPicksTable(db);
+    await ensureSubcategoryColumn(db);
     const { rows } = await db.execute(`
       SELECT v.* FROM videos v
       INNER JOIN starter_picks sp ON sp.video_id = v.id

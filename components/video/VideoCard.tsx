@@ -193,7 +193,12 @@ export function VideoCard({
   priority = false,
 }: VideoCardProps) {
   const { t } = useTranslation("common");
-  const displayTags = [t(video.category), ...video.tags];
+  const displayTags = [
+    video.subcategory
+      ? `${t(video.category)} · ${t(video.subcategory)}`
+      : t(video.category),
+    ...video.tags,
+  ];
 
   return (
     <article

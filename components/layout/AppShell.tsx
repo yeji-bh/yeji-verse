@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -8,6 +8,7 @@ import { MobileFilterDrawer } from "@/components/layout/MobileFilterDrawer";
 import { VideoGrid } from "@/components/video/VideoGrid";
 import { VideoGridSkeleton } from "@/components/video/VideoGridSkeleton";
 import { VideoModal } from "@/components/video/VideoModal";
+import { ClipList } from "@/components/video/ClipList";
 import { SubmitModal } from "@/components/video/SubmitModal";
 import { StarterManageModal } from "@/components/starter/StarterManageModal";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -16,14 +17,17 @@ import { useFilters } from "@/hooks/useFilters";
 import { usePaginatedVideos } from "@/hooks/usePaginatedVideos";
 import { useFavoriteVideos } from "@/hooks/useFavoriteVideos";
 import { useChecklist } from "@/hooks/useChecklist";
+import { useClips } from "@/hooks/useClips";
 import { useSidebarTags } from "@/hooks/useSidebarTags";
 import { getAllTags } from "@/lib/videos";
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner";
 import { BackToTop } from "@/components/ui/BackToTop";
-import type { Video } from "@/lib/types";
+import type { ClipBookmark, Video } from "@/lib/types";
+
+type BrowseMode = "all" | "favorites" | "starter" | "checklist" | "clips";
 
 interface AppShellProps {
-  mode?: "all" | "favorites" | "starter" | "checklist";
+  mode?: BrowseMode;
   initialVideos?: Video[];
   initialTotal?: number;
 }
@@ -58,6 +62,7 @@ export function AppShell({
   } = pagination;
   const [starterVideos, setStarterVideos] = useState<Video[]>([]);
   const [starterLoading, setStarterLoading] = useState(mode === "starter");
+  const [selectedStartSeconds, setSelectedStartSeconds] = useState(0);
 
   const { favorites, toggle, isFavorite, hydrated } = useFavorites();
   const {
@@ -67,6 +72,11 @@ export function AppShell({
     showUnwatchedOnly,
     setShowUnwatchedOnly,
   } = useChecklist();
+  const { clips, hydrated: clipsHydrated, addClip, removeClip } = useClips();
+  const clipVideoIds = useMemo(
+    () => [...new Set(clips.map((c) => c.videoId))],
+    [clips],
+  );
   const {
     videos: favoriteVideos,
     setVideos: setFavoriteVideos,
@@ -77,29 +87,41 @@ export function AppShell({
     setVideos: setChecklistVideos,
     loading: checklistLoading,
   } = useFavoriteVideos(checkedIds, mode === "checklist" && hydrated);
+  const {
+    videos: clipVideos,
+    setVideos: setClipVideos,
+    loading: clipVideosLoading,
+  } = useFavoriteVideos(clipVideoIds, mode === "clips" && clipsHydrated);
 
   const videos =
     mode === "checklist"
       ? checklistVideos
       : mode === "favorites"
-      ? favoriteVideos
-      : paginated
-        ? paginatedVideos
-        : starterVideos;
+        ? favoriteVideos
+        : mode === "clips"
+          ? clipVideos
+          : paginated
+            ? paginatedVideos
+            : starterVideos;
   const loading =
     mode === "checklist"
       ? checklistLoading
       : mode === "favorites"
-      ? favoriteLoading
-      : paginated
-        ? paginatedLoading
-        : starterLoading;
+        ? favoriteLoading
+        : mode === "clips"
+          ? clipVideosLoading
+          : paginated
+            ? paginatedLoading
+            : starterLoading;
 
   const {
     filters,
     filtered,
+    activeSubcategoryOptions,
     toggleCategory,
     clearCategories,
+    toggleSubcategory,
+    clearSubcategories,
     toggleTag,
     clearTags,
     toggleYear,
@@ -166,6 +188,7 @@ export function AppShell({
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [
     filters.categories,
+    filters.subcategories,
     filters.tags,
     filters.years,
     filters.sortBy,
@@ -201,10 +224,36 @@ export function AppShell({
     mode === "checklist"
       ? setChecklistVideos
       : mode === "favorites"
-      ? setFavoriteVideos
-      : paginated
-        ? setPaginatedVideos
-        : setStarterVideos;
+        ? setFavoriteVideos
+        : mode === "clips"
+          ? setClipVideos
+          : paginated
+            ? setPaginatedVideos
+            : setStarterVideos;
+
+  const clipVideosById = useMemo(() => {
+    const map = new Map<string, Video>();
+    for (const v of clipVideos) map.set(v.id, v);
+    return map;
+  }, [clipVideos]);
+
+  const displayClips = useMemo(() => {
+    const q = filters.search.trim().toLowerCase();
+    if (!q) return clips;
+    return clips.filter((c) => {
+      const video = clipVideosById.get(c.videoId);
+      return (
+        video?.title.toLowerCase().includes(q) ||
+        c.note.toLowerCase().includes(q) ||
+        video?.tags.some((tag) => tag.toLowerCase().includes(q))
+      );
+    });
+  }, [clips, clipVideosById, filters.search]);
+
+  const openVideo = useCallback((video: Video, startSeconds = 0) => {
+    setSelectedStartSeconds(startSeconds);
+    setSelectedVideo(video);
+  }, []);
 
   const handleLoadMore = useCallback(() => {
     void loadMore();
@@ -237,11 +286,11 @@ export function AppShell({
 
   useEffect(() => {
     setSelectedVideo(null);
+    setSelectedStartSeconds(0);
 
-    if (paginated) return;
+    if (mode !== "starter") return;
 
     let cancelled = false;
-
     (async () => {
       setStarterLoading(true);
       try {
@@ -255,14 +304,19 @@ export function AppShell({
         if (!cancelled) setStarterLoading(false);
       }
     })();
-
     return () => {
       cancelled = true;
     };
-  }, [paginated, mode]);
+  }, [mode]);
 
   useEffect(() => {
-    if (mode !== "all" || (!hasActiveFilters && !showUnwatchedOnly) || fullyLoaded) return;
+    if (
+      mode !== "all" ||
+      (!hasActiveFilters && !showUnwatchedOnly) ||
+      fullyLoaded
+    ) {
+      return;
+    }
     void loadAll();
   }, [mode, hasActiveFilters, showUnwatchedOnly, fullyLoaded, loadAll]);
 
@@ -322,13 +376,20 @@ export function AppShell({
       const res = await fetch("/api/videos/random");
       if (!res.ok) return;
       const video = (await res.json()) as Video;
-      setSelectedVideo(video);
+      openVideo(video);
     } catch {
       /* ignore */
     } finally {
       setRandomLoading(false);
     }
-  }, [randomLoading]);
+  }, [randomLoading, openVideo]);
+
+  const handleClipClick = useCallback(
+    (clip: ClipBookmark, video: Video) => {
+      openVideo(video, clip.startSeconds);
+    },
+    [openVideo],
+  );
 
   const sidebarProps = {
     filters,
@@ -336,6 +397,9 @@ export function AppShell({
     showBrowseFilters: mode === "all",
     onToggleCategory: toggleCategory,
     onClearCategories: clearCategories,
+    activeSubcategoryOptions,
+    onToggleSubcategory: toggleSubcategory,
+    onClearSubcategories: clearSubcategories,
     onToggleTag: toggleTag,
     onClearTags: clearTags,
     onToggleYear: toggleYear,
@@ -347,30 +411,34 @@ export function AppShell({
     hasActiveFilters,
     onToggleShowUnwatchedOnly: () => setShowUnwatchedOnly((v) => !v),
     onClearShowUnwatchedOnly: () => setShowUnwatchedOnly(false),
-    hideSort: mode === "starter",
+    hideSort: mode === "starter" || mode === "clips",
   };
 
   const emptyMessage =
     mode === "checklist"
       ? t("noChecklist")
       : mode === "favorites"
-      ? t("noFavorites")
-      : mode === "starter"
-        ? hasActiveFilters
-          ? t("noResults")
-          : t("starterEmpty")
-        : hasActiveFilters
-          ? t("noResults")
-          : t("noVideos");
+        ? t("noFavorites")
+        : mode === "clips"
+          ? t("noClips")
+          : mode === "starter"
+            ? hasActiveFilters
+              ? t("noResults")
+              : t("starterEmpty")
+            : hasActiveFilters
+              ? t("noResults")
+              : t("noVideos");
 
   const emptyHint =
     mode === "checklist"
       ? t("noChecklistHint")
       : mode === "favorites"
-      ? t("noFavoritesHint")
-      : mode === "starter" && !hasActiveFilters
-        ? t("starterEmptyHint")
-        : undefined;
+        ? t("noFavoritesHint")
+        : mode === "clips"
+          ? t("noClipsHint")
+          : mode === "starter" && !hasActiveFilters
+            ? t("starterEmptyHint")
+            : undefined;
 
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
@@ -413,6 +481,19 @@ export function AppShell({
               </div>
             </header>
           )}
+          {mode === "clips" && (
+            <header className="mb-6">
+              <h1
+                className="text-base font-bold tracking-tight bg-clip-text text-transparent lg:text-2xl"
+                style={{ backgroundImage: "var(--color-gradient)" }}
+              >
+                {t("clipsTitle")}
+              </h1>
+              <p className="mt-1 text-sm text-[var(--color-textMuted)]">
+                {t("clipsSubtitle")}
+              </p>
+            </header>
+          )}
           <div className="mb-4 flex items-center justify-between gap-3">
             <p className="text-xs text-[var(--color-textSubtle)]">
               {showGridSkeleton
@@ -422,7 +503,9 @@ export function AppShell({
                       completed: checkedIds.length,
                       total: checklistTotal,
                     })
-                  : t("resultsCount", { count: resultCount })}
+                  : mode === "clips"
+                    ? t("clipsCount", { count: displayClips.length })
+                    : t("resultsCount", { count: resultCount })}
             </p>
             {mode === "all" && (hasActiveFilters || showUnwatchedOnly) && (
               <button
@@ -436,10 +519,27 @@ export function AppShell({
           </div>
           {showGridSkeleton ? (
             <VideoGridSkeleton />
+          ) : mode === "clips" ? (
+            <ClipList
+              clips={displayClips}
+              videosById={clipVideosById}
+              onClipClick={handleClipClick}
+              onRemove={(id) => void removeClip(id)}
+              emptyMessage={
+                clips.length > 0 && displayClips.length === 0
+                  ? t("noResults")
+                  : emptyMessage
+              }
+              emptyHint={
+                clips.length > 0 && displayClips.length === 0
+                  ? undefined
+                  : emptyHint
+              }
+            />
           ) : (
             <VideoGrid
               videos={displayVideos}
-              onVideoClick={setSelectedVideo}
+              onVideoClick={(v) => openVideo(v)}
               isChecked={isChecked}
               onToggleChecked={toggleChecked}
               emptyMessage={emptyMessage}
@@ -472,12 +572,19 @@ export function AppShell({
       <VideoModal
         video={selectedVideo}
         open={!!selectedVideo}
-        onClose={() => setSelectedVideo(null)}
+        onClose={() => {
+          setSelectedVideo(null);
+          setSelectedStartSeconds(0);
+        }}
         isFavorite={selectedVideo ? isFavorite(selectedVideo.id) : false}
         onToggleFavorite={() => selectedVideo && toggle(selectedVideo.id)}
         isChecked={selectedVideo ? isChecked(selectedVideo.id) : false}
         onToggleChecked={() => selectedVideo && void toggleChecked(selectedVideo.id)}
-        onSelectVideo={setSelectedVideo}
+        onSelectVideo={(v) => openVideo(v)}
+        startSeconds={selectedStartSeconds}
+        onAddClip={(startSeconds, note) => {
+          if (selectedVideo) void addClip(selectedVideo.id, startSeconds, note);
+        }}
         onVideoUpdated={(updated) => {
           setVideos((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
           setSelectedVideo(updated);
@@ -485,6 +592,7 @@ export function AppShell({
         onVideoDeleted={(id) => {
           setVideos((prev) => prev.filter((v) => v.id !== id));
           setSelectedVideo(null);
+          setSelectedStartSeconds(0);
         }}
       />
 

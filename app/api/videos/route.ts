@@ -156,6 +156,7 @@ export async function POST(request: Request) {
       title: payload.title,
       description: payload.description?.trim() ?? "",
       category: payload.category,
+      subcategory: payload.subcategory ?? null,
       tags: payload.tags,
       publishedDate: payload.publishedDate,
       year,

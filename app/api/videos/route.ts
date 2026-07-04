@@ -14,6 +14,11 @@ import type { SubmitVideoPayload, Video, VideoStatus } from "@/lib/types";
 
 let memoryStore: Video[] = [];
 
+/** Public list responses: short browser cache so refresh is not always a full Turso round-trip. */
+const PUBLIC_LIST_HEADERS = {
+  "Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
+};
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const adminView = searchParams.get("admin") === "true";
@@ -42,7 +47,7 @@ export async function GET(request: Request) {
 
     const dbVideos = await getVideosByIds(ids);
     if (dbVideos) {
-      return NextResponse.json(dbVideos);
+      return NextResponse.json(dbVideos, { headers: PUBLIC_LIST_HEADERS });
     }
 
     const approved = memoryStore.filter(
@@ -51,6 +56,7 @@ export async function GET(request: Request) {
     const map = new Map(approved.map((v) => [v.id, v]));
     return NextResponse.json(
       ids.map((id) => map.get(id)).filter((v): v is Video => v !== undefined),
+      { headers: PUBLIC_LIST_HEADERS },
     );
   }
 
@@ -60,29 +66,35 @@ export async function GET(request: Request) {
     const page = await getVideosPageFromDb(limit, offset, "approved");
 
     if (page) {
-      return NextResponse.json({
-        videos: page.videos,
-        total: page.total,
-        hasMore: offset + page.videos.length < page.total,
-      });
+      return NextResponse.json(
+        {
+          videos: page.videos,
+          total: page.total,
+          hasMore: offset + page.videos.length < page.total,
+        },
+        { headers: PUBLIC_LIST_HEADERS },
+      );
     }
 
     const slice = memoryStore
       .filter((v) => v.status === "approved")
       .slice(offset, offset + limit);
     const total = memoryStore.filter((v) => v.status === "approved").length;
-    return NextResponse.json({
-      videos: slice,
-      total,
-      hasMore: offset + slice.length < total,
-    });
+    return NextResponse.json(
+      {
+        videos: slice,
+        total,
+        hasMore: offset + slice.length < total,
+      },
+      { headers: PUBLIC_LIST_HEADERS },
+    );
   }
 
   const dbVideos = await getVideosFromDb("approved");
   const videos = (dbVideos ?? memoryStore).filter(
     (v) => v.status === "approved",
   );
-  return NextResponse.json(videos);
+  return NextResponse.json(videos, { headers: PUBLIC_LIST_HEADERS });
 }
 
 export async function POST(request: Request) {

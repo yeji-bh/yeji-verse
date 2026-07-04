@@ -3,6 +3,11 @@
 	"main": ".open-next/worker.js",
 	"name": "yeji-verse",
 	"compatibility_date": "2026-07-03",
+	// Prefer colocating the Worker near backends (e.g. Turso) to cut latency.
+	// See https://developers.cloudflare.com/workers/configuration/smart-placement/
+	"placement": {
+		"mode": "smart"
+	},
 	"compatibility_flags": [
 		"nodejs_compat",
 		"global_fetch_strictly_public"

@@ -18,14 +18,20 @@ function getMemoryStarterVideos(allVideos: Video[]): Video[] {
     .filter((v): v is Video => !!v && v.status === "approved");
 }
 
+const PUBLIC_HEADERS = {
+  "Cache-Control": "public, max-age=30, s-maxage=60, stale-while-revalidate=300",
+};
+
 export async function GET() {
   const dbVideos = await getStarterVideosFromDb();
   if (dbVideos !== null) {
-    return NextResponse.json(dbVideos);
+    return NextResponse.json(dbVideos, { headers: PUBLIC_HEADERS });
   }
 
   const all = (await getVideosFromDb("approved")) ?? [];
-  return NextResponse.json(getMemoryStarterVideos(all));
+  return NextResponse.json(getMemoryStarterVideos(all), {
+    headers: PUBLIC_HEADERS,
+  });
 }
 
 export async function POST(request: Request) {

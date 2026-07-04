@@ -925,7 +925,6 @@ export async function getStarterVideosFromDb(): Promise<Video[] | null> {
 
   try {
     await ensureStarterPicksTable(db);
-    await ensureSubcategoryColumn(db);
     const { rows } = await db.execute(`
       SELECT v.* FROM videos v
       INNER JOIN starter_picks sp ON sp.video_id = v.id
@@ -933,12 +932,8 @@ export async function getStarterVideosFromDb(): Promise<Video[] | null> {
       ORDER BY sp.sort_order ASC, sp.created_at ASC
     `);
 
-    const videos: Video[] = [];
-    for (const row of rows) {
-      const sources = await loadSources(db, row.id as string);
-      videos.push(rowToVideo(row as Record<string, unknown>, sources));
-    }
-    return videos;
+    // Batch-load sources (avoids N+1 Turso round-trips).
+    return rowsToVideos(db, rows as Record<string, unknown>[]);
   } catch {
     return null;
   }

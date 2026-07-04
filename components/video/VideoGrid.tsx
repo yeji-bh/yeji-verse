@@ -69,8 +69,8 @@ export function VideoGrid({
               e.stopPropagation();
               onToggleChecked(video.id);
             }}
-            // First row on desktop can be 5 cards; keep LCP candidates eager.
-            priority={index < 8}
+            // Only the first row needs eager load (2-up mobile / up to 4-up tablet).
+            priority={index < 4}
           />
         ))}
       </div>

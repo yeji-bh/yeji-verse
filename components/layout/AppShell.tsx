@@ -1,16 +1,42 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useTranslation } from "react-i18next";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { MobileFilterDrawer } from "@/components/layout/MobileFilterDrawer";
 import { VideoGrid } from "@/components/video/VideoGrid";
 import { VideoGridSkeleton } from "@/components/video/VideoGridSkeleton";
-import { VideoModal } from "@/components/video/VideoModal";
 import { ClipList } from "@/components/video/ClipList";
-import { SubmitModal } from "@/components/video/SubmitModal";
-import { StarterManageModal } from "@/components/starter/StarterManageModal";
+
+const MobileFilterDrawer = dynamic(
+  () =>
+    import("@/components/layout/MobileFilterDrawer").then((m) => ({
+      default: m.MobileFilterDrawer,
+    })),
+  { ssr: false },
+);
+const VideoModal = dynamic(
+  () =>
+    import("@/components/video/VideoModal").then((m) => ({
+      default: m.VideoModal,
+    })),
+  { ssr: false },
+);
+const SubmitModal = dynamic(
+  () =>
+    import("@/components/video/SubmitModal").then((m) => ({
+      default: m.SubmitModal,
+    })),
+  { ssr: false },
+);
+const StarterManageModal = dynamic(
+  () =>
+    import("@/components/starter/StarterManageModal").then((m) => ({
+      default: m.StarterManageModal,
+    })),
+  { ssr: false },
+);
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useFilters } from "@/hooks/useFilters";
@@ -31,12 +57,14 @@ interface AppShellProps {
   mode?: BrowseMode;
   initialVideos?: Video[];
   initialTotal?: number;
+  initialStarterVideos?: Video[];
 }
 
 export function AppShell({
   mode = "all",
   initialVideos = [],
   initialTotal = 0,
+  initialStarterVideos = [],
 }: AppShellProps) {
   const { t } = useTranslation("common");
   const { user } = useAuth();
@@ -61,8 +89,11 @@ export function AppShell({
     reset: resetPagination,
     abortLoadAll,
   } = pagination;
-  const [starterVideos, setStarterVideos] = useState<Video[]>([]);
-  const [starterLoading, setStarterLoading] = useState(mode === "starter");
+  const [starterVideos, setStarterVideos] =
+    useState<Video[]>(initialStarterVideos);
+  const [starterLoading, setStarterLoading] = useState(
+    mode === "starter" && initialStarterVideos.length === 0,
+  );
   const [selectedStartSeconds, setSelectedStartSeconds] = useState(0);
 
   const { favorites, toggle, isFavorite, hydrated } = useFavorites();
@@ -176,7 +207,38 @@ export function AppShell({
   useEffect(() => {
     if (videoTotal > 0) {
       setSiteVideoTotal(videoTotal);
+      return;
     }
+
+    // Only hit the API when we truly lack a total (no SSR snapshot).
+    let cancelled = false;
+    let idleId: number | undefined;
+    let timeoutId: number | undefined;
+
+    const loadTotal = () => {
+      void (async () => {
+        try {
+          const res = await fetch("/api/videos?limit=1&offset=0");
+          if (!res.ok || cancelled) return;
+          const data = (await res.json()) as { total: number };
+          setSiteVideoTotal(data.total ?? 0);
+        } catch {
+          /* keep current */
+        }
+      })();
+    };
+
+    if (typeof requestIdleCallback !== "undefined") {
+      idleId = requestIdleCallback(loadTotal, { timeout: 4000 });
+    } else {
+      timeoutId = window.setTimeout(loadTotal, 2500);
+    }
+
+    return () => {
+      cancelled = true;
+      if (idleId !== undefined) cancelIdleCallback(idleId);
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    };
   }, [videoTotal]);
 
   useEffect(() => {
@@ -196,27 +258,6 @@ export function AppShell({
     filters.sortOrder,
     showUnwatchedOnly,
   ]);
-
-  useEffect(() => {
-    if (siteVideoTotal > 0) return;
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const res = await fetch("/api/videos?limit=1&offset=0");
-        if (!res.ok || cancelled) return;
-        const data = (await res.json()) as { total: number };
-        setSiteVideoTotal(data.total ?? 0);
-      } catch {
-        /* keep current */
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [siteVideoTotal]);
 
   const resultCount =
     mode === "all" && !hasActiveFilters ? videoTotal : displayVideos.length;
@@ -292,8 +333,11 @@ export function AppShell({
     if (mode !== "starter") return;
 
     let cancelled = false;
+    // SSR / prior visit already has data — show it and refresh quietly.
+    const showLoading = starterVideos.length === 0;
+    if (showLoading) setStarterLoading(true);
+
     (async () => {
-      setStarterLoading(true);
       try {
         const res = await fetch("/api/starter");
         if (!cancelled && res.ok) {
@@ -308,6 +352,9 @@ export function AppShell({
     return () => {
       cancelled = true;
     };
+    // Only re-fetch when entering starter mode; starterVideos length is for
+    // deciding whether to show a skeleton on first paint.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional
   }, [mode]);
 
   useEffect(() => {
@@ -584,40 +631,46 @@ export function AppShell({
         </main>
       </div>
 
-      <MobileFilterDrawer
-        open={filterOpen}
-        onClose={() => setFilterOpen(false)}
-        {...sidebarProps}
-      />
+      {filterOpen && (
+        <MobileFilterDrawer
+          open={filterOpen}
+          onClose={() => setFilterOpen(false)}
+          {...sidebarProps}
+        />
+      )}
 
-      <VideoModal
-        video={selectedVideo}
-        open={!!selectedVideo}
-        onClose={() => {
-          setSelectedVideo(null);
-          setSelectedStartSeconds(0);
-        }}
-        isFavorite={selectedVideo ? isFavorite(selectedVideo.id) : false}
-        onToggleFavorite={() => selectedVideo && toggle(selectedVideo.id)}
-        isChecked={selectedVideo ? isChecked(selectedVideo.id) : false}
-        onToggleChecked={() => selectedVideo && void toggleChecked(selectedVideo.id)}
-        onSelectVideo={(v) => openVideo(v)}
-        startSeconds={selectedStartSeconds}
-        onAddClip={(startSeconds, note) => {
-          if (selectedVideo) void addClip(selectedVideo.id, startSeconds, note);
-        }}
-        onVideoUpdated={(updated) => {
-          setVideos((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
-          setSelectedVideo(updated);
-        }}
-        onVideoDeleted={(id) => {
-          setVideos((prev) => prev.filter((v) => v.id !== id));
-          setSelectedVideo(null);
-          setSelectedStartSeconds(0);
-        }}
-      />
+      {selectedVideo && (
+        <VideoModal
+          video={selectedVideo}
+          open
+          onClose={() => {
+            setSelectedVideo(null);
+            setSelectedStartSeconds(0);
+          }}
+          isFavorite={isFavorite(selectedVideo.id)}
+          onToggleFavorite={() => toggle(selectedVideo.id)}
+          isChecked={isChecked(selectedVideo.id)}
+          onToggleChecked={() => void toggleChecked(selectedVideo.id)}
+          onSelectVideo={(v) => openVideo(v)}
+          startSeconds={selectedStartSeconds}
+          onAddClip={(startSeconds, note) => {
+            void addClip(selectedVideo.id, startSeconds, note);
+          }}
+          onVideoUpdated={(updated) => {
+            setVideos((prev) =>
+              prev.map((v) => (v.id === updated.id ? updated : v)),
+            );
+            setSelectedVideo(updated);
+          }}
+          onVideoDeleted={(id) => {
+            setVideos((prev) => prev.filter((v) => v.id !== id));
+            setSelectedVideo(null);
+            setSelectedStartSeconds(0);
+          }}
+        />
+      )}
 
-      {mode === "starter" && (
+      {mode === "starter" && starterManageOpen && (
         <StarterManageModal
           open={starterManageOpen}
           onClose={() => setStarterManageOpen(false)}
@@ -628,11 +681,13 @@ export function AppShell({
         />
       )}
 
-      <SubmitModal
-        open={submitOpen}
-        onClose={() => setSubmitOpen(false)}
-        onSubmitted={refreshVideos}
-      />
+      {submitOpen && (
+        <SubmitModal
+          open={submitOpen}
+          onClose={() => setSubmitOpen(false)}
+          onSubmitted={refreshVideos}
+        />
+      )}
 
       <BackToTop />
     </div>

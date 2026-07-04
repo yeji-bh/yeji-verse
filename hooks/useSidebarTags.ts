@@ -17,7 +17,19 @@ export function useSidebarTags() {
   }, []);
 
   useEffect(() => {
-    void refresh();
+    // Tags are non-critical for first paint — load after idle.
+    let idleId: number | undefined;
+    let timeoutId: number | undefined;
+    const run = () => void refresh();
+    if (typeof requestIdleCallback !== "undefined") {
+      idleId = requestIdleCallback(run, { timeout: 4000 });
+    } else {
+      timeoutId = window.setTimeout(run, 2500);
+    }
+    return () => {
+      if (idleId !== undefined) cancelIdleCallback(idleId);
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    };
   }, [refresh]);
 
   return { tags, refresh };

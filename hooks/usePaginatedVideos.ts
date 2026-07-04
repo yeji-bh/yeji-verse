@@ -151,14 +151,28 @@ export function usePaginatedVideos(
 
     const ac = new AbortController();
 
-    // First paint already has build-time data for LCP — refresh in the background
-    // without clearing the grid (avoids skeleton flash and keeps HTML LCP image).
+    // First paint already has build-time data for LCP — refresh after idle so we
+    // don't compete with LCP image decode / first interaction.
     if (initialUsedRef.current) {
       initialUsedRef.current = false;
-      void fetchPage(0, false, ac.signal).catch(() => {
-        /* keep initial snapshot */
-      });
-      return () => ac.abort();
+      const refresh = () => {
+        if (ac.signal.aborted) return;
+        void fetchPage(0, false, ac.signal).catch(() => {
+          /* keep initial snapshot */
+        });
+      };
+      let idleId: number | undefined;
+      let timeoutId: number | undefined;
+      if (typeof requestIdleCallback !== "undefined") {
+        idleId = requestIdleCallback(refresh, { timeout: 4000 });
+      } else {
+        timeoutId = window.setTimeout(refresh, 2500);
+      }
+      return () => {
+        ac.abort();
+        if (idleId !== undefined) cancelIdleCallback(idleId);
+        if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+      };
     }
 
     setLoading(true);

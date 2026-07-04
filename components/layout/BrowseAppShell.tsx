@@ -18,12 +18,14 @@ interface BrowseAppShellProps {
   children: React.ReactNode;
   initialVideos?: Video[];
   initialTotal?: number;
+  initialStarterVideos?: Video[];
 }
 
 export function BrowseAppShell({
   children,
   initialVideos = [],
   initialTotal = 0,
+  initialStarterVideos = [],
 }: BrowseAppShellProps) {
   const pathname = usePathname();
   const mode = getMode(pathname);
@@ -34,6 +36,7 @@ export function BrowseAppShell({
         mode={mode}
         initialVideos={initialVideos}
         initialTotal={initialTotal}
+        initialStarterVideos={initialStarterVideos}
       />
       {children}
     </>

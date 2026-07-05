@@ -6,7 +6,6 @@ export const CATEGORIES: Category[] = [
   "mv",
   "practiceRoom",
   "fancam",
-  "solo",
   "stage",
   "cover",
   "behind",

@@ -103,7 +103,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    refresh();
+    // Defer session check so LCP / first paint aren't competing on the main thread.
+    let idleId: number | undefined;
+    let timeoutId: number | undefined;
+
+    const run = () => {
+      void refresh();
+    };
+
+    if (typeof requestIdleCallback !== "undefined") {
+      idleId = requestIdleCallback(run, { timeout: 2500 });
+    } else {
+      timeoutId = window.setTimeout(run, 1500);
+    }
+
+    return () => {
+      if (idleId !== undefined) cancelIdleCallback(idleId);
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    };
   }, [refresh]);
 
   const login = useCallback(async (username: string, password: string) => {

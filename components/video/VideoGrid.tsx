@@ -69,8 +69,8 @@ export function VideoGrid({
               e.stopPropagation();
               onToggleChecked(video.id);
             }}
-            // Only the first row needs eager load (2-up mobile / up to 4-up tablet).
-            priority={index < 4}
+            // First mobile row (2-up) — fewer eager loads cuts TBT on slow devices.
+            priority={index < 2}
           />
         ))}
       </div>

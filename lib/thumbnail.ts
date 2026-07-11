@@ -1,7 +1,7 @@
 const HDSLB_RE = /(?:^https?:)?\/\/[^/]*hdslb\.com\//i;
 
-/** Card display width on mobile is ~320px; 640 covers 2x DPR. */
-export const THUMB_DISPLAY_WIDTH = 640;
+/** ~184px card × 2 DPR on mobile; 480 still sharp on desktop 3–4 col grids. */
+export const THUMB_DISPLAY_WIDTH = 480;
 
 export function isBilibiliCdnUrl(url: string): boolean {
   return HDSLB_RE.test(url);

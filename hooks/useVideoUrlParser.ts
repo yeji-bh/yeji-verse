@@ -34,8 +34,10 @@ export function useVideoUrlParser() {
         body: JSON.stringify({ url: trimmed }),
       });
       if (seq !== parseSeq.current) return null;
+      if (!res.ok) throw new Error("metadata parse failed");
 
       const data = await res.json();
+      if (data?.error) throw new Error("metadata parse failed");
       const platform = data.platform ?? detectPlatform(trimmed);
 
       return {

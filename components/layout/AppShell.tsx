@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { VideoGrid } from "@/components/video/VideoGrid";
 import { VideoGridSkeleton } from "@/components/video/VideoGridSkeleton";
 import { ClipList } from "@/components/video/ClipList";
+import { SubmitModal } from "@/components/video/SubmitModal";
 
 const MobileFilterDrawer = dynamic(
   () =>
@@ -20,13 +21,6 @@ const VideoModal = dynamic(
   () =>
     import("@/components/video/VideoModal").then((m) => ({
       default: m.VideoModal,
-    })),
-  { ssr: false },
-);
-const SubmitModal = dynamic(
-  () =>
-    import("@/components/video/SubmitModal").then((m) => ({
-      default: m.SubmitModal,
     })),
   { ssr: false },
 );

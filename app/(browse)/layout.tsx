@@ -25,7 +25,7 @@ export default async function BrowseLayout({
 }>) {
   const { page, starterVideos } = await getCachedBrowseSnapshot();
   const videos = page?.videos ?? [];
-  const lcpCandidates = videos.slice(0, 2);
+  const lcpCandidates = videos.slice(0, 4);
 
   return (
     <>

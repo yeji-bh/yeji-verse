@@ -69,8 +69,8 @@ export function VideoGrid({
               e.stopPropagation();
               onToggleChecked(video.id);
             }}
-            // First mobile row (2-up) — fewer eager loads cuts TBT on slow devices.
-            priority={index < 2}
+            // First mobile row (2-up) + a couple more for desktop first paint.
+            priority={index < 4}
           />
         ))}
       </div>

@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   // @libsql/client/web needs workerd-specific transitive deps copied into the bundle.
   // See https://opennext.js.org/cloudflare/howtos/workerd
   serverExternalPackages: ["@libsql/isomorphic-ws", "@libsql/isomorphic-fetch"],
-  allowedDevOrigins: ["192.168.100.187"],
+  allowedDevOrigins: ["192.168.100.187", "192.168.0.35"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "img.youtube.com" },

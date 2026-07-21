@@ -18,10 +18,18 @@ export function toPublishedDateString(value: string | number): string | null {
       return d.toISOString().slice(0, 10);
     }
 
-    const ymd = value.match(/^(\d{4}-\d{2}-\d{2})/);
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    // Unix timestamp as string (Bilibili page JSON)
+    if (/^\d{9,13}$/.test(trimmed)) {
+      return toPublishedDateString(Number(trimmed));
+    }
+
+    const ymd = trimmed.match(/^(\d{4}-\d{2}-\d{2})/);
     if (ymd) return ymd[1];
 
-    const d = new Date(value);
+    const d = new Date(trimmed);
     if (Number.isNaN(d.getTime())) return null;
     return d.toISOString().slice(0, 10);
   } catch {
@@ -107,6 +115,75 @@ async function fetchYouTubeDescription(videoId: string): Promise<string | null> 
   }
 }
 
+async function fetchBilibiliFromPage(url: string): Promise<{
+  title: string | null;
+  description: string | null;
+  thumbnail: string | null;
+  publishedDate: string | null;
+}> {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        ...BILIBILI_HEADERS,
+        Accept: "text/html,application/xhtml+xml",
+      },
+      redirect: "follow",
+    });
+    if (!res.ok) {
+      return { title: null, description: null, thumbnail: null, publishedDate: null };
+    }
+    const html = await res.text();
+    const pick = (property: string) => {
+      const re = new RegExp(
+        `<meta[^>]+(?:property|name)=["']${property}["'][^>]+content=["']([^"']+)["']`,
+        "i",
+      );
+      const reAlt = new RegExp(
+        `<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${property}["']`,
+        "i",
+      );
+      return html.match(re)?.[1] ?? html.match(reAlt)?.[1] ?? null;
+    };
+
+    const rawTitle =
+      pick("og:title") ??
+      html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] ??
+      null;
+    const title = rawTitle
+      ? rawTitle
+          .replace(/\s*[|_].*哔哩哔哩.*$/i, "")
+          .replace(/\s*[|_]\s*bilibili\s*$/i, "")
+          .trim() || null
+      : null;
+
+    const description =
+      pick("og:description") ??
+      pick("description") ??
+      html.match(/"desc"\s*:\s*"((?:\\.|[^"\\])*)"/)?.[1]?.replace(/\\n/g, "\n").replace(/\\"/g, '"') ??
+      null;
+
+    // og:image is often a tiny @100w variant — strip size suffix for full cover.
+    const rawImage = pick("og:image");
+    const imageBase = rawImage
+      ? rawImage.replace(/^\/\//, "https://").split("@")[0]
+      : null;
+    const thumbnail = normalizeImageUrl(imageBase);
+
+    const rawDate =
+      html.match(/itemprop=["']uploadDate["'][^>]*content=["']([^"']+)["']/i)?.[1] ??
+      html.match(/content=["']([^"']+)["'][^>]*itemprop=["']uploadDate["']/i)?.[1] ??
+      pick("og:video:release_date") ??
+      html.match(/"pubdate"\s*:\s*(\d+)/)?.[1] ??
+      html.match(/"publish_time"\s*:\s*"?(\d+)"?/)?.[1] ??
+      null;
+    const publishedDate = rawDate ? toPublishedDateString(rawDate) : null;
+
+    return { title, description, thumbnail, publishedDate };
+  } catch {
+    return { title: null, description: null, thumbnail: null, publishedDate: null };
+  }
+}
+
 async function fetchBilibiliView(url: string): Promise<{
   title: string | null;
   description: string | null;
@@ -125,26 +202,43 @@ async function fetchBilibiliView(url: string): Promise<{
         next: { revalidate: 3600 },
       },
     );
-    if (!res.ok) return { title: null, description: null, thumbnail: null, publishedDate: null };
-    const json = (await res.json()) as {
-      code?: number;
-      data?: { title?: string; desc?: string; pic?: string; pubdate?: number };
-    };
-    if (json.code !== 0 || !json.data) {
-      return { title: null, description: null, thumbnail: null, publishedDate: null };
+    if (res.ok) {
+      const json = (await res.json()) as {
+        code?: number;
+        data?: { title?: string; desc?: string; pic?: string; pubdate?: number };
+      };
+      if (json.code === 0 && json.data) {
+        return {
+          title: json.data.title ?? null,
+          description: json.data.desc?.trim() || null,
+          thumbnail: normalizeImageUrl(json.data.pic),
+          publishedDate:
+            json.data.pubdate != null
+              ? toPublishedDateString(json.data.pubdate)
+              : null,
+        };
+      }
     }
-    return {
-      title: json.data.title ?? null,
-      description: json.data.desc?.trim() || null,
-      thumbnail: normalizeImageUrl(json.data.pic),
-      publishedDate:
-        json.data.pubdate != null
-          ? toPublishedDateString(json.data.pubdate)
-          : null,
-    };
   } catch {
-    return { title: null, description: null, thumbnail: null, publishedDate: null };
+    /* fall through to page scrape — api.bilibili.com is often blocked on edge */
   }
+
+  const pageUrls = ids.bvid
+    ? [
+        `https://www.bilibili.com/video/${ids.bvid}`,
+        `https://m.bilibili.com/video/${ids.bvid}`,
+      ]
+    : [
+        `https://www.bilibili.com/video/av${ids.aid}`,
+        `https://m.bilibili.com/video/av${ids.aid}`,
+      ];
+
+  for (const pageUrl of pageUrls) {
+    const scraped = await fetchBilibiliFromPage(pageUrl);
+    if (scraped.title || scraped.thumbnail) return scraped;
+  }
+
+  return { title: null, description: null, thumbnail: null, publishedDate: null };
 }
 
 export async function fetchBilibiliThumbnail(url: string): Promise<string | null> {
